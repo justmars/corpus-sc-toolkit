@@ -52,7 +52,10 @@ opinions_with_ponencia AS (
         'pdf',
         caso.pdf,
         'title',
-        'Ponencia',
+        CASE meta.notice
+          WHEN 1 THEN 'Notice'
+          WHEN 0 THEN 'Ponencia'
+        END,
         'writer',
         meta.writer,
         'body',
