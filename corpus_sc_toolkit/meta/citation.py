@@ -1,6 +1,25 @@
 from loguru import logger
 from citation_utils import Citation
 from slugify import slugify
+from dateutil.parser import parse
+
+
+def get_cite_from_fields(data: dict) -> Citation | None:
+    """Presumes existence of the following keys:
+
+    1. docket_category
+    2. serial
+    3. date
+    """
+    keys = ["docket_category", "serial", "date"]
+    if not all([data.get(k) for k in keys]):
+        return None
+
+    date_obj = parse(data["date"]).date()
+    docket_partial = f"{data['docket_category']} No. {data['serial']}"
+    docket_str = f"{docket_partial}, {date_obj.strftime('%b %-d, %Y')}"
+    cite = Citation.extract_citation(docket_str)
+    return cite
 
 
 def get_id_from_citation(

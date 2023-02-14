@@ -15,6 +15,14 @@ There is a pre-existing sqlite database that is replicated via litestream to the
 
 ## Extraction Flow
 
+### Function
+
+Based on an SQL expression, extract pydantic models based on the following function:
+
+::: corpus_sc_toolkit.pdf.decision.InterimDecision.limited_decisions
+
+See raw SQL expression below that needs to be instantied into their respespective Decision, Opinion, and Segment models.
+
 ### SQL
 
 We can query the database with the following SQL expression to get all "non-notices" with their respective opinions:
@@ -111,11 +119,3 @@ FROM
 WHERE
   meta.notice = 0
 ```
-
-However, this only gets the raw information that needs to be instantied into their respespective Decision, Opinion, and Segment models.
-
-### Function
-
-Based on the SQL expression, extract pydantic models based on the following function:
-
-::: corpus_sc_toolkit.pdf.decision_pdf.ExtractDecisionPDF.limited_decisions

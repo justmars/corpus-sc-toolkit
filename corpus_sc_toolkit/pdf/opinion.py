@@ -1,19 +1,15 @@
+import json
 from collections.abc import Iterator
-from pathlib import Path
+
 from typing import Self
 
 from pydantic import BaseModel, Field
 from sqlite_utils import Database
-
-from corpus_sc_toolkit.justice import OpinionWriterName
-
-SC_BASE_URL = "https://sc.judiciary.gov.ph"
-PDF_DB_PATH: Path = Path().cwd() / "pdf.db"
-TARGET_FOLDER: Path = Path().home() / "code" / "corpus" / "decisions" / "sc"
-SQL_DECISIONS_ONLY = Path(__file__).parent / "sql" / "limit_extract.sql"
+from .resources import SC_BASE_URL
+from corpus_sc_toolkit.justice import CandidateJustice
 
 
-class ExtractSegmentPDF(BaseModel):
+class InterimSegment(BaseModel):
     id: str = Field(...)
     opinion_id: str = Field(...)
     decision_id: int = Field(...)
@@ -22,25 +18,11 @@ class ExtractSegmentPDF(BaseModel):
     char_count: int = Field(...)
 
 
-class ExtractOpinionPDF(BaseModel):
+class InterimOpinion(BaseModel):
     id: str = Field(...)
     decision_id: int = Field(...)
     pdf: str
-    writer: OpinionWriterName | None = Field(
-        None,
-        description=(
-            "The writer of the opinion; when not supplied could mean a Per"
-            " Curiam opinion, or unable to detect the proper justice."
-        ),
-    )
-    justice_id: dict | None = Field(
-        default_factory=dict,
-        title="Justice ID",
-        description=(  # noqa: E501
-            "The result of matching the cleaned writer name with the database"
-            " to get the id, if possible."
-        ),
-    )
+    candidate: CandidateJustice
     title: str | None = Field(
         ...,
         description=(
@@ -53,7 +35,52 @@ class ExtractOpinionPDF(BaseModel):
     annex: str | None = Field(
         default=None, description="Annex portion of the opinion."
     )
-    segments: list[ExtractSegmentPDF] = Field(default_factory=list)
+    segments: list[InterimSegment] = Field(default_factory=list)
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    @classmethod
+    def setup(cls, db: Database, data: dict) -> dict | None:
+        """Presumes existence of the following keys:
+
+        This will partially process the sql query defined in
+        `/sql/limit_extract.sql`
+
+        The required fields in `data`:
+
+        1. `opinions` - i.e. a string made of `json_group_array`, `json_object` from sqlite query
+        2. `id` - the decision id connected to each opinion from the opinions list
+        3. `date` - for determining the justice involved in the opinion/s
+        """  # noqa: E501
+        match = None
+        opinions = []
+        keys = ["opinions", "id", "date"]
+        if not all([data.get(k) for k in keys]):
+            return None
+
+        id, dt, op_lst = data["id"], data["date"], json.loads(data["opinions"])
+
+        for op in op_lst:
+            pdf_url = f"{SC_BASE_URL}{op['pdf']}"
+            candidate = CandidateJustice(db, op.get("writer"), dt)
+            obj = cls(
+                id=op["id"],
+                decision_id=id,
+                pdf=pdf_url,
+                candidate=candidate,
+                title=op["title"],
+                body=op["body"],
+                annex=op["annex"],
+            )
+            opinion = obj.with_segments_set(db=db)
+            opinions.append(opinion)
+
+            if not match and opinion.title == "Ponencia":
+                match = opinion.candidate
+
+        details = match.detail._asdict() if match and match.detail else {}
+        return {"opinions": opinions} | details
 
     def get_segment(
         self,
@@ -63,7 +90,7 @@ class ExtractOpinionPDF(BaseModel):
         position: str,
     ):
         if all(elements):
-            return ExtractSegmentPDF(
+            return InterimSegment(
                 id="-".join(str(i) for i in elements),
                 opinion_id=opinion_id,
                 decision_id=self.decision_id,
@@ -72,7 +99,7 @@ class ExtractOpinionPDF(BaseModel):
                 char_count=len(text),
             )
 
-    def _from_main(self, db: Database) -> Iterator[ExtractSegmentPDF]:
+    def _from_main(self, db: Database) -> Iterator[InterimSegment]:
         """Populate segments from the main decision."""
         criteria = "decision_id = ? and length(text) > 10"
         params = (self.decision_id,)
@@ -86,7 +113,7 @@ class ExtractOpinionPDF(BaseModel):
             ):
                 yield segment
 
-    def _from_opinions(self, db: Database) -> Iterator[ExtractSegmentPDF]:
+    def _from_opinions(self, db: Database) -> Iterator[InterimSegment]:
         """Populate segments from the opinion decision."""
         criteria = "opinion_id = ? and length(text) > 10"
         params = (self.id,)
@@ -100,8 +127,7 @@ class ExtractOpinionPDF(BaseModel):
             ):
                 yield segment
 
-    def with_segments_set(self, path: Path = PDF_DB_PATH) -> Self:
-        db = Database(path)
+    def with_segments_set(self, db: Database) -> Self:
         if self.title in ["Ponencia", "Notice"]:  # see limit_extract.sql
             self.segments = list(self._from_main(db))
         else:

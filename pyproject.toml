@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "corpus-sc-toolkit"
 description = "Toolkit to process component elements of a Philippine Supreme Court decision."
-version = "0.0.3"
+version = "0.0.4"
 authors = ["Marcelino G. Veloso III <mars@veloso.one>"]
 readme = "README.md"
 license = "MIT"
 homepage = "https://mv3.dev"
-repository = "https://github.com/justmars/corpus-from-pdf"
-documentation = "https://mv3.dev/corpus-from-pdf"
+repository = "https://github.com/justmars/corpus-sc-toolkit"
+documentation = "https://mv3.dev/corpus-sc-toolkit"
 classifiers = [
   "Programming Language :: Python :: 3.11",
   "Typing :: Typed",

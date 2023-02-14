@@ -1,2 +1,2 @@
-from .decision_pdf import ExtractDecisionPDF
-from .opinion_pdf import ExtractOpinionPDF, ExtractSegmentPDF
+from .decision import InterimDecision
+from .opinion import InterimOpinion, InterimSegment
