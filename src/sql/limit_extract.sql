@@ -87,4 +87,4 @@ FROM
   JOIN pre_tbl_decision_meta meta
   ON meta.decision_id = caso.id
 WHERE
-  caso.date > '2022-01-01'
+  meta.notice = 0
