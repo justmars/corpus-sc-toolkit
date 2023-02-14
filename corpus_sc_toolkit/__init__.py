@@ -1,6 +1,11 @@
-__version__ = "0.0.4"
+__version__ = "0.0.5"
 
-from .html import DecisionHTMLConvertMarkdown, add_markdown_file
+from .html import (
+    DecisionHTMLConvertMarkdown,
+    add_markdown_file,
+    segmentize,
+    standardize,
+)
 from .justice import (
     CandidateJustice,
     Justice,
@@ -18,4 +23,5 @@ from .meta import (
     tags_from_title,
     voteline_clean,
 )
-from .pdf import InterimDecision
+from .pdf import InterimDecision, InterimOpinion
+from .resources import DECISION_PATH, SC_BASE_URL, SC_LOCAL_FOLDER

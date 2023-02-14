@@ -1,7 +1,7 @@
 from collections.abc import Iterator
 from datetime import date
 from pathlib import Path
-from typing import Self, Any
+from typing import Any, Self
 
 import yaml
 from citation_utils import Citation, ShortDocketCategory
@@ -10,14 +10,15 @@ from loguru import logger
 from pydantic import BaseModel, Field
 from sqlite_utils import Database
 
-from corpus_sc_toolkit.meta import (
+from corpus_sc_toolkit import (
     CourtComposition,
     DecisionCategory,
     DecisionSource,
     get_cite_from_fields,
     get_id_from_citation,
 )
-from .resources import SC_BASE_URL, TARGET_FOLDER
+from corpus_sc_toolkit.resources import SC_BASE_URL, SC_LOCAL_FOLDER
+
 from .opinion import InterimOpinion
 
 
@@ -81,7 +82,7 @@ class InterimDecision(BaseModel):
             yield cls.set(row, opx, cite)
 
     @property
-    def is_dump_ok(self, target_path: Path = TARGET_FOLDER):
+    def is_dump_ok(self, target_path: Path = SC_LOCAL_FOLDER):
         if not target_path.exists():
             raise Exception("Cannot find target destination.")
         if not self.citation:
@@ -92,7 +93,7 @@ class InterimDecision(BaseModel):
             return False
         return True
 
-    def dump(self, target_path: Path = TARGET_FOLDER):
+    def dump(self, target_path: Path = SC_LOCAL_FOLDER):
         if not self.is_dump_ok:
             return
         target_id = target_path / f"{self.id}"
@@ -102,6 +103,6 @@ class InterimDecision(BaseModel):
             logger.debug(f"Built {target_id=}=")
 
     @classmethod
-    def export(cls, db: Database, to_folder: Path = TARGET_FOLDER):
+    def export(cls, db: Database, to_folder: Path = SC_LOCAL_FOLDER):
         for case in cls.limited_decisions(db):
             case.dump(to_folder)

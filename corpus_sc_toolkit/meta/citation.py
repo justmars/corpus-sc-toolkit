@@ -1,7 +1,7 @@
-from loguru import logger
 from citation_utils import Citation
-from slugify import slugify
 from dateutil.parser import parse
+from loguru import logger
+from slugify import slugify
 
 
 def get_cite_from_fields(data: dict) -> Citation | None:

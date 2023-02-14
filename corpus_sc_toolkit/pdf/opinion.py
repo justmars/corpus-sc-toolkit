@@ -1,12 +1,12 @@
 import json
 from collections.abc import Iterator
-
 from typing import Self
 
 from pydantic import BaseModel, Field
 from sqlite_utils import Database
-from .resources import SC_BASE_URL
-from corpus_sc_toolkit.justice import CandidateJustice
+
+from corpus_sc_toolkit import CandidateJustice
+from corpus_sc_toolkit.resources import SC_BASE_URL
 
 
 class InterimSegment(BaseModel):
