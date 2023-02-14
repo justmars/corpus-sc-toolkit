@@ -25,6 +25,7 @@ loguru = "^0.6.0"
 sqlpyd = "^0.1.4"
 httpx = "^0.23.3"
 markdownify = "^0.11.6"
+pylts = "^0.0.7"
 
 [tool.poetry.group.dev.dependencies] # latest as of Jan. 2023
 rich = "^13.3"

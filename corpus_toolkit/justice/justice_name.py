@@ -2,10 +2,9 @@ import re
 from enum import Enum
 from typing import NamedTuple
 
-
 from unidecode import unidecode
 
-IS_PER_CURIAM = re.compile(r"per\s+curiam", re.I)
+IS_PER_CURIAM = re.compile(r"per\s+curiam", re.I)  # type: ignore
 
 
 class OpinionWriterName(NamedTuple):
@@ -19,8 +18,7 @@ class OpinionWriterName(NamedTuple):
         if text:
             if IS_PER_CURIAM.search(text):
                 return cls(per_curiam=True)
-            else:
-                return cls(writer=cls.clean(text))
+            return cls(writer=cls.clean(text))
 
     @classmethod
     def clean(cls, text: str) -> str | None:

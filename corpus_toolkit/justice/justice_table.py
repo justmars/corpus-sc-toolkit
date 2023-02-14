@@ -5,10 +5,11 @@ from pathlib import Path
 import yaml
 from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta as rd
+from jinja2 import Environment, PackageLoader, select_autoescape
 from loguru import logger
 from pydantic import Field, validator
 from sqlpyd import Connection, IndividualBio
-from jinja2 import Environment, PackageLoader, select_autoescape
+
 from .justice_list import LIST_SC_JUSTICES
 
 MAX_JUSTICE_AGE = 70
@@ -184,6 +185,7 @@ class Justice(Bio):
     def set_local_from_api(cls, local: Path = JUSTICE_LOCAL) -> Path:
         """Create a local .yaml file containing the list of validated Justices."""
         if local.exists():
+            logger.debug("Local justice list file used.")
             return local
         with open(local, "w") as writefile:
             yaml.safe_dump(
@@ -199,60 +201,6 @@ class Justice(Bio):
         """Add a table containing names and ids of justices; alter the original
         decision's table for it to include a justice id."""
         return c.add_records(Justice, yaml.safe_load(p.read_bytes()))
-
-    @classmethod
-    def get_active_on_date(cls, c: Connection, target_date: str) -> list[dict]:
-        """Get list of justices that have been appointed before the `target date`
-        and have not yet become inactive."""
-        try:
-            valid_date = parse(target_date).date().isoformat()
-        except Exception:
-            raise Exception(f"Need {target_date=}")
-        return list(
-            c.table(cls).rows_where(
-                "inactive_date > :date and :date > start_term",
-                {"date": valid_date},
-                select=(
-                    "id, lower(last_name) surname, alias, start_term,"
-                    " inactive_date, chief_date"
-                ),
-                order_by="start_term desc",
-            )
-        )
-
-    @classmethod
-    def get_justice_on_date(
-        cls, c: Connection, target_date: str, cleaned_name: str
-    ) -> dict | None:
-        """Based on `get_active_on_date()`, match the cleaned_name to either the alias
-        of the justice or the justice's last name; on match, determine whether the
-        designation should be 'C.J.' or 'J.'"""
-        candidate_options = cls.get_active_on_date(c, target_date)
-        opts = []
-        for candidate in candidate_options:
-            if candidate["alias"] and candidate["alias"] == cleaned_name:
-                opts.append(candidate)
-                continue
-            elif candidate["surname"] == cleaned_name:
-                opts.append(candidate)
-                continue
-        if opts:
-            if len(opts) == 1:
-                res = opts[0]
-                res.pop("alias")
-                res["surname"] = res["surname"].title()
-                res["designation"] = "J."
-                target = parse(target_date).date()
-                if chief_date := res.get("chief_date"):
-                    s = parse(chief_date).date()
-                    e = parse(res["inactive_date"]).date()
-                    if s < target < e:
-                        res["designation"] = "C.J."
-                return res
-            else:
-                msg = f"Many {opts=} for {cleaned_name=} on {target_date=}"
-                logger.warning(msg)
-        return None
 
     @classmethod
     def view_chiefs(cls, c: Connection) -> list[dict]:

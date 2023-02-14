@@ -2072,6 +2072,24 @@ files = [
 plugins = ["importlib-metadata"]
 
 [[package]]
+name = "pylts"
+version = "0.0.7"
+description = "Pydantic wrapper around litestreamed database specific to an AWS bucket."
+category = "main"
+optional = false
+python-versions = ">=3.11,<4.0"
+files = [
+    {file = "pylts-0.0.7-py3-none-any.whl", hash = "sha256:25cd75ac53321dec8dd8169d8f502d0cb5d5559a0ca8d528e142cdba4ffe7a6b"},
+    {file = "pylts-0.0.7.tar.gz", hash = "sha256:e70f7a4e3f95ab998cede758cb9e6232997d5af7605ed57286300ef0734cf200"},
+]
+
+[package.dependencies]
+click = ">=8.1.3,<9.0.0"
+loguru = ">=0.6.0,<0.7.0"
+pydantic = ">=1.10.4,<2.0.0"
+python-dotenv = ">=0.21,<0.22"
+
+[[package]]
 name = "pymdown-extensions"
 version = "9.9.2"
 description = "Extension pack for Python Markdown."
@@ -3108,4 +3126,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "443bd94da2016cc65cce727036c85103cbdb4c2f508512f6ed7e7a7e5eee14f4"
+content-hash = "aa12a45a624628128c9b10da3292a1765d083597be3357df45b0e902df7a9896"

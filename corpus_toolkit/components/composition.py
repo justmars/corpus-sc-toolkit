@@ -1,7 +1,6 @@
 import re
 from enum import Enum
 
-
 COMPOSITION_START_DIVISION = re.compile(r"div", re.I)
 COMPOSITION_START_ENBANC = re.compile(r"en", re.I)
 

@@ -1,10 +1,16 @@
 import os
+from http import HTTPStatus
+
 import httpx
 import yaml
-from http import HTTPStatus
+from dotenv import find_dotenv, load_dotenv
+from loguru import logger
+
+load_dotenv(find_dotenv())
 
 
 def get_justices_from_api():
+    logger.debug("Extracting justice list from API.")
     headers = {
         "Accept": "application/vnd.github.raw",
         "Authorization": f"token {os.getenv('GH_TOKEN')}",
@@ -15,7 +21,8 @@ def get_justices_from_api():
         res = client.get(url=url, headers=headers, timeout=120)
         if res.status_code == HTTPStatus.OK:
             yield from yaml.safe_load(res.content)
+            return
         raise Exception(f"Could not get justice list, see {res=}")
 
 
-LIST_SC_JUSTICES = get_justices_from_api()
+LIST_SC_JUSTICES = list(get_justices_from_api())
