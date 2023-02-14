@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "corpus-toolkit"
-description = "Toolkit to access certain elements of a decision"
+name = "corpus-sc-toolkit"
+description = "Toolkit to access certain elements of a Philippine Supreme Court decision."
 version = "0.0.1"
 authors = ["Marcelino G. Veloso III <mars@veloso.one>"]
 readme = "README.md"

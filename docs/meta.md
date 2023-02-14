@@ -2,16 +2,16 @@
 
 ## Court Category
 
-::: corpus_toolkit.meta.category.DecisionCategory
+::: corpus_sc_toolkit.meta.category.DecisionCategory
 
 ## Court Composition
 
-::: corpus_toolkit.meta.composition.CourtComposition
+::: corpus_sc_toolkit.meta.composition.CourtComposition
 
 ## Title Tags
 
-::: corpus_toolkit.meta.tags.tags_from_title
+::: corpus_sc_toolkit.meta.tags.tags_from_title
 
 ## Vote Lines
 
-::: corpus_toolkit.meta.voteline.extract_votelines
+::: corpus_sc_toolkit.meta.voteline.extract_votelines

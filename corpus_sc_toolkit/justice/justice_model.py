@@ -11,7 +11,7 @@ MAX_JUSTICE_AGE = 70
 
 justice_jinja_env = Environment(
     loader=PackageLoader(
-        package_name="corpus_toolkit", package_path="justice/sql"
+        package_name="corpus_sc_toolkit", package_path="justice/sql"
     ),
     autoescape=select_autoescape(),
 )
@@ -67,7 +67,7 @@ class Justice(Bio):
         True
         >>> # See local file
         >>> from pathlib import Path
-        >>> from corpus_toolkit.justice import get_justices_file
+        >>> from corpus_sc_toolkit.justice import get_justices_file
         >>> p = Path().cwd() / "tests" / "sc.yaml" # the test file
         >>> f = get_justices_file(p)
         >>> f.exists()

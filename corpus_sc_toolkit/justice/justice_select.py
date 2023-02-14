@@ -45,7 +45,7 @@ class CandidateJustice(NamedTuple):
         Examples:
             >>> import yaml
             >>> from pathlib import Path
-            >>> from corpus_toolkit.justice import Justice, get_justices_file
+            >>> from corpus_sc_toolkit.justice import Justice, get_justices_file
             >>> from sqlpyd import Connection
             >>> p = Path().cwd() / "tests" / "sc.yaml" # the test file
             >>> c = Connection(DatabasePath="test.db")
@@ -83,7 +83,7 @@ class CandidateJustice(NamedTuple):
         Examples:
             >>> import yaml
             >>> from pathlib import Path
-            >>> from corpus_toolkit.justice import Justice, get_justices_file
+            >>> from corpus_sc_toolkit.justice import Justice, get_justices_file
             >>> from sqlpyd import Connection
             >>> p = Path().cwd() / "tests" / "sc.yaml" # the test file
             >>> c = Connection(DatabasePath="test.db")

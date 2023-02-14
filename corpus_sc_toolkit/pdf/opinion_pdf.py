@@ -5,7 +5,7 @@ from typing import Self
 from pydantic import BaseModel, Field
 from sqlite_utils import Database
 
-from corpus_toolkit.justice import OpinionWriterName
+from corpus_sc_toolkit.justice import OpinionWriterName
 
 SC_BASE_URL = "https://sc.judiciary.gov.ph"
 PDF_DB_PATH: Path = Path().cwd() / "pdf.db"

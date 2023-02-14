@@ -1,6 +1,6 @@
 import pytest
 
-from corpus_toolkit import OpinionWriterName
+from corpus_sc_toolkit import OpinionWriterName
 
 data = [
     (

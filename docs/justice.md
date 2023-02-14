@@ -2,16 +2,16 @@
 
 ## Source list from API
 
-::: corpus_toolkit.justice.justice_list.get_justices_from_api
+::: corpus_sc_toolkit.justice.justice_list.get_justices_from_api
 
 ## Local file containing list
 
-::: corpus_toolkit.justice.justice_list.get_justices_file
+::: corpus_sc_toolkit.justice.justice_list.get_justices_file
 
 ## Justice model instance
 
-::: corpus_toolkit.justice.justice_model.Justice
+::: corpus_sc_toolkit.justice.justice_model.Justice
 
 ## Justice names
 
-::: corpus_toolkit.justice.justice_name.OpinionWriterName
+::: corpus_sc_toolkit.justice.justice_name.OpinionWriterName

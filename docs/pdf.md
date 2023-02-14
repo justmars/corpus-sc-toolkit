@@ -118,4 +118,4 @@ However, this only gets the raw information that needs to be instantied into the
 
 Based on the SQL expression, extract pydantic models based on the following function:
 
-::: corpus_toolkit.pdf.decision_pdf.ExtractDecisionPDF.limited_decisions
+::: corpus_sc_toolkit.pdf.decision_pdf.ExtractDecisionPDF.limited_decisions

@@ -7,7 +7,7 @@ CATEGORY_START_RESOLUTION = re.compile(r"r\s*e\s*s", re.I)
 
 class DecisionCategory(str, Enum):
     """Each Decision (which is not classified as a 'notice of a minute resolution')
-    is categorized as being either a `Decision` or a `Resolution.
+    is categorized as being either a `Decision` or a `Resolution`.
 
     A minute resolution, as described by the internal rules of the Philippine
     Supreme Court, is characterized as follows:
@@ -30,10 +30,21 @@ class DecisionCategory(str, Enum):
 
     decision = "Decision"
     resolution = "Resolution"
+    minute = "Minute Resolution"
     other = "Unspecified"
 
     @classmethod
     def _setter(cls, text: str | None):
+        """Detect pattern based on simple matching of characters.
+
+        Examples:
+            >>> text = "R E S O L U T I O N"
+            >>> DecisionCategory._setter(text)
+            <DecisionCategory.resolution: 'Resolution'>
+            >>> text2 = "Decission" # wrongly spelled
+            >>> DecisionCategory._setter(text2)
+            <DecisionCategory.decision: 'Decision'>
+        """
         if text:
             if CATEGORY_START_DECISION.search(text):
                 return cls.decision
@@ -44,7 +55,7 @@ class DecisionCategory(str, Enum):
     @classmethod
     def set_category(cls, category: str | None = None, notice: int | None = 0):
         if notice:
-            return cls.resolution
+            return cls.minute
         if category:
             cls._setter(category)
         return cls.other
