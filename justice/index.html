@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Toolkit to access certain elements of a decision.">
+        <meta name="description" content="Toolkit to process component elements of a Philippine Supreme Court decision.">
       
       
         <meta name="author" content="Marcelino Veloso III">
@@ -313,14 +313,14 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#corpus_toolkit.justice.justice_model.Justice--justice" class="md-nav__link">
+  <a href="#corpus_sc_toolkit.justice.justice_model.Justice--justice" class="md-nav__link">
     Justice
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#corpus_toolkit.justice.justice_model.Justice-functions" class="md-nav__link">
+  <a href="#corpus_sc_toolkit.justice.justice_model.Justice-functions" class="md-nav__link">
     Functions
   </a>
   
@@ -328,7 +328,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#corpus_toolkit.justice.justice_model.Justice.view_chiefs" class="md-nav__link">
+  <a href="#corpus_sc_toolkit.justice.justice_model.Justice.view_chiefs" class="md-nav__link">
     view_chiefs()
   </a>
   
@@ -353,7 +353,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#corpus_toolkit.justice.justice_name.OpinionWriterName-functions" class="md-nav__link">
+  <a href="#corpus_sc_toolkit.justice.justice_name.OpinionWriterName-functions" class="md-nav__link">
     Functions
   </a>
   
@@ -361,7 +361,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#corpus_toolkit.justice.justice_name.OpinionWriterName.clean" class="md-nav__link">
+  <a href="#corpus_sc_toolkit.justice.justice_name.OpinionWriterName.clean" class="md-nav__link">
     clean()
   </a>
   
@@ -395,6 +395,21 @@
     <li class="md-nav__item">
       <a href="../meta/" class="md-nav__link">
         Meta
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../html/" class="md-nav__link">
+        eLib Ponencia
       </a>
     </li>
   
@@ -464,14 +479,14 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#corpus_toolkit.justice.justice_model.Justice--justice" class="md-nav__link">
+  <a href="#corpus_sc_toolkit.justice.justice_model.Justice--justice" class="md-nav__link">
     Justice
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#corpus_toolkit.justice.justice_model.Justice-functions" class="md-nav__link">
+  <a href="#corpus_sc_toolkit.justice.justice_model.Justice-functions" class="md-nav__link">
     Functions
   </a>
   
@@ -479,7 +494,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#corpus_toolkit.justice.justice_model.Justice.view_chiefs" class="md-nav__link">
+  <a href="#corpus_sc_toolkit.justice.justice_model.Justice.view_chiefs" class="md-nav__link">
     view_chiefs()
   </a>
   
@@ -504,7 +519,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#corpus_toolkit.justice.justice_name.OpinionWriterName-functions" class="md-nav__link">
+  <a href="#corpus_sc_toolkit.justice.justice_name.OpinionWriterName-functions" class="md-nav__link">
     Functions
   </a>
   
@@ -512,7 +527,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#corpus_toolkit.justice.justice_name.OpinionWriterName.clean" class="md-nav__link">
+  <a href="#corpus_sc_toolkit.justice.justice_name.OpinionWriterName.clean" class="md-nav__link">
     clean()
   </a>
   
@@ -557,9 +572,9 @@
 
   <div class="doc doc-contents first">
   
-      <p>The main list of Justices is found in the main github corpus repository.
-This function, provided a <code>GH_TOKEN</code> is declared as an environment variable,
-will pull that data into an iterator of dicts.</p>
+      <p>A master list of <a class="autorefs autorefs-internal" href="#justice">Justices</a> is found in the github <code>/corpus</code> repository.
+Provided a <code>GH_TOKEN</code> is declared as an environment variable,
+this will pull that list into an iterator of dicts.</p>
 
   <p><strong>Yields:</strong></p>
   <table>
@@ -580,7 +595,7 @@ will pull that data into an iterator of dicts.</p>
   </table>
 
       <details class="quote">
-        <summary>Source code in <code>corpus_toolkit/justice/justice_list.py</code></summary>
+        <summary>Source code in <code>corpus_sc_toolkit/justice/justice_list.py</code></summary>
         <div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">Python</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-25">25</a></span>
 <span class="normal"><a href="#__codelineno-0-26">26</a></span>
 <span class="normal"><a href="#__codelineno-0-27">27</a></span>
@@ -600,9 +615,9 @@ will pull that data into an iterator of dicts.</p>
 <span class="normal"><a href="#__codelineno-0-41">41</a></span>
 <span class="normal"><a href="#__codelineno-0-42">42</a></span>
 <span class="normal"><a href="#__codelineno-0-43">43</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-25" name="__codelineno-0-25"></a><span class="k">def</span> <span class="nf">get_justices_from_api</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
-<a id="__codelineno-0-26" name="__codelineno-0-26"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;The main list of Justices is found in the main github corpus repository.</span>
-<a id="__codelineno-0-27" name="__codelineno-0-27"></a><span class="sd">    This function, provided a `GH_TOKEN` is declared as an environment variable,</span>
-<a id="__codelineno-0-28" name="__codelineno-0-28"></a><span class="sd">    will pull that data into an iterator of dicts.</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;A master list of [Justices][justice] is found in the github `/corpus` repository.</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27"></a><span class="sd">    Provided a `GH_TOKEN` is declared as an environment variable,</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28"></a><span class="sd">    this will pull that list into an iterator of dicts.</span>
 <a id="__codelineno-0-29" name="__codelineno-0-29"></a>
 <a id="__codelineno-0-30" name="__codelineno-0-30"></a><span class="sd">    Yields:</span>
 <a id="__codelineno-0-31" name="__codelineno-0-31"></a><span class="sd">        Iterator[dict]: Justices from the API</span>
@@ -632,8 +647,8 @@ will pull that data into an iterator of dicts.</p>
   <div class="doc doc-contents first">
   
       <p>Return, if existing, the path to the <code>local_file</code> (*.yaml) containing
-a list of validated Justices; if it doesn't exist yet, create it by calling
-<a class="autorefs autorefs-internal" href="#source-list-from-api">get_justices_from_api()</a>.</p>
+a list of validated <a class="autorefs autorefs-internal" href="#justice">Justices</a>; if it doesn't exist yet, create it by
+calling <a class="autorefs autorefs-internal" href="#source-list-from-api">get_justices_from_api()</a>.</p>
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -686,7 +701,7 @@ a list of validated Justices; if it doesn't exist yet, create it by calling
   </table>
 
       <details class="quote">
-        <summary>Source code in <code>corpus_toolkit/justice/justice_list.py</code></summary>
+        <summary>Source code in <code>corpus_sc_toolkit/justice/justice_list.py</code></summary>
         <div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">Python</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-46">46</a></span>
 <span class="normal"><a href="#__codelineno-0-47">47</a></span>
 <span class="normal"><a href="#__codelineno-0-48">48</a></span>
@@ -721,8 +736,8 @@ a list of validated Justices; if it doesn't exist yet, create it by calling
 <span class="normal"><a href="#__codelineno-0-77">77</a></span>
 <span class="normal"><a href="#__codelineno-0-78">78</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-46" name="__codelineno-0-46"></a><span class="k">def</span> <span class="nf">get_justices_file</span><span class="p">(</span><span class="n">local_file</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">JUSTICE_LOCAL</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
 <a id="__codelineno-0-47" name="__codelineno-0-47"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return, if existing, the path to the `local_file` (*.yaml) containing</span>
-<a id="__codelineno-0-48" name="__codelineno-0-48"></a><span class="sd">    a list of validated Justices; if it doesn&#39;t exist yet, create it by calling</span>
-<a id="__codelineno-0-49" name="__codelineno-0-49"></a><span class="sd">    [get_justices_from_api()][source-list-from-api].</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a><span class="sd">    a list of validated [Justices][justice]; if it doesn&#39;t exist yet, create it by</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a><span class="sd">    calling [get_justices_from_api()][source-list-from-api].</span>
 <a id="__codelineno-0-50" name="__codelineno-0-50"></a>
 <a id="__codelineno-0-51" name="__codelineno-0-51"></a><span class="sd">    Args:</span>
 <a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="sd">        local_file (Path, optional): _description_. Defaults to JUSTICE_LOCAL.</span>
@@ -765,10 +780,10 @@ a list of validated Justices; if it doesn't exist yet, create it by calling
 
   <div class="doc doc-contents first">
       <p class="doc doc-class-bases">
-        Bases: <code><span title="corpus_toolkit.justice.justice_model.Bio">Bio</span></code></p>
+        Bases: <code><span title="corpus_sc_toolkit.justice.justice_model.Bio">Bio</span></code></p>
 
   
-      <h4 id="corpus_toolkit.justice.justice_model.Justice--justice">Justice</h4>
+      <h4 id="corpus_sc_toolkit.justice.justice_model.Justice--justice">Justice</h4>
 <p>Based on sqlpyd <code>TableConfig</code>, the declaration of the model makes it easier
 to create a table based on a given list of Pydantic fields. The <a class="autorefs autorefs-internal" href="#local-file-containing-list">list of justices </a>
 from the created YAML file are parsed through this model prior to being inserted
@@ -865,7 +880,7 @@ into the database.</p>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="go">True</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="gp">&gt;&gt;&gt; </span><span class="c1"># See local file</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">corpus_toolkit.justice</span> <span class="kn">import</span> <span class="n">get_justices_file</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">corpus_sc_toolkit.justice</span> <span class="kn">import</span> <span class="n">get_justices_file</span>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">Path</span><span class="p">()</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span> <span class="o">/</span> <span class="s2">&quot;tests&quot;</span> <span class="o">/</span> <span class="s2">&quot;sc.yaml&quot;</span> <span class="c1"># the test file</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">get_justices_file</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
@@ -880,7 +895,7 @@ into the database.</p>
 
 
         <details class="quote">
-          <summary>Source code in <code>corpus_toolkit/justice/justice_model.py</code></summary>
+          <summary>Source code in <code>corpus_sc_toolkit/justice/justice_model.py</code></summary>
           <div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">Python</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-34"> 34</a></span>
 <span class="normal"><a href="#__codelineno-0-35"> 35</a></span>
 <span class="normal"><a href="#__codelineno-0-36"> 36</a></span>
@@ -1115,7 +1130,7 @@ into the database.</p>
 <a id="__codelineno-0-67" name="__codelineno-0-67"></a><span class="sd">        True</span>
 <a id="__codelineno-0-68" name="__codelineno-0-68"></a><span class="sd">        &gt;&gt;&gt; # See local file</span>
 <a id="__codelineno-0-69" name="__codelineno-0-69"></a><span class="sd">        &gt;&gt;&gt; from pathlib import Path</span>
-<a id="__codelineno-0-70" name="__codelineno-0-70"></a><span class="sd">        &gt;&gt;&gt; from corpus_toolkit.justice import get_justices_file</span>
+<a id="__codelineno-0-70" name="__codelineno-0-70"></a><span class="sd">        &gt;&gt;&gt; from corpus_sc_toolkit.justice import get_justices_file</span>
 <a id="__codelineno-0-71" name="__codelineno-0-71"></a><span class="sd">        &gt;&gt;&gt; p = Path().cwd() / &quot;tests&quot; / &quot;sc.yaml&quot; # the test file</span>
 <a id="__codelineno-0-72" name="__codelineno-0-72"></a><span class="sd">        &gt;&gt;&gt; f = get_justices_file(p)</span>
 <a id="__codelineno-0-73" name="__codelineno-0-73"></a><span class="sd">        &gt;&gt;&gt; f.exists()</span>
@@ -1291,13 +1306,13 @@ into the database.</p>
 
 
 
-<h4 id="corpus_toolkit.justice.justice_model.Justice-functions">Functions</h4>
+<h4 id="corpus_sc_toolkit.justice.justice_model.Justice-functions">Functions</h4>
 
 <div class="doc doc-object doc-function">
 
 
 
-<h5 id="corpus_toolkit.justice.justice_model.Justice.view_chiefs" class="doc doc-heading">
+<h5 id="corpus_sc_toolkit.justice.justice_model.Justice.view_chiefs" class="doc doc-heading">
 <code class="highlight language-python"><span class="n">view_chiefs</span><span class="p">(</span><span class="n">c</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
@@ -1313,7 +1328,7 @@ into the database.</p>
 dates of appointment.</p>
 
       <details class="quote">
-        <summary>Source code in <code>corpus_toolkit/justice/justice_model.py</code></summary>
+        <summary>Source code in <code>corpus_sc_toolkit/justice/justice_model.py</code></summary>
         <div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">Python</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-219">219</a></span>
 <span class="normal"><a href="#__codelineno-0-220">220</a></span>
 <span class="normal"><a href="#__codelineno-0-221">221</a></span>
@@ -1367,7 +1382,7 @@ dates of appointment.</p>
 
 
         <details class="quote">
-          <summary>Source code in <code>corpus_toolkit/justice/justice_name.py</code></summary>
+          <summary>Source code in <code>corpus_sc_toolkit/justice/justice_name.py</code></summary>
           <div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">Python</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-10">10</a></span>
 <span class="normal"><a href="#__codelineno-0-11">11</a></span>
 <span class="normal"><a href="#__codelineno-0-12">12</a></span>
@@ -1442,13 +1457,13 @@ dates of appointment.</p>
 
 
 
-<h4 id="corpus_toolkit.justice.justice_name.OpinionWriterName-functions">Functions</h4>
+<h4 id="corpus_sc_toolkit.justice.justice_name.OpinionWriterName-functions">Functions</h4>
 
 <div class="doc doc-object doc-function">
 
 
 
-<h5 id="corpus_toolkit.justice.justice_name.OpinionWriterName.clean" class="doc doc-heading">
+<h5 id="corpus_sc_toolkit.justice.justice_name.OpinionWriterName.clean" class="doc doc-heading">
 <code class="highlight language-python"><span class="n">clean</span><span class="p">(</span><span class="n">text</span><span class="p">)</span></code>
   
   <span class="doc doc-labels">
@@ -1471,7 +1486,7 @@ made uniform, e.g.:</p>
 </code></pre></div>
 
       <details class="quote">
-        <summary>Source code in <code>corpus_toolkit/justice/justice_name.py</code></summary>
+        <summary>Source code in <code>corpus_sc_toolkit/justice/justice_name.py</code></summary>
         <div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">Python</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-23">23</a></span>
 <span class="normal"><a href="#__codelineno-0-24">24</a></span>
 <span class="normal"><a href="#__codelineno-0-25">25</a></span>

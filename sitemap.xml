@@ -6,6 +6,11 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://mv3.dev/html/</loc>
+         <lastmod>2023-02-14</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://mv3.dev/justice/</loc>
          <lastmod>2023-02-14</lastmod>
          <changefreq>daily</changefreq>
