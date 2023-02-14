@@ -331,6 +331,33 @@
     Vote Lines
   </a>
   
+    <nav class="md-nav" aria-label="Vote Lines">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#clean" class="md-nav__link">
+    Clean
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validate" class="md-nav__link">
+    Validate
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#extract" class="md-nav__link">
+    Extract
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -422,6 +449,33 @@
   <a href="#vote-lines" class="md-nav__link">
     Vote Lines
   </a>
+  
+    <nav class="md-nav" aria-label="Vote Lines">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#clean" class="md-nav__link">
+    Clean
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validate" class="md-nav__link">
+    Validate
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#extract" class="md-nav__link">
+    Extract
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1113,6 +1167,209 @@ sample algorithm to determine tags associated with the title.</p>
   </div>
 
 </div><h2 id="vote-lines">Vote Lines</h2>
+<h3 id="clean">Clean</h3>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+  <div class="doc doc-contents first">
+  
+      <p>Various steps to remove non-essential text from the voteline found.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>text</code></td>
+          <td>
+                <code>str | None</code>
+          </td>
+          <td><p>The voteline.</p></td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>str | None</code>
+          </td>
+          <td><p>str | None: The cleaned voteline, if found.</p></td>
+        </tr>
+    </tbody>
+  </table>
+
+      <details class="quote">
+        <summary>Source code in <code>corpus_sc_toolkit/meta/voteline.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">Python</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-48">48</a></span>
+<span class="normal"><a href="#__codelineno-0-49">49</a></span>
+<span class="normal"><a href="#__codelineno-0-50">50</a></span>
+<span class="normal"><a href="#__codelineno-0-51">51</a></span>
+<span class="normal"><a href="#__codelineno-0-52">52</a></span>
+<span class="normal"><a href="#__codelineno-0-53">53</a></span>
+<span class="normal"><a href="#__codelineno-0-54">54</a></span>
+<span class="normal"><a href="#__codelineno-0-55">55</a></span>
+<span class="normal"><a href="#__codelineno-0-56">56</a></span>
+<span class="normal"><a href="#__codelineno-0-57">57</a></span>
+<span class="normal"><a href="#__codelineno-0-58">58</a></span>
+<span class="normal"><a href="#__codelineno-0-59">59</a></span>
+<span class="normal"><a href="#__codelineno-0-60">60</a></span>
+<span class="normal"><a href="#__codelineno-0-61">61</a></span>
+<span class="normal"><a href="#__codelineno-0-62">62</a></span>
+<span class="normal"><a href="#__codelineno-0-63">63</a></span>
+<span class="normal"><a href="#__codelineno-0-64">64</a></span>
+<span class="normal"><a href="#__codelineno-0-65">65</a></span>
+<span class="normal"><a href="#__codelineno-0-66">66</a></span>
+<span class="normal"><a href="#__codelineno-0-67">67</a></span>
+<span class="normal"><a href="#__codelineno-0-68">68</a></span>
+<span class="normal"><a href="#__codelineno-0-69">69</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-48" name="__codelineno-0-48"></a><span class="k">def</span> <span class="nf">voteline_clean</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Various steps to remove non-essential text from the voteline found.</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50"></a>
+<a id="__codelineno-0-51" name="__codelineno-0-51"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="sd">        text (str | None): The voteline.</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="sd">        str | None: The cleaned voteline, if found.</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">text</span><span class="p">:</span>
+<a id="__codelineno-0-58" name="__codelineno-0-58"></a>        <span class="k">return</span> <span class="kc">None</span>
+<a id="__codelineno-0-59" name="__codelineno-0-59"></a>    <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;. &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span>
+<a id="__codelineno-0-60" name="__codelineno-0-60"></a>    <span class="n">init</span> <span class="o">=</span> <span class="n">markdownify</span><span class="p">(</span><span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;*&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+<a id="__codelineno-0-61" name="__codelineno-0-61"></a>    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">VOTEFULL_MIN_LENGTH</span><span class="p">:</span>
+<a id="__codelineno-0-62" name="__codelineno-0-62"></a>        <span class="k">return</span> <span class="kc">None</span>
+<a id="__codelineno-0-63" name="__codelineno-0-63"></a>    <span class="n">clean</span> <span class="o">=</span> <span class="n">WHITELIST</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">init</span><span class="p">)</span>
+<a id="__codelineno-0-64" name="__codelineno-0-64"></a>    <span class="n">add_concur_line</span> <span class="o">=</span> <span class="n">clean</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;concur.&quot;</span><span class="p">,</span> <span class="s2">&quot;concur.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-65" name="__codelineno-0-65"></a>    <span class="n">unchair</span> <span class="o">=</span> <span class="n">CHAIRPERSON</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">add_concur_line</span><span class="p">)</span>
+<a id="__codelineno-0-66" name="__codelineno-0-66"></a>    <span class="n">relined</span> <span class="o">=</span> <span class="n">multilines</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">unchair</span><span class="p">)</span>
+<a id="__codelineno-0-67" name="__codelineno-0-67"></a>    <span class="n">startings</span> <span class="o">=</span> <span class="n">startlines</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">relined</span><span class="p">)</span>
+<a id="__codelineno-0-68" name="__codelineno-0-68"></a>    <span class="n">endings</span> <span class="o">=</span> <span class="n">endlines</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">startings</span><span class="p">)</span>
+<a id="__codelineno-0-69" name="__codelineno-0-69"></a>    <span class="k">return</span> <span class="n">endings</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+</code></pre></div></td></tr></table></div>
+      </details>
+  </div>
+
+</div><h3 id="validate">Validate</h3>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+  <div class="doc doc-contents first">
+  
+      <p>Checks if certain criteria would qualify the line as a voteline.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>text</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td><p>Candidate text.</p></td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>bool</code></td>          <td>
+                <code>bool</code>
+          </td>
+          <td><p>Whether the text can be considered a voteline.</p></td>
+        </tr>
+    </tbody>
+  </table>
+
+      <details class="quote">
+        <summary>Source code in <code>corpus_sc_toolkit/meta/voteline.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">Python</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-72">72</a></span>
+<span class="normal"><a href="#__codelineno-0-73">73</a></span>
+<span class="normal"><a href="#__codelineno-0-74">74</a></span>
+<span class="normal"><a href="#__codelineno-0-75">75</a></span>
+<span class="normal"><a href="#__codelineno-0-76">76</a></span>
+<span class="normal"><a href="#__codelineno-0-77">77</a></span>
+<span class="normal"><a href="#__codelineno-0-78">78</a></span>
+<span class="normal"><a href="#__codelineno-0-79">79</a></span>
+<span class="normal"><a href="#__codelineno-0-80">80</a></span>
+<span class="normal"><a href="#__codelineno-0-81">81</a></span>
+<span class="normal"><a href="#__codelineno-0-82">82</a></span>
+<span class="normal"><a href="#__codelineno-0-83">83</a></span>
+<span class="normal"><a href="#__codelineno-0-84">84</a></span>
+<span class="normal"><a href="#__codelineno-0-85">85</a></span>
+<span class="normal"><a href="#__codelineno-0-86">86</a></span>
+<span class="normal"><a href="#__codelineno-0-87">87</a></span>
+<span class="normal"><a href="#__codelineno-0-88">88</a></span>
+<span class="normal"><a href="#__codelineno-0-89">89</a></span>
+<span class="normal"><a href="#__codelineno-0-90">90</a></span>
+<span class="normal"><a href="#__codelineno-0-91">91</a></span>
+<span class="normal"><a href="#__codelineno-0-92">92</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-72" name="__codelineno-0-72"></a><span class="k">def</span> <span class="nf">is_line_ok</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-0-73" name="__codelineno-0-73"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Checks if certain criteria would qualify the line as a voteline.</span>
+<a id="__codelineno-0-74" name="__codelineno-0-74"></a>
+<a id="__codelineno-0-75" name="__codelineno-0-75"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-76" name="__codelineno-0-76"></a><span class="sd">        text (str): Candidate text.</span>
+<a id="__codelineno-0-77" name="__codelineno-0-77"></a>
+<a id="__codelineno-0-78" name="__codelineno-0-78"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-79" name="__codelineno-0-79"></a><span class="sd">        bool: Whether the text can be considered a voteline.</span>
+<a id="__codelineno-0-80" name="__codelineno-0-80"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-81" name="__codelineno-0-81"></a>    <span class="n">has_proper_length</span> <span class="o">=</span> <span class="n">VOTELINE_MAX_LENGTH</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">VOTELINE_MIN_LENGTH</span>
+<a id="__codelineno-0-82" name="__codelineno-0-82"></a>    <span class="n">has_indicator</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(C\.|J\.)?J\.&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+<a id="__codelineno-0-83" name="__codelineno-0-83"></a>    <span class="n">not_all_caps</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">text</span><span class="o">.</span><span class="n">isupper</span><span class="p">()</span>
+<a id="__codelineno-0-84" name="__codelineno-0-84"></a>    <span class="n">first_char_capital_letter</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^[A-Z]&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+<a id="__codelineno-0-85" name="__codelineno-0-85"></a>    <span class="k">return</span> <span class="nb">all</span><span class="p">(</span>
+<a id="__codelineno-0-86" name="__codelineno-0-86"></a>        <span class="p">[</span>
+<a id="__codelineno-0-87" name="__codelineno-0-87"></a>            <span class="n">has_proper_length</span><span class="p">,</span>
+<a id="__codelineno-0-88" name="__codelineno-0-88"></a>            <span class="n">has_indicator</span><span class="p">,</span>
+<a id="__codelineno-0-89" name="__codelineno-0-89"></a>            <span class="n">not_all_caps</span><span class="p">,</span>
+<a id="__codelineno-0-90" name="__codelineno-0-90"></a>            <span class="n">first_char_capital_letter</span><span class="p">,</span>
+<a id="__codelineno-0-91" name="__codelineno-0-91"></a>        <span class="p">]</span>
+<a id="__codelineno-0-92" name="__codelineno-0-92"></a>    <span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+      </details>
+  </div>
+
+</div><h3 id="extract">Extract</h3>
 
 
 <div class="doc doc-object doc-function">
@@ -1179,35 +1436,35 @@ member of the Court.</p>
 
       <details class="quote">
         <summary>Source code in <code>corpus_sc_toolkit/meta/voteline.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">Python</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-79">79</a></span>
-<span class="normal"><a href="#__codelineno-0-80">80</a></span>
-<span class="normal"><a href="#__codelineno-0-81">81</a></span>
-<span class="normal"><a href="#__codelineno-0-82">82</a></span>
-<span class="normal"><a href="#__codelineno-0-83">83</a></span>
-<span class="normal"><a href="#__codelineno-0-84">84</a></span>
-<span class="normal"><a href="#__codelineno-0-85">85</a></span>
-<span class="normal"><a href="#__codelineno-0-86">86</a></span>
-<span class="normal"><a href="#__codelineno-0-87">87</a></span>
-<span class="normal"><a href="#__codelineno-0-88">88</a></span>
-<span class="normal"><a href="#__codelineno-0-89">89</a></span>
-<span class="normal"><a href="#__codelineno-0-90">90</a></span>
-<span class="normal"><a href="#__codelineno-0-91">91</a></span>
-<span class="normal"><a href="#__codelineno-0-92">92</a></span>
-<span class="normal"><a href="#__codelineno-0-93">93</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-79" name="__codelineno-0-79"></a><span class="k">def</span> <span class="nf">extract_votelines</span><span class="p">(</span><span class="n">decision_pk</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
-<a id="__codelineno-0-80" name="__codelineno-0-80"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Applicable to content found in the elibrary, this refers to a line</span>
-<a id="__codelineno-0-81" name="__codelineno-0-81"></a><span class="sd">    under the decision / resolution which consolidates the votes of each</span>
-<a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="sd">    member of the Court.</span>
-<a id="__codelineno-0-83" name="__codelineno-0-83"></a>
-<a id="__codelineno-0-84" name="__codelineno-0-84"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-85" name="__codelineno-0-85"></a><span class="sd">        decision_pk (str): The decision id</span>
-<a id="__codelineno-0-86" name="__codelineno-0-86"></a><span class="sd">        text (str): The title text</span>
-<a id="__codelineno-0-87" name="__codelineno-0-87"></a>
-<a id="__codelineno-0-88" name="__codelineno-0-88"></a><span class="sd">    Yields:</span>
-<a id="__codelineno-0-89" name="__codelineno-0-89"></a><span class="sd">        Iterator[dict[str, str]]: The voting lines associated with the decision id.</span>
-<a id="__codelineno-0-90" name="__codelineno-0-90"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-91" name="__codelineno-0-91"></a>    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
-<a id="__codelineno-0-92" name="__codelineno-0-92"></a>        <span class="k">if</span> <span class="n">is_line_ok</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
-<a id="__codelineno-0-93" name="__codelineno-0-93"></a>            <span class="k">yield</span> <span class="nb">dict</span><span class="p">(</span><span class="n">decision_id</span><span class="o">=</span><span class="n">decision_pk</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">line</span><span class="p">)</span>
+        <div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">Python</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-95"> 95</a></span>
+<span class="normal"><a href="#__codelineno-0-96"> 96</a></span>
+<span class="normal"><a href="#__codelineno-0-97"> 97</a></span>
+<span class="normal"><a href="#__codelineno-0-98"> 98</a></span>
+<span class="normal"><a href="#__codelineno-0-99"> 99</a></span>
+<span class="normal"><a href="#__codelineno-0-100">100</a></span>
+<span class="normal"><a href="#__codelineno-0-101">101</a></span>
+<span class="normal"><a href="#__codelineno-0-102">102</a></span>
+<span class="normal"><a href="#__codelineno-0-103">103</a></span>
+<span class="normal"><a href="#__codelineno-0-104">104</a></span>
+<span class="normal"><a href="#__codelineno-0-105">105</a></span>
+<span class="normal"><a href="#__codelineno-0-106">106</a></span>
+<span class="normal"><a href="#__codelineno-0-107">107</a></span>
+<span class="normal"><a href="#__codelineno-0-108">108</a></span>
+<span class="normal"><a href="#__codelineno-0-109">109</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-95" name="__codelineno-0-95"></a><span class="k">def</span> <span class="nf">extract_votelines</span><span class="p">(</span><span class="n">decision_pk</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<a id="__codelineno-0-96" name="__codelineno-0-96"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Applicable to content found in the elibrary, this refers to a line</span>
+<a id="__codelineno-0-97" name="__codelineno-0-97"></a><span class="sd">    under the decision / resolution which consolidates the votes of each</span>
+<a id="__codelineno-0-98" name="__codelineno-0-98"></a><span class="sd">    member of the Court.</span>
+<a id="__codelineno-0-99" name="__codelineno-0-99"></a>
+<a id="__codelineno-0-100" name="__codelineno-0-100"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-101" name="__codelineno-0-101"></a><span class="sd">        decision_pk (str): The decision id</span>
+<a id="__codelineno-0-102" name="__codelineno-0-102"></a><span class="sd">        text (str): The title text</span>
+<a id="__codelineno-0-103" name="__codelineno-0-103"></a>
+<a id="__codelineno-0-104" name="__codelineno-0-104"></a><span class="sd">    Yields:</span>
+<a id="__codelineno-0-105" name="__codelineno-0-105"></a><span class="sd">        Iterator[dict[str, str]]: The voting lines associated with the decision id.</span>
+<a id="__codelineno-0-106" name="__codelineno-0-106"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-107" name="__codelineno-0-107"></a>    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+<a id="__codelineno-0-108" name="__codelineno-0-108"></a>        <span class="k">if</span> <span class="n">is_line_ok</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+<a id="__codelineno-0-109" name="__codelineno-0-109"></a>            <span class="k">yield</span> <span class="nb">dict</span><span class="p">(</span><span class="n">decision_id</span><span class="o">=</span><span class="n">decision_pk</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">line</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
       </details>
   </div>
