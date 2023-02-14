@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "corpus-from-pdf"
-description = "Pull data from pdf into consistent format with corpus-base"
+name = "corpus-toolkit"
+description = "Various functions for corpus-base and corpus-x"
 version = "0.0.1"
 authors = ["Marcelino G. Veloso III <mars@veloso.one>"]
 readme = "README.md"
@@ -22,10 +22,13 @@ sqlite-utils = "^3.30"
 citation-docket = "^0.1.1"
 unidecode = "^1.3.6"
 loguru = "^0.6.0"
+sqlpyd = "^0.1.4"
+httpx = "^0.23.3"
+markdownify = "^0.11.6"
 
 [tool.poetry.group.dev.dependencies] # latest as of Jan. 2023
 rich = "^13.3"
-black = "^23.1a1"
+black = "^23.1.0"
 pytest = "^7.2"
 pytest-datadir = "^1.4.1"
 pytest-cov = "^2.12.1"

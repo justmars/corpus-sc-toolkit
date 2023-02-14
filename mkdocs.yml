@@ -1,4 +1,4 @@
-site_name: corpus-from-pdf Docs
+site_name: corpus-toolkit
 site_description: corpus-from-pdf description
 site_url: https://mv3.dev
 site_author: Marcelino Veloso III
@@ -20,8 +20,10 @@ theme:
         name: Switch to light mode
 nav:
   - Overview: index.md
+  - Justice: justice.md
 
 extra:
+  homepage: https://mv3.dev
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/justmars

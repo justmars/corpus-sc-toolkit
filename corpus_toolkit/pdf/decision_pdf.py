@@ -1,8 +1,7 @@
 import json
-import re
 from collections.abc import Iterator
 from datetime import date
-from enum import Enum
+
 from pathlib import Path
 from typing import Self
 
@@ -12,59 +11,14 @@ from dateutil.parser import parse
 from loguru import logger
 from pydantic import BaseModel, Field
 from sqlite_utils import Database
-from unidecode import unidecode
-
-from .clean import Notice
-
-CATEGORY_START_DECISION = re.compile(r"d\s*e\s*c", re.I)
-CATEGORY_START_RESOLUTION = re.compile(r"r\s*e\s*s", re.I)
-
-COMPOSITION_START_DIVISION = re.compile(r"div", re.I)
-COMPOSITION_START_ENBANC = re.compile(r"en", re.I)
+from corpus_toolkit.components import DecisionCategory, CourtComposition
+from corpus_toolkit.justice import OpinionWriterName
 
 SC_BASE_URL = "https://sc.judiciary.gov.ph"
 PDF_DB_PATH: Path = Path().cwd() / "pdf.db"
 TARGET_FOLDER: Path = Path().home() / "code" / "corpus" / "decisions" / "sc"
 
 SQL_DECISIONS_ONLY = Path(__file__).parent / "sql" / "limit_extract.sql"
-
-
-class DecisionCategory(str, Enum):
-    decision = "Decision"
-    resolution = "Resolution"
-    other = "Unspecified"
-
-    @classmethod
-    def _setter(cls, text: str | None):
-        if text:
-            if CATEGORY_START_DECISION.search(text):
-                return cls.decision
-            elif CATEGORY_START_RESOLUTION.search(text):
-                return cls.resolution
-        return cls.other
-
-    @classmethod
-    def set_category(cls, category: str | None = None, notice: int | None = 0):
-        if notice:
-            return cls.resolution
-        if category:
-            cls._setter(category)
-        return cls.other
-
-
-class CourtComposition(str, Enum):
-    enbanc = "En Banc"
-    division = "Division"
-    other = "Unspecified"
-
-    @classmethod
-    def _setter(cls, text: str | None):
-        if text:
-            if COMPOSITION_START_DIVISION.search(text):
-                return cls.division
-            elif COMPOSITION_START_ENBANC.search(text):
-                return cls.enbanc
-        return cls.other
 
 
 class ExtractSegmentPDF(BaseModel):
@@ -80,7 +34,7 @@ class ExtractOpinionPDF(BaseModel):
     id: str = Field(...)
     decision_id: int = Field(...)
     pdf: str
-    justice_label: str | None = Field(
+    writer: OpinionWriterName | None = Field(
         None,
         description=(
             "The writer of the opinion; when not supplied could mean a Per"
@@ -180,20 +134,13 @@ class ExtractDecisionPDF(BaseModel):
             return None
 
     @classmethod
-    def set_writer(cls, text: str | None = None):
-        if not text:
-            return None
-        if len(text) < 25:
-            return unidecode(text).lower().strip(",.: ")
-
-    @classmethod
     def set_opinions(cls, ops: str, id: int):
         for op in json.loads(ops):
             yield ExtractOpinionPDF(
                 id=op["id"],
                 decision_id=id,
                 pdf=f"{SC_BASE_URL}{op['pdf']}",
-                justice_label=cls.set_writer(op["writer"]),
+                writer=OpinionWriterName.extract(op["writer"]),
                 title=op["title"],
                 body=op["body"],
                 annex=op["annex"],
