@@ -11,8 +11,8 @@ from loguru import logger
 from pydantic import BaseModel, Field
 from sqlite_utils import Database
 
-from corpus_toolkit.meta import CourtComposition, DecisionCategory
 from corpus_toolkit.justice import CandidateJustice, OpinionWriterName
+from corpus_toolkit.meta import CourtComposition, DecisionCategory
 
 from .opinion_pdf import ExtractOpinionPDF
 

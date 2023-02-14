@@ -3,7 +3,6 @@ import datetime
 from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta as rd
 from jinja2 import Environment, PackageLoader, select_autoescape
-
 from pydantic import Field, validator
 from sqlpyd import Connection, IndividualBio
 
