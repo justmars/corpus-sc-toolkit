@@ -2,6 +2,17 @@ from collections.abc import Iterator
 
 
 def tags_from_title(decision_pk: str, text: str) -> Iterator[dict[str, str]]:
+    """The title of a decision is indicative of its classification. This is a
+    sample algorithm to determine tags associated with the title.
+
+    Args:
+        decision_pk (str): The decision id
+        text (str): The title text
+
+    Yields:
+        Iterator[dict[str, str]]: The different tags associated based on the text.
+    """
+
     def is_contained(target_text: str, matches: list[str]) -> bool:
         return any(m.lower() in target_text.lower() for m in matches)
 

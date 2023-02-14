@@ -1,4 +1,5 @@
 import re
+from collections.abc import Iterator
 
 from markdownify import markdownify
 
@@ -75,7 +76,18 @@ def is_line_ok(text: str):
     )
 
 
-def extract_votelines(decision_pk: str, text: str):
+def extract_votelines(decision_pk: str, text: str) -> Iterator[dict[str, str]]:
+    """Applicable to content found in the elibrary, this refers to a line
+    under the decision / resolution which consolidates the votes of each
+    member of the Court.
+
+    Args:
+        decision_pk (str): The decision id
+        text (str): The title text
+
+    Yields:
+        Iterator[dict[str, str]]: The voting lines associated with the decision id.
+    """
     for line in text.splitlines():
         if is_line_ok(line):
             yield dict(decision_id=decision_pk, text=line)

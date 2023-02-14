@@ -6,6 +6,10 @@ COMPOSITION_START_ENBANC = re.compile(r"en", re.I)
 
 
 class CourtComposition(str, Enum):
+    """The Supreme Court may sit either `en banc` (the full 15 member complement)
+    or by `division` (5-member groups).
+    """
+
     enbanc = "En Banc"
     division = "Division"
     other = "Unspecified"
