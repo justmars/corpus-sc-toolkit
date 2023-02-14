@@ -45,7 +45,15 @@ startlines = re.compile(r"^[\.,\s]")
 endlines = re.compile(r"\-+$")
 
 
-def voteline_clean(text: str | None):
+def voteline_clean(text: str | None) -> str | None:
+    """Various steps to remove non-essential text from the voteline found.
+
+    Args:
+        text (str | None): The voteline.
+
+    Returns:
+        str | None: The cleaned voteline, if found.
+    """
     if not text:
         return None
     text = text.lstrip(". ").rstrip()
@@ -61,7 +69,15 @@ def voteline_clean(text: str | None):
     return endings.strip()
 
 
-def is_line_ok(text: str):
+def is_line_ok(text: str) -> bool:
+    """Checks if certain criteria would qualify the line as a voteline.
+
+    Args:
+        text (str): Candidate text.
+
+    Returns:
+        bool: Whether the text can be considered a voteline.
+    """
     has_proper_length = VOTELINE_MAX_LENGTH > len(text) > VOTELINE_MIN_LENGTH
     has_indicator = re.search(r"(C\.|J\.)?J\.", text)
     not_all_caps = not text.isupper()

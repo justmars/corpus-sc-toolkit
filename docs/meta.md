@@ -14,4 +14,14 @@
 
 ## Vote Lines
 
+### Clean
+
+::: corpus_sc_toolkit.meta.voteline.voteline_clean
+
+### Validate
+
+::: corpus_sc_toolkit.meta.voteline.is_line_ok
+
+### Extract
+
 ::: corpus_sc_toolkit.meta.voteline.extract_votelines

@@ -1,4 +1,4 @@
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 
 from .html import DecisionHTMLConvertMarkdown, add_markdown_file
 from .justice import (
@@ -13,5 +13,6 @@ from .meta import (
     DecisionCategory,
     extract_votelines,
     tags_from_title,
+    voteline_clean,
 )
 from .pdf import ExtractDecisionPDF
