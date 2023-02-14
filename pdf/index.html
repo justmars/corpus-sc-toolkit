@@ -349,15 +349,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#sql" class="md-nav__link">
-    SQL
+  <a href="#function" class="md-nav__link">
+    Function
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#function" class="md-nav__link">
-    Function
+  <a href="#sql" class="md-nav__link">
+    SQL
   </a>
   
 </li>
@@ -417,15 +417,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#sql" class="md-nav__link">
-    SQL
+  <a href="#function" class="md-nav__link">
+    Function
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#function" class="md-nav__link">
-    Function
+  <a href="#sql" class="md-nav__link">
+    SQL
   </a>
   
 </li>
@@ -462,6 +462,50 @@
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">c</span> <span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">DatabasePath</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">stream</span><span class="o">.</span><span class="n">dbpath</span><span class="p">),</span> <span class="n">WAL</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># database access</span>
 </code></pre></div>
 <h2 id="extraction-flow">Extraction Flow</h2>
+<h3 id="function">Function</h3>
+<p>Based on an SQL expression, extract pydantic models based on the following function:</p>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+  <div class="doc doc-contents first">
+
+      <details class="quote">
+        <summary>Source code in <code>corpus_sc_toolkit/pdf/decision.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">Python</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-68">68</a></span>
+<span class="normal"><a href="#__codelineno-0-69">69</a></span>
+<span class="normal"><a href="#__codelineno-0-70">70</a></span>
+<span class="normal"><a href="#__codelineno-0-71">71</a></span>
+<span class="normal"><a href="#__codelineno-0-72">72</a></span>
+<span class="normal"><a href="#__codelineno-0-73">73</a></span>
+<span class="normal"><a href="#__codelineno-0-74">74</a></span>
+<span class="normal"><a href="#__codelineno-0-75">75</a></span>
+<span class="normal"><a href="#__codelineno-0-76">76</a></span>
+<span class="normal"><a href="#__codelineno-0-77">77</a></span>
+<span class="normal"><a href="#__codelineno-0-78">78</a></span>
+<span class="normal"><a href="#__codelineno-0-79">79</a></span>
+<span class="normal"><a href="#__codelineno-0-80">80</a></span>
+<span class="normal"><a href="#__codelineno-0-81">81</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-68" name="__codelineno-0-68"></a><span class="nd">@classmethod</span>
+<a id="__codelineno-0-69" name="__codelineno-0-69"></a><span class="k">def</span> <span class="nf">limited_decisions</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">db</span><span class="p">:</span> <span class="n">Database</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Self</span><span class="p">]:</span>
+<a id="__codelineno-0-70" name="__codelineno-0-70"></a>    <span class="n">sql_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;sql&quot;</span> <span class="o">/</span> <span class="s2">&quot;limit_extract.sql&quot;</span>
+<a id="__codelineno-0-71" name="__codelineno-0-71"></a>    <span class="n">query</span> <span class="o">=</span> <span class="n">sql_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
+<a id="__codelineno-0-72" name="__codelineno-0-72"></a>    <span class="n">rows</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">execute_returning_dicts</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+<a id="__codelineno-0-73" name="__codelineno-0-73"></a>    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+<a id="__codelineno-0-74" name="__codelineno-0-74"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">cite</span> <span class="o">:=</span> <span class="n">get_cite_from_fields</span><span class="p">(</span><span class="n">row</span><span class="p">)):</span>
+<a id="__codelineno-0-75" name="__codelineno-0-75"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Bad citation in </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">=}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-76" name="__codelineno-0-76"></a>            <span class="k">continue</span>
+<a id="__codelineno-0-77" name="__codelineno-0-77"></a>        <span class="n">opx</span> <span class="o">=</span> <span class="n">InterimOpinion</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">row</span><span class="p">)</span>
+<a id="__codelineno-0-78" name="__codelineno-0-78"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">opx</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">opx</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;opinions&quot;</span><span class="p">):</span>
+<a id="__codelineno-0-79" name="__codelineno-0-79"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No opinions detected in </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">=}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-80" name="__codelineno-0-80"></a>            <span class="k">continue</span>
+<a id="__codelineno-0-81" name="__codelineno-0-81"></a>        <span class="k">yield</span> <span class="bp">cls</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">opx</span><span class="p">,</span> <span class="n">cite</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+      </details>
+  </div>
+
+</div><p>See raw SQL expression below that needs to be instantied into their respespective Decision, Opinion, and Segment models.</p>
 <h3 id="sql">SQL</h3>
 <p>We can query the database with the following SQL expression to get all "non-notices" with their respective opinions:</p>
 <div class="highlight"><span class="filename">SQL</span><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">WITH</span><span class="w"> </span><span class="n">opinions_included</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
@@ -555,87 +599,6 @@
 <a id="__codelineno-1-89" name="__codelineno-1-89" href="#__codelineno-1-89"></a><span class="k">WHERE</span>
 <a id="__codelineno-1-90" name="__codelineno-1-90" href="#__codelineno-1-90"></a><span class="w">  </span><span class="n">meta</span><span class="p">.</span><span class="n">notice</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span>
 </code></pre></div>
-<p>However, this only gets the raw information that needs to be instantied into their respespective Decision, Opinion, and Segment models.</p>
-<h3 id="function">Function</h3>
-<p>Based on the SQL expression, extract pydantic models based on the following function:</p>
-
-
-<div class="doc doc-object doc-function">
-
-
-
-  <div class="doc doc-contents first">
-
-      <details class="quote">
-        <summary>Source code in <code>corpus_sc_toolkit/pdf/decision_pdf.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">Python</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-70"> 70</a></span>
-<span class="normal"><a href="#__codelineno-0-71"> 71</a></span>
-<span class="normal"><a href="#__codelineno-0-72"> 72</a></span>
-<span class="normal"><a href="#__codelineno-0-73"> 73</a></span>
-<span class="normal"><a href="#__codelineno-0-74"> 74</a></span>
-<span class="normal"><a href="#__codelineno-0-75"> 75</a></span>
-<span class="normal"><a href="#__codelineno-0-76"> 76</a></span>
-<span class="normal"><a href="#__codelineno-0-77"> 77</a></span>
-<span class="normal"><a href="#__codelineno-0-78"> 78</a></span>
-<span class="normal"><a href="#__codelineno-0-79"> 79</a></span>
-<span class="normal"><a href="#__codelineno-0-80"> 80</a></span>
-<span class="normal"><a href="#__codelineno-0-81"> 81</a></span>
-<span class="normal"><a href="#__codelineno-0-82"> 82</a></span>
-<span class="normal"><a href="#__codelineno-0-83"> 83</a></span>
-<span class="normal"><a href="#__codelineno-0-84"> 84</a></span>
-<span class="normal"><a href="#__codelineno-0-85"> 85</a></span>
-<span class="normal"><a href="#__codelineno-0-86"> 86</a></span>
-<span class="normal"><a href="#__codelineno-0-87"> 87</a></span>
-<span class="normal"><a href="#__codelineno-0-88"> 88</a></span>
-<span class="normal"><a href="#__codelineno-0-89"> 89</a></span>
-<span class="normal"><a href="#__codelineno-0-90"> 90</a></span>
-<span class="normal"><a href="#__codelineno-0-91"> 91</a></span>
-<span class="normal"><a href="#__codelineno-0-92"> 92</a></span>
-<span class="normal"><a href="#__codelineno-0-93"> 93</a></span>
-<span class="normal"><a href="#__codelineno-0-94"> 94</a></span>
-<span class="normal"><a href="#__codelineno-0-95"> 95</a></span>
-<span class="normal"><a href="#__codelineno-0-96"> 96</a></span>
-<span class="normal"><a href="#__codelineno-0-97"> 97</a></span>
-<span class="normal"><a href="#__codelineno-0-98"> 98</a></span>
-<span class="normal"><a href="#__codelineno-0-99"> 99</a></span>
-<span class="normal"><a href="#__codelineno-0-100">100</a></span>
-<span class="normal"><a href="#__codelineno-0-101">101</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-70" name="__codelineno-0-70"></a><span class="nd">@classmethod</span>
-<a id="__codelineno-0-71" name="__codelineno-0-71"></a><span class="k">def</span> <span class="nf">limited_decisions</span><span class="p">(</span>
-<a id="__codelineno-0-72" name="__codelineno-0-72"></a>    <span class="bp">cls</span><span class="p">,</span>
-<a id="__codelineno-0-73" name="__codelineno-0-73"></a>    <span class="n">db_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
-<a id="__codelineno-0-74" name="__codelineno-0-74"></a>    <span class="n">sql_query_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">SQL_DECISIONS_ONLY</span><span class="p">,</span>
-<a id="__codelineno-0-75" name="__codelineno-0-75"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Self</span><span class="p">]:</span>
-<a id="__codelineno-0-76" name="__codelineno-0-76"></a>    <span class="n">db</span> <span class="o">=</span> <span class="n">Database</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span>
-<a id="__codelineno-0-77" name="__codelineno-0-77"></a>    <span class="n">query</span> <span class="o">=</span> <span class="n">sql_query_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
-<a id="__codelineno-0-78" name="__codelineno-0-78"></a>    <span class="n">rows</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">execute_returning_dicts</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
-<a id="__codelineno-0-79" name="__codelineno-0-79"></a>    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
-<a id="__codelineno-0-80" name="__codelineno-0-80"></a>        <span class="k">yield</span> <span class="bp">cls</span><span class="p">(</span>
-<a id="__codelineno-0-81" name="__codelineno-0-81"></a>            <span class="nb">id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span>
-<a id="__codelineno-0-82" name="__codelineno-0-82"></a>            <span class="n">origin</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">SC_BASE_URL</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-83" name="__codelineno-0-83"></a>            <span class="n">case_title</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">],</span>
-<a id="__codelineno-0-84" name="__codelineno-0-84"></a>            <span class="n">date_prom</span><span class="o">=</span><span class="p">(</span><span class="n">date_obj</span> <span class="o">:=</span> <span class="n">parse</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">date</span><span class="p">()),</span>
-<a id="__codelineno-0-85" name="__codelineno-0-85"></a>            <span class="n">date_scraped</span><span class="o">=</span><span class="n">parse</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;scraped&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">date</span><span class="p">(),</span>
-<a id="__codelineno-0-86" name="__codelineno-0-86"></a>            <span class="n">docket</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="n">set_docket</span><span class="p">(</span>
-<a id="__codelineno-0-87" name="__codelineno-0-87"></a>                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;docket_category&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> No. </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;serial&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">date_obj</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%b </span><span class="si">%-d</span><span class="s1">, %Y&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>  <span class="c1"># noqa: E501</span>
-<a id="__codelineno-0-88" name="__codelineno-0-88"></a>            <span class="p">),</span>
-<a id="__codelineno-0-89" name="__codelineno-0-89"></a>            <span class="n">category</span><span class="o">=</span><span class="n">DecisionCategory</span><span class="o">.</span><span class="n">set_category</span><span class="p">(</span>
-<a id="__codelineno-0-90" name="__codelineno-0-90"></a>                <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;category&quot;</span><span class="p">),</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;notice&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-91" name="__codelineno-0-91"></a>            <span class="p">),</span>
-<a id="__codelineno-0-92" name="__codelineno-0-92"></a>            <span class="n">composition</span><span class="o">=</span><span class="n">CourtComposition</span><span class="o">.</span><span class="n">_setter</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;composition&quot;</span><span class="p">]),</span>
-<a id="__codelineno-0-93" name="__codelineno-0-93"></a>            <span class="n">opinions</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span>
-<a id="__codelineno-0-94" name="__codelineno-0-94"></a>                <span class="bp">cls</span><span class="o">.</span><span class="n">set_opinions</span><span class="p">(</span>
-<a id="__codelineno-0-95" name="__codelineno-0-95"></a>                    <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span>
-<a id="__codelineno-0-96" name="__codelineno-0-96"></a>                    <span class="n">ops</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;opinions&quot;</span><span class="p">],</span>
-<a id="__codelineno-0-97" name="__codelineno-0-97"></a>                    <span class="nb">id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span>
-<a id="__codelineno-0-98" name="__codelineno-0-98"></a>                    <span class="n">date_str</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">],</span>
-<a id="__codelineno-0-99" name="__codelineno-0-99"></a>                <span class="p">)</span>
-<a id="__codelineno-0-100" name="__codelineno-0-100"></a>            <span class="p">),</span>
-<a id="__codelineno-0-101" name="__codelineno-0-101"></a>        <span class="p">)</span>
-</code></pre></div></td></tr></table></div>
-      </details>
-  </div>
-
-</div>
 
 
 
