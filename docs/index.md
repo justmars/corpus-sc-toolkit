@@ -1,29 +1,7 @@
 # corpus-toolkit
 
-Various functions for corpus-base and corpus-x
+Toolkit to access certain elements of a decision, e.g.:
 
-## Extracts
-
-### Decision Extracted
-
-### Opinions Extracted
-
-### Segments Extracted
-
-## Justice
-
-### List of Justices
-
-### Justice Identity
-
-### Justice Table
-
-## Decision Components
-
-### Court Category
-
-### Court Composition
-
-### Title Tags
-
-### Votelines
+1. [Justice][justice]
+2. [Meta][meta]
+3. [PDF][extracts]

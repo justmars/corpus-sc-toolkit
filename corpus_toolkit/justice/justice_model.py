@@ -1,19 +1,13 @@
 import datetime
-from collections.abc import Iterator
-from pathlib import Path
 
-import yaml
 from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta as rd
 from jinja2 import Environment, PackageLoader, select_autoescape
-from loguru import logger
+
 from pydantic import Field, validator
 from sqlpyd import Connection, IndividualBio
 
-from .justice_list import LIST_SC_JUSTICES
-
 MAX_JUSTICE_AGE = 70
-JUSTICE_LOCAL = Path(__file__).parent / "sc.yaml"
 
 
 justice_jinja_env = Environment(
@@ -39,6 +33,56 @@ class Bio(IndividualBio):
 
 
 class Justice(Bio):
+    """
+    # Justice
+
+    Based on sqlpyd `TableConfig`, the declaration of the model makes it easier
+    to create a table based on a given list of Pydantic fields. The [list of justices ][local-file-containing-list]
+    from the created YAML file are parsed through this model prior to being inserted
+    into the database.
+
+    Field | Type | Description
+    --:|:--|:--
+    id |int | Unique identifier of the Justice
+    full_name |str | First + last + suffix
+    first_name |str | -
+    last_name |str | -
+    suffix |str | e.g. Jr., Sr., III, etc.
+    nick_name |str | -
+    gender |str | -
+    alias |str | Other names
+    start_term |str | Time justice appointed
+    end_term |str | Time justice
+    chief_date |str | Date appointed as Chief Justice (optional)
+    birth_date |str | Date of birth
+    retire_date |str | Based on the Birth Date, if it exists, it is the maximum term of service allowed by law.
+    inactive_date |str | Which date is earliest inactive date of the Justice, the retire date is set automatically but it is not guaranteed to to be the actual inactive date. So the inactive date is either that specified in the `end_term` or the `retire_date`, whichever is earlier.
+
+    Examples:
+        >>> # See database
+        >>> from sqlpyd import Connection
+        >>> from sqlite_utils.db import Table
+        >>> c = Connection(DatabasePath="test.db")
+        >>> table = c.create_table(Justice)
+        >>> isinstance(table, Table)
+        True
+        >>> # See local file
+        >>> from pathlib import Path
+        >>> from corpus_toolkit.justice import get_justices_file
+        >>> p = Path().cwd() / "tests" / "sc.yaml" # the test file
+        >>> f = get_justices_file(p)
+        >>> f.exists()
+        True
+        >>> # Can add all pydantic validated records from the local copy of justices to the database.
+        >>> import yaml
+        >>> res = c.add_records(Justice, yaml.safe_load(f.read_bytes()))
+        >>> len(list(table.rows))
+        194
+        >>> c.path_to_db.unlink() # tear down
+
+
+    """  # noqa: E501
+
     __prefix__ = "sc"
     __tablename__ = "justices"
     __indexes__ = [
@@ -172,35 +216,6 @@ class Justice(Bio):
             retire_date=retire_date,
             inactive_date=inactive_date,
         )
-
-    @classmethod
-    def validate_from_api(cls) -> Iterator["Justice"]:
-        return (cls.from_data(i) for i in LIST_SC_JUSTICES)
-
-    @classmethod
-    def extract_as_list(cls) -> list[dict]:
-        return [i.dict(exclude_none=True) for i in cls.validate_from_api()]
-
-    @classmethod
-    def set_local_from_api(cls, local: Path = JUSTICE_LOCAL) -> Path:
-        """Create a local .yaml file containing the list of validated Justices."""
-        if local.exists():
-            logger.debug("Local justice list file used.")
-            return local
-        with open(local, "w") as writefile:
-            yaml.safe_dump(
-                data=cls.extract_as_list(),
-                stream=writefile,
-                sort_keys=False,
-                default_flow_style=False,
-            )
-            return local
-
-    @classmethod
-    def init_justices_tbl(cls, c: Connection, p: Path = JUSTICE_LOCAL):
-        """Add a table containing names and ids of justices; alter the original
-        decision's table for it to include a justice id."""
-        return c.add_records(Justice, yaml.safe_load(p.read_bytes()))
 
     @classmethod
     def view_chiefs(cls, c: Connection) -> list[dict]:

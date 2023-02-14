@@ -22,8 +22,15 @@ class OpinionWriterName(NamedTuple):
 
     @classmethod
     def clean(cls, text: str) -> str | None:
-        """Since most ponente strings from the case files are not uniform, clean this
-        field by a variety of fixes such"""
+        """Each `ponente` name stored in `decisions_tbl` of the database has been
+        made uniform, e.g.:
+
+        Examples:
+            >>> OpinionWriterName.clean("REYES , J.B.L, Acting C.J.") # sample name 1
+            'reyes, j.b.l.'
+            >>> OpinionWriterName.clean("REYES, J, B. L. J.") # sample name 2
+            'reyes, j.b.l.'
+        """
 
         no_asterisk = re.sub(r"\[?(\*)+\]?", "", text)
         surname = init_surnames(no_asterisk)

@@ -1,6 +1,7 @@
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Self
-from collections.abc import Iterator
+
 from pydantic import BaseModel, Field
 from sqlite_utils import Database
 
@@ -35,7 +36,10 @@ class ExtractOpinionPDF(BaseModel):
     justice_id: dict | None = Field(
         default_factory=dict,
         title="Justice ID",
-        description="The result of matching the cleaned writer name with the database to get the id, if possible.",  # noqa: E501
+        description=(  # noqa: E501
+            "The result of matching the cleaned writer name with the database"
+            " to get the id, if possible."
+        ),
     )
     title: str | None = Field(
         ...,

@@ -1,7 +1,6 @@
 import json
 from collections.abc import Iterator
 from datetime import date
-
 from pathlib import Path
 from typing import Self
 
@@ -11,10 +10,11 @@ from dateutil.parser import parse
 from loguru import logger
 from pydantic import BaseModel, Field
 from sqlite_utils import Database
-from corpus_toolkit.components import DecisionCategory, CourtComposition
-from corpus_toolkit.justice import OpinionWriterName, CandidateJustice
-from .opinion_pdf import ExtractOpinionPDF
 
+from corpus_toolkit.meta import CourtComposition, DecisionCategory
+from corpus_toolkit.justice import CandidateJustice, OpinionWriterName
+
+from .opinion_pdf import ExtractOpinionPDF
 
 SC_BASE_URL = "https://sc.judiciary.gov.ph"
 TARGET_FOLDER: Path = Path().home() / "code" / "corpus" / "decisions" / "sc"
