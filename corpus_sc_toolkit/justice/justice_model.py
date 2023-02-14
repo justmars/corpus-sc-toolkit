@@ -62,6 +62,7 @@ class Justice(Bio):
         >>> from sqlpyd import Connection
         >>> from sqlite_utils.db import Table
         >>> c = Connection(DatabasePath="test.db")
+        >>> c.path_to_db.unlink(missing_ok=True) # tear down
         >>> table = c.create_table(Justice)
         >>> isinstance(table, Table)
         True

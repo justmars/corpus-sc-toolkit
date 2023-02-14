@@ -1,5 +1,9 @@
 # Meta
 
+## Decision Source
+
+::: corpus_sc_toolkit.meta.source.DecisionSource
+
 ## Court Category
 
 ::: corpus_sc_toolkit.meta.category.DecisionCategory

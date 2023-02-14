@@ -5,14 +5,19 @@ from pathlib import Path
 from typing import Self
 
 import yaml
-from citation_docket import Docket, extract_dockets
+from citation_utils import Citation, ShortDocketCategory
 from dateutil.parser import parse
 from loguru import logger
 from pydantic import BaseModel, Field
 from sqlite_utils import Database
 
+from corpus_sc_toolkit.citation import get_id_from_citation as get_id
 from corpus_sc_toolkit.justice import CandidateJustice, OpinionWriterName
-from corpus_sc_toolkit.meta import CourtComposition, DecisionCategory
+from corpus_sc_toolkit.meta import (
+    CourtComposition,
+    DecisionCategory,
+    DecisionSource,
+)
 
 from .opinion_pdf import ExtractOpinionPDF
 
@@ -21,33 +26,47 @@ TARGET_FOLDER: Path = Path().home() / "code" / "corpus" / "decisions" / "sc"
 SQL_DECISIONS_ONLY = Path(__file__).parent / "sql" / "limit_extract.sql"
 
 
+class PonenciaMeta(BaseModel):
+    raw_ponente: str | None = Field(
+        None,
+        title="Ponente",
+        description=(
+            "After going through a cleaning process, this should be in"
+            " lowercase and be suitable for matching a justice id."
+        ),
+    )
+    justice_id: int | None = Field(
+        None,
+        title="Justice ID",
+        description=(
+            "Using the raw_ponente, determine the appropriate justice_id using"
+            " the `update_justice_ids.sql` template."
+        ),
+    )
+    per_curiam: bool = Field(
+        False,
+        title="Is Per Curiam",
+        description="If true, decision was penned anonymously.",
+    )
+
+
 class ExtractDecisionPDF(BaseModel):
-    id: int
+    id: str
+    source: DecisionSource = DecisionSource.sc
     origin: str
     case_title: str
     date_prom: date
     date_scraped: date
-    docket: Docket | None = None
-    category: DecisionCategory
+    citation: Citation | None = None
     composition: CourtComposition
+    category: DecisionCategory
+    raw_ponente: str | None = None
+    justice_id: str | None = None
+    per_curiam: bool = False
     opinions: list[ExtractOpinionPDF] = Field(default_factory=list)
 
     class Config:
         use_enum_values = True
-
-    @classmethod
-    def set_docket(cls, text: str):
-        try:
-            citation = next(extract_dockets(text))
-            return Docket(
-                context=text,
-                short_category=citation.short_category,
-                category=citation.category,
-                ids=citation.ids,
-                docket_date=citation.docket_date,
-            )
-        except Exception:
-            return None
 
     @classmethod
     def set_opinions(cls, db: Database, ops: str, id: int, date_str: str):
@@ -77,37 +96,66 @@ class ExtractDecisionPDF(BaseModel):
         query = sql_query_path.read_text()
         rows = db.execute_returning_dicts(query)
         for row in rows:
+            id = row["id"]
+            dt = row["date"]
+            src = DecisionSource.sc.value
+            composition = CourtComposition._setter(text=row["composition"])
+            category = DecisionCategory.set_category(
+                category=row.get("category"),
+                notice=row.get("notice"),
+            )
+
+            date_obj = parse(dt).date()
+            docket_partial = f"{row['docket_category']} No. {row['serial']}"
+            docket_str = f"{docket_partial}, {date_obj.strftime('%b %-d, %Y')}"
+            cite = Citation.extract_citation(docket_str)
+            if not cite:
+                logger.error(f"Bad citation in {id=}")
+                continue
+
+            ops = row["opinions"]
+            op_lst = list(cls.set_opinions(db=db, ops=ops, id=id, date_str=dt))
+            if not op_lst:
+                logger.error(f"No opinions detected in {id=}")
+                continue
+
+            ponencias = [o for o in op_lst if o.title == "Ponencia"]
+            if not ponencias:
+                logger.error(f"Could not detect ponencia in {id=}")
+                continue
+            p = ponencias[0]
+            if p.writer:
+                per_curiam = p.writer.per_curiam
+                raw_ponente = p.writer.writer
+                justice_id = p.justice_id["id"] if p.justice_id else None
+            else:
+                per_curiam = False
+                raw_ponente = None
+                justice_id = None
+
             yield cls(
-                id=row["id"],
-                origin=f"{SC_BASE_URL}/{row['id']}",
+                id=get_id(folder_name=id, source=src, citation=cite),
+                origin=f"{SC_BASE_URL}/{id}",
                 case_title=row["title"],
-                date_prom=(date_obj := parse(row["date"]).date()),
+                date_prom=date_obj,
                 date_scraped=parse(row["scraped"]).date(),
-                docket=cls.set_docket(
-                    f"{row['docket_category']} No. {row['serial']}, {date_obj.strftime('%b %-d, %Y')}"  # noqa: E501
-                ),
-                category=DecisionCategory.set_category(
-                    row.get("category"), row.get("notice")
-                ),
-                composition=CourtComposition._setter(row["composition"]),
-                opinions=list(
-                    cls.set_opinions(
-                        db=db,
-                        ops=row["opinions"],
-                        id=row["id"],
-                        date_str=row["date"],
-                    )
-                ),
+                citation=cite,
+                composition=composition,
+                category=category,
+                opinions=op_lst,
+                raw_ponente=raw_ponente,
+                per_curiam=per_curiam,
+                justice_id=justice_id,
             )
 
     @property
     def is_dump_ok(self, target_path: Path = TARGET_FOLDER):
         if not target_path.exists():
             raise Exception("Cannot find target destination.")
-        if not self.docket:
+        if not self.citation:
             logger.warning(f"No docket in {self.id=}")
             return False
-        if self.docket.short_category == "BM":
+        if self.citation.docket_category == ShortDocketCategory.BM:
             logger.warning(f"Manual check: BM docket in {self.id}.")
             return False
         return True

@@ -9,6 +9,13 @@ from .justice_model import Justice
 from .justice_name import OpinionWriterName
 
 
+class JusticeDetail(NamedTuple):
+    justice_id: int | None = None
+    raw_ponente: str | None = None
+    designation: str | None = "J."
+    per_curiam: bool = False
+
+
 class CandidateJustice(NamedTuple):
     db: Database
     text: str | None = None
@@ -24,11 +31,12 @@ class CandidateJustice(NamedTuple):
             return None
 
     @property
+    def src(self):
+        return OpinionWriterName.extract(self.text)
+
+    @property
     def candidate(self) -> str | None:
-        if name_found := OpinionWriterName.extract(self.text):
-            if name_found.writer:
-                return name_found.writer
-        return None
+        return self.src and self.src.writer
 
     @property
     def table(self) -> Table:
@@ -49,6 +57,7 @@ class CandidateJustice(NamedTuple):
             >>> from sqlpyd import Connection
             >>> p = Path().cwd() / "tests" / "sc.yaml" # the test file
             >>> c = Connection(DatabasePath="test.db")
+            >>> c.path_to_db.unlink(missing_ok=True) # tear down
             >>> tbl = c.create_table(Justice)
             >>> res = c.add_records(Justice, yaml.safe_load(get_justices_file(p).read_bytes()))
             >>> search = CandidateJustice(db=c.db, date_str='Dec. 1, 1995')
@@ -87,6 +96,7 @@ class CandidateJustice(NamedTuple):
             >>> from sqlpyd import Connection
             >>> p = Path().cwd() / "tests" / "sc.yaml" # the test file
             >>> c = Connection(DatabasePath="test.db")
+            >>> c.path_to_db.unlink(missing_ok=True) # tear down
             >>> tbl = c.create_table(Justice)
             >>> res = c.add_records(Justice, yaml.safe_load(get_justices_file(p).read_bytes()))
             >>> search = CandidateJustice(db=c.db, text='Panganiban, Acting Cj', date_str='Dec. 1, 1995')
@@ -128,4 +138,45 @@ class CandidateJustice(NamedTuple):
                 logger.warning(
                     f"Many {opts=} for {self.candidate=} on {self.valid_date=}"
                 )
+        return None
+
+    @property
+    def detail(self) -> JusticeDetail | None:
+        """Get object to match fields directly
+
+        Examples:
+            >>> import yaml
+            >>> from pathlib import Path
+            >>> from corpus_sc_toolkit.justice import Justice, get_justices_file
+            >>> from sqlpyd import Connection
+            >>> p = Path().cwd() / "tests" / "sc.yaml" # the test file
+            >>> c = Connection(DatabasePath="test.db")
+            >>> c.path_to_db.unlink(missing_ok=True) # tear down
+            >>> tbl = c.create_table(Justice)
+            >>> res = c.add_records(Justice, yaml.safe_load(get_justices_file(p).read_bytes()))
+            >>> search = CandidateJustice(db=c.db, text='Panganiban, Acting Cj', date_str='Dec. 1, 1995')
+            >>> print(search.detail)
+            JusticeDetail(justice_id=137, raw_ponente='Panganiban', designation='J.', per_curiam=False)
+            >>> c.path_to_db.unlink() # tear down
+
+        Returns:
+            JusticeDetail | None: Will subsequently be used in DecisionRow in a third-party library.
+        """  # noqa: E501
+        if not self.src:
+            return None
+
+        if self.src.per_curiam:
+            return JusticeDetail(
+                justice_id=None,
+                raw_ponente=None,
+                designation=None,
+                per_curiam=True,
+            )
+        elif self.choice and self.choice.get("id", None):
+            return JusticeDetail(
+                justice_id=self.choice["id"],
+                raw_ponente=self.choice["surname"],
+                designation=self.choice["designation"],
+                per_curiam=False,
+            )
         return None
