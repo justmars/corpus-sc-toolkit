@@ -23,9 +23,9 @@ GITHUB_HEADERS = headers = {
 
 
 def get_justices_from_api() -> Iterator[dict]:
-    """The main list of Justices is found in the main github corpus repository.
-    This function, provided a `GH_TOKEN` is declared as an environment variable,
-    will pull that data into an iterator of dicts.
+    """A master list of [Justices][justice] is found in the github `/corpus` repository.
+    Provided a `GH_TOKEN` is declared as an environment variable,
+    this will pull that list into an iterator of dicts.
 
     Yields:
         Iterator[dict]: Justices from the API
@@ -45,8 +45,8 @@ def get_justices_from_api() -> Iterator[dict]:
 
 def get_justices_file(local_file: Path = JUSTICE_LOCAL) -> Path:
     """Return, if existing, the path to the `local_file` (*.yaml) containing
-    a list of validated Justices; if it doesn't exist yet, create it by calling
-    [get_justices_from_api()][source-list-from-api].
+    a list of validated [Justices][justice]; if it doesn't exist yet, create it by
+    calling [get_justices_from_api()][source-list-from-api].
 
     Args:
         local_file (Path, optional): _description_. Defaults to JUSTICE_LOCAL.

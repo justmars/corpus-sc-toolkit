@@ -1,5 +1,5 @@
 site_name: corpus-toolkit
-site_description: Toolkit to access certain elements of a Philippine Supreme Court decision.
+site_description: Toolkit to process component elements of a Philippine Supreme Court decision.
 site_url: https://mv3.dev
 site_author: Marcelino Veloso III
 repo_url: https://github.com/justmars
@@ -22,6 +22,7 @@ nav:
   - Overview: index.md
   - Justice: justice.md
   - Meta: meta.md
+  - eLib Ponencia: html.md
   - PDF Extraction: pdf.md
 
 extra:

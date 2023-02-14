@@ -2,7 +2,7 @@
 
 ![Github CI](https://github.com/justmars/corpus-toolkit/actions/workflows/main.yml/badge.svg)
 
-Toolkit to access certain elements of a Philippine Supreme Court decision.
+Toolkit to process component elements of a Philippine Supreme Court decision.
 
 ## Development
 
