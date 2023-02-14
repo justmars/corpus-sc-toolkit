@@ -1,8 +1,8 @@
-site_name: corpus-toolkit
+site_name: corpus-sc-toolkit Docs
 site_description: Toolkit to process component elements of a Philippine Supreme Court decision.
-site_url: https://mv3.dev
+site_url: https://lawsql.com
 site_author: Marcelino Veloso III
-repo_url: https://github.com/justmars
+repo_url: https://mv3.dev/pylts
 theme:
   name: "material"
   palette:

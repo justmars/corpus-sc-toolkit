@@ -1,4 +1,4 @@
-# corpus-toolkit
+# corpus-sc-toolkit
 
 Toolkit to process component elements of a Philippine Supreme Court decision.
 
