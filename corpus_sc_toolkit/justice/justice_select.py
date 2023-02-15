@@ -183,6 +183,18 @@ class CandidateJustice(NamedTuple):
         return None
 
     @property
+    def id(self) -> int | None:
+        return self.detail.justice_id if self.detail else None
+
+    @property
+    def per_curiam(self) -> bool:
+        return self.detail.per_curiam if self.detail else False
+
+    @property
+    def raw_ponente(self) -> str | None:
+        return self.detail.raw_ponente if self.detail else None
+
+    @property
     def ponencia(self) -> dict[str, Any]:
         """Produces a dict of partial fields that include the following keys:
 
@@ -191,7 +203,7 @@ class CandidateJustice(NamedTuple):
         3. `per_curiam`: bool
         """
         return {
-            "justice_id": self.detail.justice_id if self.detail else None,
-            "raw_ponente": self.detail.raw_ponente if self.detail else None,
-            "per_curiam": self.detail.per_curiam if self.detail else False,
+            "justice_id": self.id,
+            "raw_ponente": self.raw_ponente,
+            "per_curiam": self.per_curiam,
         }

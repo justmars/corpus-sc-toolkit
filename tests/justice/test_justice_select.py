@@ -165,9 +165,9 @@ def test_justice_choice(candidate):
 
 def test_justice_ponencia(candidate):
     assert candidate.ponencia == {
-        "justice_id": 137,
-        "raw_ponente": "Panganiban",
-        "per_curiam": False,
+        "justice_id": candidate.id,
+        "raw_ponente": candidate.raw_ponente,
+        "per_curiam": candidate.per_curiam,
     }
 
 

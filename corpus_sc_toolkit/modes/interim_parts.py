@@ -1,5 +1,4 @@
 import json
-from collections.abc import Iterator
 from typing import NamedTuple, Self
 
 from pydantic import BaseModel, Field
@@ -69,6 +68,22 @@ class InterimOpinion(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
+    @property
+    def row(self) -> dict[str, str]:
+        """Row to be used in OpinionRow table."""
+        text = f"{self.body}\n----\n{self.annex}"
+        base = self.dict(include={"id", "decision_id", "pdf", "title"})
+        extended = {"justice_id": self.candidate.id, "text": text}
+        return base | extended
+
+    @property
+    def ponencia_meta(self):
+        """Used to return relevant details of the ponencia in `setup()`"""
+        if self.title == "Ponencia":
+            if self.candidate and self.candidate.detail:
+                return self.candidate.detail._asdict()
+        return None
+
     @classmethod
     def setup(cls, idx: str, db: Database, data: dict) -> dict | None:
         """Presumes existence of the following keys:
@@ -81,63 +96,52 @@ class InterimOpinion(BaseModel):
         1. `opinions` - i.e. a string made of `json_group_array`, `json_object` from sqlite query
         2. `date` - for determining the justice involved in the opinion/s
         """  # noqa: E501
-        opinions = []
-        match_ponencia = None
-        fields_present = "date" in data and "opinions" in data
-        if not fields_present:
+        prerequisite = "id" in data and "date" in data and "opinions" in data
+        if not prerequisite:
             return None
+
+        opinions = []
+        match_ponencia = {}
+        keys = ["id", "title", "body", "annex"]
         for op in json.loads(data["opinions"]):
             opinion = cls(
-                id=op["id"],
                 decision_id=idx,
                 pdf=f"{SC_BASE_URL}{op['pdf']}",
                 candidate=CandidateJustice(db, op.get("writer"), data["date"]),
-                title=op["title"],
-                body=op["body"],
-                annex=op["annex"],
-            ).with_segments_set(db=db)
+                **{k: v for k, v in op.items() if k in keys},
+            )
+            opinion.add_segments(db=db, id=data["id"])
             opinions.append(opinion)
-            if not match_ponencia and opinion.title == "Ponencia":
-                match_ponencia = opinion.candidate
-        return {"opinions": opinions} | (
-            match_ponencia.detail._asdict()
-            if match_ponencia and match_ponencia.detail
-            else {}
-        )
+            if opinion.ponencia_meta:
+                match_ponencia = opinion.ponencia_meta
+        return {"opinions": opinions} | match_ponencia
 
-    def _from_main(self, db: Database) -> Iterator[InterimSegment]:
-        """Populate segments from the main decision."""
-        for row in db["pre_tbl_decision_segment"].rows_where(
-            where="decision_id = ? and length(text) > 10",
-            where_args=(self.decision_id,),
-        ):
-            if segment := InterimSegment.set(
-                elements=[row["id"], row["page_num"], self.decision_id],
-                opinion_id=f"main-{self.decision_id}",
-                decision_id=self.decision_id,
-                text=row["text"],
-                position=f"{row['id']}-{row['page_num']}",
-            ):
-                yield segment
-
-    def _from_opinions(self, db: Database) -> Iterator[InterimSegment]:
-        """Populate segments from the opinion decision."""
-        for row in db["pre_tbl_opinion_segment"].rows_where(
-            where="opinion_id = ? and length(text) > 10",
-            where_args=(self.id,),
-        ):
-            if segment := InterimSegment.set(
-                elements=[row["id"], row["page_num"], row["opinion_id"]],
-                opinion_id=f"{str(self.decision_id)}-{row['opinion_id']}",
-                decision_id=self.decision_id,
-                text=row["text"],
-                position=f"{row['id']}-{row['page_num']}",
-            ):
-                yield segment
-
-    def with_segments_set(self, db: Database) -> Self:
+    def add_segments(self, db: Database, id: int):
         if self.title in ["Ponencia", "Notice"]:  # see limit_extract.sql
-            self.segments = list(self._from_main(db))
+            tbl = db["pre_tbl_decision_segment"]
+            criteria = "decision_id = ? and length(text) > 10"
+            params = (id,)  # refers to the **unaltered** decision id
+            rows = tbl.rows_where(where=criteria, where_args=params)
+            for row in rows:
+                if segment := InterimSegment.set(
+                    elements=[row["id"], row["page_num"], self.decision_id],
+                    opinion_id=f"main-{self.decision_id}",
+                    decision_id=self.decision_id,
+                    text=row["text"],
+                    position=f"{row['id']}-{row['page_num']}",
+                ):
+                    self.segments.append(segment)
         else:
-            self.segments = list(self._from_opinions(db))
-        return self
+            tbl = db["pre_tbl_opinion_segment"]
+            criteria = "opinion_id = ? and length(text) > 10"
+            params = (self.id,)  # refers to the opinion id
+            rows = tbl.rows_where(where=criteria, where_args=params)
+            for row in rows:
+                if segment := InterimSegment.set(
+                    elements=[row["id"], row["page_num"], row["opinion_id"]],
+                    opinion_id=f"{str(self.decision_id)}-{row['opinion_id']}",
+                    decision_id=self.decision_id,
+                    text=row["text"],
+                    position=f"{row['id']}-{row['page_num']}",
+                ):
+                    self.segments.append(segment)
