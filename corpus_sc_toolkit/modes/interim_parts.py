@@ -17,11 +17,30 @@ class InterimSegment(NamedTuple):
     segment: str
     char_count: int
 
+    @classmethod
+    def set(
+        cls,
+        elements: list,
+        opinion_id: str,
+        text: str,
+        position: str,
+        decision_id: str,
+    ):
+        if all(elements):
+            return cls(
+                id="-".join(str(i) for i in elements),
+                opinion_id=opinion_id,
+                decision_id=decision_id,
+                position=position,
+                segment=text,
+                char_count=len(text),
+            )
+
 
 class InterimOpinion(BaseModel):
     id: str = Field(...)
     decision_id: str = Field(...)
-    pdf: str
+    pdf: str = Field(description="Downloadable link to the opinion pdf.")
     candidate: CandidateJustice
     title: str | None = Field(
         ...,
@@ -31,11 +50,21 @@ class InterimOpinion(BaseModel):
         ),
         col=str,
     )
-    body: str = Field(..., description="Text proper of the opinion.")
-    annex: str | None = Field(
-        default=None, description="Annex portion of the opinion."
+    body: str = Field(
+        ...,
+        title="Opinion Body",
+        description="Text proper of the opinion.",
     )
-    segments: list[InterimSegment] = Field(default_factory=list)
+    annex: str | None = Field(
+        default=None,
+        title="Opinion Annex",
+        description="Annex portion of the opinion.",
+    )
+    segments: list[InterimSegment] = Field(
+        default_factory=list,
+        title="Opinion Segments",
+        description="Each body segment of the Opinion Body.",
+    )
 
     class Config:
         arbitrary_types_allowed = True
@@ -52,59 +81,40 @@ class InterimOpinion(BaseModel):
         1. `opinions` - i.e. a string made of `json_group_array`, `json_object` from sqlite query
         2. `date` - for determining the justice involved in the opinion/s
         """  # noqa: E501
-        match = None
         opinions = []
-        keys = ["opinions", "date"]
-        if not all([data.get(k) for k in keys]):
+        match_ponencia = None
+        fields_present = "date" in data and "opinions" in data
+        if not fields_present:
             return None
-
         for op in json.loads(data["opinions"]):
-            pdf_url = f"{SC_BASE_URL}{op['pdf']}"
-            candidate = CandidateJustice(db, op.get("writer"), data["date"])
-            obj = cls(
+            opinion = cls(
                 id=op["id"],
                 decision_id=idx,
-                pdf=pdf_url,
-                candidate=candidate,
+                pdf=f"{SC_BASE_URL}{op['pdf']}",
+                candidate=CandidateJustice(db, op.get("writer"), data["date"]),
                 title=op["title"],
                 body=op["body"],
                 annex=op["annex"],
-            )
-            opinion = obj.with_segments_set(db=db)
+            ).with_segments_set(db=db)
             opinions.append(opinion)
-
-            if not match and opinion.title == "Ponencia":
-                match = opinion.candidate
-
-        details = match.detail._asdict() if match and match.detail else {}
-        return {"opinions": opinions} | details
-
-    def get_segment(
-        self,
-        elements: list,
-        opinion_id: str,
-        text: str,
-        position: str,
-    ):
-        if all(elements):
-            return InterimSegment(
-                id="-".join(str(i) for i in elements),
-                opinion_id=opinion_id,
-                decision_id=self.decision_id,
-                position=position,
-                segment=text,
-                char_count=len(text),
-            )
+            if not match_ponencia and opinion.title == "Ponencia":
+                match_ponencia = opinion.candidate
+        return {"opinions": opinions} | (
+            match_ponencia.detail._asdict()
+            if match_ponencia and match_ponencia.detail
+            else {}
+        )
 
     def _from_main(self, db: Database) -> Iterator[InterimSegment]:
         """Populate segments from the main decision."""
-        criteria = "decision_id = ? and length(text) > 10"
-        params = (self.decision_id,)
-        rows = db["pre_tbl_decision_segment"].rows_where(criteria, params)
-        for row in rows:
-            if segment := self.get_segment(
+        for row in db["pre_tbl_decision_segment"].rows_where(
+            where="decision_id = ? and length(text) > 10",
+            where_args=(self.decision_id,),
+        ):
+            if segment := InterimSegment.set(
                 elements=[row["id"], row["page_num"], self.decision_id],
                 opinion_id=f"main-{self.decision_id}",
+                decision_id=self.decision_id,
                 text=row["text"],
                 position=f"{row['id']}-{row['page_num']}",
             ):
@@ -112,13 +122,14 @@ class InterimOpinion(BaseModel):
 
     def _from_opinions(self, db: Database) -> Iterator[InterimSegment]:
         """Populate segments from the opinion decision."""
-        criteria = "opinion_id = ? and length(text) > 10"
-        params = (self.id,)
-        rows = db["pre_tbl_opinion_segment"].rows_where(criteria, params)
-        for row in rows:
-            if segment := self.get_segment(
+        for row in db["pre_tbl_opinion_segment"].rows_where(
+            where="opinion_id = ? and length(text) > 10",
+            where_args=(self.id,),
+        ):
+            if segment := InterimSegment.set(
                 elements=[row["id"], row["page_num"], row["opinion_id"]],
                 opinion_id=f"{str(self.decision_id)}-{row['opinion_id']}",
+                decision_id=self.decision_id,
                 text=row["text"],
                 position=f"{row['id']}-{row['page_num']}",
             ):
