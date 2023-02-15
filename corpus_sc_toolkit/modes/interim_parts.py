@@ -12,7 +12,7 @@ from corpus_sc_toolkit.resources import SC_BASE_URL
 class InterimSegment(NamedTuple):
     id: str
     opinion_id: str
-    decision_id: int
+    decision_id: str
     position: str
     segment: str
     char_count: int
@@ -20,7 +20,7 @@ class InterimSegment(NamedTuple):
 
 class InterimOpinion(BaseModel):
     id: str = Field(...)
-    decision_id: int = Field(...)
+    decision_id: str = Field(...)
     pdf: str
     candidate: CandidateJustice
     title: str | None = Field(
@@ -41,7 +41,7 @@ class InterimOpinion(BaseModel):
         arbitrary_types_allowed = True
 
     @classmethod
-    def setup(cls, db: Database, data: dict) -> dict | None:
+    def setup(cls, idx: str, db: Database, data: dict) -> dict | None:
         """Presumes existence of the following keys:
 
         This will partially process the sql query defined in
@@ -50,23 +50,20 @@ class InterimOpinion(BaseModel):
         The required fields in `data`:
 
         1. `opinions` - i.e. a string made of `json_group_array`, `json_object` from sqlite query
-        2. `id` - the decision id connected to each opinion from the opinions list
-        3. `date` - for determining the justice involved in the opinion/s
+        2. `date` - for determining the justice involved in the opinion/s
         """  # noqa: E501
         match = None
         opinions = []
-        keys = ["opinions", "id", "date"]
+        keys = ["opinions", "date"]
         if not all([data.get(k) for k in keys]):
             return None
 
-        id, dt, op_lst = data["id"], data["date"], json.loads(data["opinions"])
-
-        for op in op_lst:
+        for op in json.loads(data["opinions"]):
             pdf_url = f"{SC_BASE_URL}{op['pdf']}"
-            candidate = CandidateJustice(db, op.get("writer"), dt)
+            candidate = CandidateJustice(db, op.get("writer"), data["date"])
             obj = cls(
                 id=op["id"],
-                decision_id=id,
+                decision_id=idx,
                 pdf=pdf_url,
                 candidate=candidate,
                 title=op["title"],

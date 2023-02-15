@@ -36,17 +36,17 @@ def decision_from_pdf_db(
         logger.error(f"Bad citation in {row['id']=}")
         return None
 
-    opx = InterimOpinion.setup(db, row)
+    idx = get_id_from_citation(
+        folder_name=row["id"], source=DecisionSource.sc.value, citation=cite
+    )
+
+    opx = InterimOpinion.setup(idx=idx, db=db, data=row)
     if not opx or not opx.get("opinions"):
         logger.error(f"No opinions detected in {row['id']=}")
         return None
 
     return InterimDecision(
-        id=get_id_from_citation(
-            folder_name=row["id"],
-            source=DecisionSource.sc.value,
-            citation=cite,
-        ),
+        id=idx,
         origin=row["id"],
         title=row["title"],
         description=cite.display,

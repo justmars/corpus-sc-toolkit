@@ -28,7 +28,7 @@ def get_id_from_citation(
     citation: Citation,
 ) -> str:
     """The decision id to be used as a url slug ought to be unique,
-    based on citation paramters if possible.
+    based on citation parameters, if possible.
     """
     if not citation.slug:
         logger.debug(f"Citation absent: {source=}; {folder_name=}")
