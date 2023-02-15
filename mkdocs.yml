@@ -20,13 +20,11 @@ theme:
         name: Switch to light mode
 nav:
   - Overview: index.md
-  - Justice: justice.md
-  - Meta: meta.md
-  - Loader:
-    - via Path: loader/path.md
-    - via PDF: loader/pdf.md
-
-
+  - Justice Field: justice.md
+  - Meta Field: meta.md
+  - Modes:
+    - YAML-Path: modes/path.md
+    - PDF-DB: modes/pdf.md
 extra:
   homepage: https://mv3.dev
   social:

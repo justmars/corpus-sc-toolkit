@@ -77,6 +77,7 @@ def decision_from_path(p: Path, db: Database) -> BaseDecision | None:
         title=data.get("case_title"),
         description=cite.display,
         date=data.get("date_prom"),
+        date_scraped=data.get("date_scraped"),
         composition=CourtComposition._setter(data.get("composition")),
         category=DecisionCategory._setter(data.get("category")),
         fallo=markdownify(f.read_text()) if f.exists() else None,
