@@ -1,5 +1,5 @@
+import datetime
 from collections.abc import Iterator
-from datetime import date
 from pathlib import Path
 from typing import Self
 
@@ -29,9 +29,10 @@ class BaseDecision(BaseModel):
     id: str
     source: DecisionSource = DecisionSource.sc
     origin: str
-    case_title: str
-    date_prom: date
-    date_scraped: date
+    title: str
+    description: str
+    date: datetime.date
+    date_scraped: datetime.date
     citation: Citation | None = None
     composition: CourtComposition
     category: DecisionCategory
@@ -47,7 +48,7 @@ class BaseDecision(BaseModel):
         use_enum_values = True
 
     @classmethod
-    def from_path(cls, path: Path, db: Database) -> Self:
+    def from_path(cls, path: Path, db: Database) -> Self | None:
         from .from_path import decision_from_path
 
         return decision_from_path(path, db)

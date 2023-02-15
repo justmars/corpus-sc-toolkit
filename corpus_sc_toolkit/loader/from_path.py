@@ -2,6 +2,7 @@ from pathlib import Path
 
 import yaml
 from citation_utils import Citation
+from loguru import logger
 from markdownify import markdownify
 from sqlite_utils import Database
 
@@ -17,7 +18,7 @@ from corpus_sc_toolkit.meta import (
 from .models import BaseDecision
 
 
-def decision_from_path(p: Path, db: Database) -> BaseDecision:
+def decision_from_path(p: Path, db: Database) -> BaseDecision | None:
     """The BaseDecision fields that are created through this
     function will ultimately map out to a DecisionRow instance, a third-party library.
 
@@ -59,7 +60,10 @@ def decision_from_path(p: Path, db: Database) -> BaseDecision:
     """  # noqa: E501
     f = p.parent / "fallo.html"
     data = yaml.safe_load(p.read_text())
-    cite = Citation.extract_citation_from_data(data)
+    if not (cite := Citation.extract_citation_from_data(data)):
+        logger.error(f"Bad citation in {p=}")
+        return None
+
     return BaseDecision(
         id=get_id_from_citation(
             folder_name=p.parent.name,
@@ -70,8 +74,9 @@ def decision_from_path(p: Path, db: Database) -> BaseDecision:
         modified=p.stat().st_mtime,
         source=DecisionSource(p.parent.parent.stem),
         origin=p.parent.name,
-        case_title=data.get("case_title"),
-        date_prom=data.get("date_prom"),
+        title=data.get("case_title"),
+        description=cite.display,
+        date=data.get("date_prom"),
         composition=CourtComposition._setter(data.get("composition")),
         category=DecisionCategory._setter(data.get("category")),
         fallo=markdownify(f.read_text()) if f.exists() else None,

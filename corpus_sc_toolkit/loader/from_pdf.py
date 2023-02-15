@@ -41,28 +41,25 @@ def decision_from_pdf_db(
         logger.error(f"No opinions detected in {row['id']=}")
         return None
 
-    id = get_id_from_citation(
-        folder_name=row["id"],
-        source=DecisionSource.sc.value,
-        citation=cite,
-    )
-
-    cat = DecisionCategory.set_category(
-        category=row.get("category"),
-        notice=row.get("notice"),
-    )
-
     return InterimDecision(
-        id=id,
+        id=get_id_from_citation(
+            folder_name=row["id"],
+            source=DecisionSource.sc.value,
+            citation=cite,
+        ),
         origin=row["id"],
-        case_title=row["title"],
+        title=row["title"],
+        description=cite.display,
         created=datetime.datetime.now().timestamp(),
         modified=datetime.datetime.now().timestamp(),
-        date_prom=parse(row["date"]).date(),
+        date=parse(row["date"]).date(),
         date_scraped=parse(row["scraped"]).date(),
         citation=cite,
         composition=CourtComposition._setter(text=row["composition"]),
-        category=cat,
+        category=DecisionCategory.set_category(
+            category=row.get("category"),
+            notice=row.get("notice"),
+        ),
         opinions=opx["opinions"],
         raw_ponente=opx.get("raw_ponente", None),
         per_curiam=opx.get("per_curiam", False),
