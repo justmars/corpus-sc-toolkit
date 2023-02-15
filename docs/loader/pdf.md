@@ -1,5 +1,9 @@
 # Decision Loaded from PDF
 
+## Interim Decision
+
+::: corpus_sc_toolkit.loader.models.InterimDecision
+
 ## Source of Extraction
 
 There is a pre-existing sqlite database that is replicated via litestream to the repository. This database, found in `s3://corpus-pdf/db` refers to content [previously extracted from pdf files](https://github.com/justmars/corpus-extractor).

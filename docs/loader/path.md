@@ -1,5 +1,9 @@
 # Decision Loaded from Path
 
+## Base Decision
+
+::: corpus_sc_toolkit.loader.models.BaseDecision
+
 ## Contents of Row From Path
 
 ::: corpus_sc_toolkit.loader.from_path.decision_from_path

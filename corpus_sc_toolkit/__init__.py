@@ -9,6 +9,7 @@ from .justice import (
     get_justices_from_api,
 )
 from .loader import (
+    BaseDecision,
     DecisionHTMLConvertMarkdown,
     InterimDecision,
     InterimOpinion,

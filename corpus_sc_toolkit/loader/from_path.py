@@ -14,10 +14,12 @@ from corpus_sc_toolkit.meta import (
     voteline_clean,
 )
 
+from .models import BaseDecision
 
-def decision_from_path(p: Path, db: Database) -> dict:
-    """The fields that are created through this function will ultimately
-    map out to a DecisionRow instance, a third-party library.
+
+def decision_from_path(p: Path, db: Database) -> BaseDecision:
+    """The BaseDecision fields that are created through this
+    function will ultimately map out to a DecisionRow instance, a third-party library.
 
     It consolidates the various [metadata][meta] from the toolkit.
 
@@ -58,34 +60,27 @@ def decision_from_path(p: Path, db: Database) -> dict:
     f = p.parent / "fallo.html"
     data = yaml.safe_load(p.read_text())
     cite = Citation.extract_citation_from_data(data)
-
-    id = get_id_from_citation(
-        folder_name=p.parent.name,
-        source=p.parent.parent.stem,
-        citation=cite,
-    )
-
-    ponencia_fields = CandidateJustice(
-        db=db,
-        text=data.get("ponente"),
-        date_str=data.get("date_prom"),
-    ).ponencia
-
-    return dict(
-        id=id,
-        origin=p.parent.name,
-        source=DecisionSource(p.parent.parent.stem),
-        is_pdf=False,
+    return BaseDecision(
+        id=get_id_from_citation(
+            folder_name=p.parent.name,
+            source=p.parent.parent.stem,
+            citation=cite,
+        ),
         created=p.stat().st_ctime,
         modified=p.stat().st_mtime,
-        title=data.get("case_title"),
-        description=cite.display,
-        date=data.get("date_prom"),
+        source=DecisionSource(p.parent.parent.stem),
+        origin=p.parent.name,
+        case_title=data.get("case_title"),
+        date_prom=data.get("date_prom"),
         composition=CourtComposition._setter(data.get("composition")),
         category=DecisionCategory._setter(data.get("category")),
         fallo=markdownify(f.read_text()) if f.exists() else None,
         voting=voteline_clean(data.get("voting")),
         citation=cite,
         emails=data.get("emails", ["bot@lawsql.com"]),
-        **ponencia_fields,
+        **CandidateJustice(
+            db=db,
+            text=data.get("ponente"),
+            date_str=data.get("date_prom"),
+        ).ponencia,
     )
