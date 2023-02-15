@@ -15,6 +15,7 @@ from corpus_sc_toolkit.meta import (
     DecisionSource,
 )
 from corpus_sc_toolkit.resources import SC_LOCAL_FOLDER
+
 from .interim_parts import InterimOpinion
 
 

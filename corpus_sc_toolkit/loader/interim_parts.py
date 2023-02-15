@@ -6,7 +6,6 @@ from pydantic import BaseModel, Field
 from sqlite_utils import Database
 
 from corpus_sc_toolkit.justice import CandidateJustice
-
 from corpus_sc_toolkit.resources import SC_BASE_URL
 
 
