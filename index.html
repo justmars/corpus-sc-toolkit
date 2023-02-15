@@ -266,7 +266,7 @@
   
     <li class="md-nav__item">
       <a href="justice/" class="md-nav__link">
-        Justice
+        Justice Field
       </a>
     </li>
   
@@ -281,7 +281,7 @@
   
     <li class="md-nav__item">
       <a href="meta/" class="md-nav__link">
-        Meta
+        Meta Field
       </a>
     </li>
   
@@ -305,14 +305,14 @@
       
       
         <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
-          Loader
+          Modes
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
         <label class="md-nav__title" for="__nav_4">
           <span class="md-nav__icon md-icon"></span>
-          Loader
+          Modes
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -322,8 +322,8 @@
   
   
     <li class="md-nav__item">
-      <a href="loader/path/" class="md-nav__link">
-        via Path
+      <a href="modes/path/" class="md-nav__link">
+        YAML-Path
       </a>
     </li>
   
@@ -336,8 +336,8 @@
   
   
     <li class="md-nav__item">
-      <a href="loader/pdf/" class="md-nav__link">
-        via PDF
+      <a href="modes/pdf/" class="md-nav__link">
+        PDF-DB
       </a>
     </li>
   
@@ -389,12 +389,256 @@
 
 <h1 id="corpus-sc-toolkit">corpus-sc-toolkit</h1>
 <p>Toolkit to process component elements of a Philippine Supreme Court decision.</p>
-<ol>
-<li><a class="autorefs autorefs-internal" href="justice/#justice">Justice Identification</a></li>
-<li><a class="autorefs autorefs-internal" href="meta/#meta">Meta Components of a Decision</a></li>
-<li><a class="autorefs autorefs-internal" href="loader/path/#decision-loaded-from-path">Loading Decisions from Local Path</a></li>
-<li><a class="autorefs autorefs-internal" href="loader/pdf/#decision-loaded-from-pdf">Loading Decisions from PDF-Based DB</a></li>
-</ol>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+  <div class="doc doc-contents first">
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+
+  
+      <p>A Decision will rely on the previous processing of various fields.</p>
+<p>This toolkit helps process some of those fields prior to insertion into a
+terminal database (even if they may previously originate from another
+third-party database.)</p>
+<table>
+<thead>
+<tr>
+<th align="center">Field</th>
+<th align="center">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">created</td>
+<td align="center">float</td>
+<td align="left">When was this model instantiated, for paths, this is when the file was actually made</td>
+</tr>
+<tr>
+<td align="center">modified</td>
+<td align="center">float</td>
+<td align="left">When was this model last modified, for paths, this is when the file was actually modified</td>
+</tr>
+<tr>
+<td align="center">id</td>
+<td align="center">str</td>
+<td align="left">The <a class="autorefs autorefs-internal" href="meta/#set-decision-id-from-values">combination of various strings</a> based on the source and citation, if available.</td>
+</tr>
+<tr>
+<td align="center">source</td>
+<td align="center"><a class="autorefs autorefs-internal" href="meta/#decision-source">DecisionSource</a></td>
+<td align="left">May either be <code>sc</code> or <code>legacy</code>.</td>
+</tr>
+<tr>
+<td align="center">origin</td>
+<td align="center">str</td>
+<td align="left">If <code>sc</code> source, this refers to the URL slug stem</td>
+</tr>
+<tr>
+<td align="center">title</td>
+<td align="center">str</td>
+<td align="left">The case title, this can be classified into <a class="autorefs autorefs-internal" href="meta/#title-tags">tags</a></td>
+</tr>
+<tr>
+<td align="center">description</td>
+<td align="center">str</td>
+<td align="left">The citation display</td>
+</tr>
+<tr>
+<td align="center">date</td>
+<td align="center">datetime.date</td>
+<td align="left">The date the case was promulgated</td>
+</tr>
+<tr>
+<td align="center">date_scraped</td>
+<td align="center">datetime.date</td>
+<td align="left">The date the case was scraped</td>
+</tr>
+<tr>
+<td align="center">citation</td>
+<td align="center">optional[Citation]</td>
+<td align="left">The citation object</td>
+</tr>
+<tr>
+<td align="center">composition</td>
+<td align="center"><a class="autorefs autorefs-internal" href="meta/#court-composition">CourtComposition</a></td>
+<td align="left">Whether the court sat en banc or in division</td>
+</tr>
+<tr>
+<td align="center">category</td>
+<td align="center"><a class="autorefs autorefs-internal" href="meta/#decision-category">DecisionCategory</a></td>
+<td align="left">Whether the case decided was a decision or a resolution</td>
+</tr>
+<tr>
+<td align="center">raw_ponente</td>
+<td align="center">optional[str]</td>
+<td align="left">Who decided the case, if available</td>
+</tr>
+<tr>
+<td align="center">justice_id</td>
+<td align="center">optional[int]</td>
+<td align="left">The <a class="autorefs autorefs-internal" href="justice/#justice">justice id</a>, if available</td>
+</tr>
+<tr>
+<td align="center">per_curiam</td>
+<td align="center">bool. Defaults to False.</td>
+<td align="left">Whether the case was decided per curiam</td>
+</tr>
+<tr>
+<td align="center">is_pdf</td>
+<td align="center">bool. Defaults to False.</td>
+<td align="left">Whether the case originated from a PDF file</td>
+</tr>
+<tr>
+<td align="center">fallo</td>
+<td align="center">optional[str]</td>
+<td align="left">Detected fallo / dispositive portion</td>
+</tr>
+<tr>
+<td align="center">voting</td>
+<td align="center">optional[str]</td>
+<td align="left">Detected <a class="autorefs autorefs-internal" href="meta/#vote-lines">voting line</a></td>
+</tr>
+<tr>
+<td align="center">emails</td>
+<td align="center">list[str]</td>
+<td align="left">Emails of authors</td>
+</tr>
+</tbody>
+</table>
+
+
+        <details class="quote">
+          <summary>Source code in <code>corpus_sc_toolkit/modes/models.py</code></summary>
+          <div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">Python</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-22">22</a></span>
+<span class="normal"><a href="#__codelineno-0-23">23</a></span>
+<span class="normal"><a href="#__codelineno-0-24">24</a></span>
+<span class="normal"><a href="#__codelineno-0-25">25</a></span>
+<span class="normal"><a href="#__codelineno-0-26">26</a></span>
+<span class="normal"><a href="#__codelineno-0-27">27</a></span>
+<span class="normal"><a href="#__codelineno-0-28">28</a></span>
+<span class="normal"><a href="#__codelineno-0-29">29</a></span>
+<span class="normal"><a href="#__codelineno-0-30">30</a></span>
+<span class="normal"><a href="#__codelineno-0-31">31</a></span>
+<span class="normal"><a href="#__codelineno-0-32">32</a></span>
+<span class="normal"><a href="#__codelineno-0-33">33</a></span>
+<span class="normal"><a href="#__codelineno-0-34">34</a></span>
+<span class="normal"><a href="#__codelineno-0-35">35</a></span>
+<span class="normal"><a href="#__codelineno-0-36">36</a></span>
+<span class="normal"><a href="#__codelineno-0-37">37</a></span>
+<span class="normal"><a href="#__codelineno-0-38">38</a></span>
+<span class="normal"><a href="#__codelineno-0-39">39</a></span>
+<span class="normal"><a href="#__codelineno-0-40">40</a></span>
+<span class="normal"><a href="#__codelineno-0-41">41</a></span>
+<span class="normal"><a href="#__codelineno-0-42">42</a></span>
+<span class="normal"><a href="#__codelineno-0-43">43</a></span>
+<span class="normal"><a href="#__codelineno-0-44">44</a></span>
+<span class="normal"><a href="#__codelineno-0-45">45</a></span>
+<span class="normal"><a href="#__codelineno-0-46">46</a></span>
+<span class="normal"><a href="#__codelineno-0-47">47</a></span>
+<span class="normal"><a href="#__codelineno-0-48">48</a></span>
+<span class="normal"><a href="#__codelineno-0-49">49</a></span>
+<span class="normal"><a href="#__codelineno-0-50">50</a></span>
+<span class="normal"><a href="#__codelineno-0-51">51</a></span>
+<span class="normal"><a href="#__codelineno-0-52">52</a></span>
+<span class="normal"><a href="#__codelineno-0-53">53</a></span>
+<span class="normal"><a href="#__codelineno-0-54">54</a></span>
+<span class="normal"><a href="#__codelineno-0-55">55</a></span>
+<span class="normal"><a href="#__codelineno-0-56">56</a></span>
+<span class="normal"><a href="#__codelineno-0-57">57</a></span>
+<span class="normal"><a href="#__codelineno-0-58">58</a></span>
+<span class="normal"><a href="#__codelineno-0-59">59</a></span>
+<span class="normal"><a href="#__codelineno-0-60">60</a></span>
+<span class="normal"><a href="#__codelineno-0-61">61</a></span>
+<span class="normal"><a href="#__codelineno-0-62">62</a></span>
+<span class="normal"><a href="#__codelineno-0-63">63</a></span>
+<span class="normal"><a href="#__codelineno-0-64">64</a></span>
+<span class="normal"><a href="#__codelineno-0-65">65</a></span>
+<span class="normal"><a href="#__codelineno-0-66">66</a></span>
+<span class="normal"><a href="#__codelineno-0-67">67</a></span>
+<span class="normal"><a href="#__codelineno-0-68">68</a></span>
+<span class="normal"><a href="#__codelineno-0-69">69</a></span>
+<span class="normal"><a href="#__codelineno-0-70">70</a></span>
+<span class="normal"><a href="#__codelineno-0-71">71</a></span>
+<span class="normal"><a href="#__codelineno-0-72">72</a></span>
+<span class="normal"><a href="#__codelineno-0-73">73</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-22" name="__codelineno-0-22"></a><span class="k">class</span> <span class="nc">Fields</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;A Decision will rely on the previous processing of various fields.</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24"></a>
+<a id="__codelineno-0-25" name="__codelineno-0-25"></a><span class="sd">    This toolkit helps process some of those fields prior to insertion into a</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26"></a><span class="sd">    terminal database (even if they may previously originate from another</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27"></a><span class="sd">    third-party database.)</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28"></a>
+<a id="__codelineno-0-29" name="__codelineno-0-29"></a><span class="sd">    Field | Type | Description</span>
+<a id="__codelineno-0-30" name="__codelineno-0-30"></a><span class="sd">    :--:|:--:|:--</span>
+<a id="__codelineno-0-31" name="__codelineno-0-31"></a><span class="sd">    created | float | When was this model instantiated, for paths, this is when the file was actually made</span>
+<a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="sd">    modified | float |  When was this model last modified, for paths, this is when the file was actually modified</span>
+<a id="__codelineno-0-33" name="__codelineno-0-33"></a><span class="sd">    id | str | The [combination of various strings][set-decision-id-from-values] based on the source and citation, if available.</span>
+<a id="__codelineno-0-34" name="__codelineno-0-34"></a><span class="sd">    source | [DecisionSource][decision-source] | May either be `sc` or `legacy`.</span>
+<a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="sd">    origin | str | If `sc` source, this refers to the URL slug stem</span>
+<a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="sd">    title | str | The case title, this can be classified into [tags][title-tags]</span>
+<a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="sd">    description | str | The citation display</span>
+<a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="sd">    date | datetime.date | The date the case was promulgated</span>
+<a id="__codelineno-0-39" name="__codelineno-0-39"></a><span class="sd">    date_scraped | datetime.date | The date the case was scraped</span>
+<a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="sd">    citation | optional[Citation] | The citation object</span>
+<a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="sd">    composition | [CourtComposition][court-composition] | Whether the court sat en banc or in division</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="sd">    category | [DecisionCategory][decision-category] | Whether the case decided was a decision or a resolution</span>
+<a id="__codelineno-0-43" name="__codelineno-0-43"></a><span class="sd">    raw_ponente| optional[str] | Who decided the case, if available</span>
+<a id="__codelineno-0-44" name="__codelineno-0-44"></a><span class="sd">    justice_id | optional[int] | The [justice id][justice], if available</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="sd">    per_curiam | bool. Defaults to False. | Whether the case was decided per curiam</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46"></a><span class="sd">    is_pdf | bool. Defaults to False. | Whether the case originated from a PDF file</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47"></a><span class="sd">    fallo | optional[str] | Detected fallo / dispositive portion</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a><span class="sd">    voting | optional[str] | Detected [voting line][vote-lines]</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a><span class="sd">    emails | list[str] | Emails of authors</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50"></a><span class="sd">    &quot;&quot;&quot;</span>  <span class="c1"># noqa: E501</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51"></a>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a>    <span class="n">created</span><span class="p">:</span> <span class="nb">float</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a>    <span class="n">modified</span><span class="p">:</span> <span class="nb">float</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a>    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a>    <span class="n">source</span><span class="p">:</span> <span class="n">DecisionSource</span> <span class="o">=</span> <span class="n">DecisionSource</span><span class="o">.</span><span class="n">sc</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a>    <span class="n">origin</span><span class="p">:</span> <span class="nb">str</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a>    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span>
+<a id="__codelineno-0-58" name="__codelineno-0-58"></a>    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span>
+<a id="__codelineno-0-59" name="__codelineno-0-59"></a>    <span class="n">date</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span>
+<a id="__codelineno-0-60" name="__codelineno-0-60"></a>    <span class="n">date_scraped</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span>
+<a id="__codelineno-0-61" name="__codelineno-0-61"></a>    <span class="n">citation</span><span class="p">:</span> <span class="n">Citation</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-62" name="__codelineno-0-62"></a>    <span class="n">composition</span><span class="p">:</span> <span class="n">CourtComposition</span>
+<a id="__codelineno-0-63" name="__codelineno-0-63"></a>    <span class="n">category</span><span class="p">:</span> <span class="n">DecisionCategory</span>
+<a id="__codelineno-0-64" name="__codelineno-0-64"></a>    <span class="n">raw_ponente</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-65" name="__codelineno-0-65"></a>    <span class="n">justice_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-66" name="__codelineno-0-66"></a>    <span class="n">per_curiam</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<a id="__codelineno-0-67" name="__codelineno-0-67"></a>    <span class="n">is_pdf</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<a id="__codelineno-0-68" name="__codelineno-0-68"></a>    <span class="n">fallo</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-69" name="__codelineno-0-69"></a>    <span class="n">voting</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-70" name="__codelineno-0-70"></a>    <span class="n">emails</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+<a id="__codelineno-0-71" name="__codelineno-0-71"></a>
+<a id="__codelineno-0-72" name="__codelineno-0-72"></a>    <span class="k">class</span> <span class="nc">Config</span><span class="p">:</span>
+<a id="__codelineno-0-73" name="__codelineno-0-73"></a>        <span class="n">use_enum_values</span> <span class="o">=</span> <span class="kc">True</span>
+</code></pre></div></td></tr></table></div>
+        </details>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  </div>
+
+</div>
 
 
 
