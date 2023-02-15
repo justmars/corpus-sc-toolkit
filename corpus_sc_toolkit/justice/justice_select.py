@@ -1,5 +1,5 @@
 import datetime
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
 from dateutil.parser import parse
 from loguru import logger
@@ -173,10 +173,25 @@ class CandidateJustice(NamedTuple):
                 per_curiam=True,
             )
         elif self.choice and self.choice.get("id", None):
+            digit_id = int(self.choice["id"])
             return JusticeDetail(
-                justice_id=self.choice["id"],
+                justice_id=digit_id,
                 raw_ponente=self.choice["surname"],
                 designation=self.choice["designation"],
                 per_curiam=False,
             )
         return None
+
+    @property
+    def ponencia(self) -> dict[str, Any]:
+        """Produces a dict of partial fields that include the following keys:
+
+        1. `justice_id`: int
+        2. `raw_ponente`: str
+        3. `per_curiam`: bool
+        """
+        return {
+            "justice_id": self.detail.justice_id if self.detail else None,
+            "raw_ponente": self.detail.raw_ponente if self.detail else None,
+            "per_curiam": self.detail.per_curiam if self.detail else False,
+        }

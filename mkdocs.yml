@@ -22,8 +22,10 @@ nav:
   - Overview: index.md
   - Justice: justice.md
   - Meta: meta.md
-  - eLib Ponencia: html.md
-  - PDF Extraction: pdf.md
+  - Loader:
+    - via Path: loader/path.md
+    - via PDF: loader/pdf.md
+
 
 extra:
   homepage: https://mv3.dev

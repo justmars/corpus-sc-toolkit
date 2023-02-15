@@ -1,17 +1,22 @@
 __version__ = "0.0.5"
 
-from .html import (
-    DecisionHTMLConvertMarkdown,
-    add_markdown_file,
-    segmentize,
-    standardize,
-)
 from .justice import (
     CandidateJustice,
     Justice,
+    JusticeDetail,
     OpinionWriterName,
     get_justices_file,
     get_justices_from_api,
+)
+from .loader import (
+    DecisionHTMLConvertMarkdown,
+    InterimDecision,
+    InterimOpinion,
+    add_markdown_file,
+    decision_from_path,
+    decision_from_pdf_db,
+    segmentize,
+    standardize,
 )
 from .meta import (
     CourtComposition,
@@ -23,5 +28,4 @@ from .meta import (
     tags_from_title,
     voteline_clean,
 )
-from .pdf import InterimDecision, InterimOpinion
 from .resources import DECISION_PATH, SC_BASE_URL, SC_LOCAL_FOLDER

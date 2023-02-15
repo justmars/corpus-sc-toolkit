@@ -1,12 +1,21 @@
-import json
+import yaml
+from citation_utils import Citation, ShortDocketCategory
+from loguru import logger
 from collections.abc import Iterator
-from typing import Self
-
+from datetime import date
+from pathlib import Path
+from typing import Any, Self
+import json
 from pydantic import BaseModel, Field
 from sqlite_utils import Database
 
-from corpus_sc_toolkit import CandidateJustice
-from corpus_sc_toolkit.resources import SC_BASE_URL
+from corpus_sc_toolkit.meta import (
+    CourtComposition,
+    DecisionCategory,
+    DecisionSource,
+)
+from corpus_sc_toolkit.resources import SC_LOCAL_FOLDER, SC_BASE_URL
+from corpus_sc_toolkit.justice import CandidateJustice
 
 
 class InterimSegment(BaseModel):
@@ -133,3 +142,59 @@ class InterimOpinion(BaseModel):
         else:
             self.segments = list(self._from_opinions(db))
         return self
+
+
+class InterimDecision(BaseModel):
+    id: str
+    source: DecisionSource = DecisionSource.sc
+    origin: str
+    case_title: str
+    date_prom: date
+    date_scraped: date
+    citation: Citation | None = None
+    composition: CourtComposition
+    category: DecisionCategory
+    raw_ponente: str | None = None
+    justice_id: str | None = None
+    per_curiam: bool = False
+    opinions: list[InterimOpinion] = Field(default_factory=list)
+
+    class Config:
+        use_enum_values = True
+
+    @classmethod
+    def limited_decisions(cls, db: Database) -> Iterator[Self]:
+        from .from_pdf import decision_from_pdf_db
+
+        sql_path = Path(__file__).parent / "sql" / "limit_extract.sql"
+        query = sql_path.read_text()
+        rows = db.execute_returning_dicts(query)
+        for row in rows:
+            if result := decision_from_pdf_db(db, row):
+                yield result
+
+    @property
+    def is_dump_ok(self, target_path: Path = SC_LOCAL_FOLDER):
+        if not target_path.exists():
+            raise Exception("Cannot find target destination.")
+        if not self.citation:
+            logger.warning(f"No docket in {self.id=}")
+            return False
+        if self.citation.docket_category == ShortDocketCategory.BM:
+            logger.warning(f"Manual check: BM docket in {self.id}.")
+            return False
+        return True
+
+    def dump(self, target_path: Path = SC_LOCAL_FOLDER):
+        if not self.is_dump_ok:
+            return
+        target_id = target_path / f"{self.id}"
+        target_id.mkdir(exist_ok=True)
+        with open(target_id / "_pdf.yml", "w+") as writefile:
+            yaml.safe_dump(self.dict(), writefile)
+            logger.debug(f"Built {target_id=}=")
+
+    @classmethod
+    def export(cls, db: Database, to_folder: Path = SC_LOCAL_FOLDER):
+        for case in cls.limited_decisions(db):
+            case.dump(to_folder)
