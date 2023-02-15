@@ -1,4 +1,4 @@
-# corpus-toolkit
+# corpus-sc-toolkit
 
 ![Github CI](https://github.com/justmars/corpus-toolkit/actions/workflows/main.yml/badge.svg)
 

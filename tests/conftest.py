@@ -1,8 +1,10 @@
-import pytest
-from sqlpyd import Connection
-from corpus_sc_toolkit import Justice
 from pathlib import Path
+
+import pytest
 import yaml
+from sqlpyd import Connection
+
+from corpus_sc_toolkit import Justice
 
 temppath = "tests/test.db"
 

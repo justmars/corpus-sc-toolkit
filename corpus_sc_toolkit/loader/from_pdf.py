@@ -1,16 +1,19 @@
 from typing import Any
+
+from dateutil.parser import parse
+from loguru import logger
+from sqlite_utils.db import Database
+
 from corpus_sc_toolkit.meta import (
-    get_id_from_citation,
-    get_cite_from_fields,
-    DecisionSource,
     CourtComposition,
     DecisionCategory,
+    DecisionSource,
+    get_cite_from_fields,
+    get_id_from_citation,
 )
-from dateutil.parser import parse
-from .interim_models import InterimDecision, InterimOpinion
 from corpus_sc_toolkit.resources import SC_BASE_URL
-from sqlite_utils.db import Database
-from loguru import logger
+
+from .interim_models import InterimDecision, InterimOpinion
 
 
 def decision_from_pdf_db(
@@ -125,6 +128,7 @@ def decision_from_pdf_db(
     if not (cite := get_cite_from_fields(row)):
         logger.error(f"Bad citation in {row['id']=}")
         return None
+
     opx = InterimOpinion.setup(db, row)
     if not opx or not opx.get("opinions"):
         logger.error(f"No opinions detected in {row['id']=}")
@@ -135,10 +139,12 @@ def decision_from_pdf_db(
         source=DecisionSource.sc.value,
         citation=cite,
     )
+
     cat = DecisionCategory.set_category(
         category=row.get("category"),
         notice=row.get("notice"),
     )
+
     return InterimDecision(
         id=id,
         origin=f"{SC_BASE_URL}/{row['id']}",

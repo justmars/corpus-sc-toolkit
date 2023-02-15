@@ -1,4 +1,5 @@
 import pytest
+
 from corpus_sc_toolkit import CandidateJustice, JusticeDetail
 
 

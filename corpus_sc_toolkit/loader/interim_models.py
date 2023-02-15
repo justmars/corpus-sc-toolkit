@@ -1,30 +1,31 @@
-import yaml
-from citation_utils import Citation, ShortDocketCategory
-from loguru import logger
+import json
 from collections.abc import Iterator
 from datetime import date
 from pathlib import Path
-from typing import Any, Self
-import json
+from typing import NamedTuple, Self
+
+import yaml
+from citation_utils import Citation, ShortDocketCategory
+from loguru import logger
 from pydantic import BaseModel, Field
 from sqlite_utils import Database
 
+from corpus_sc_toolkit.justice import CandidateJustice
 from corpus_sc_toolkit.meta import (
     CourtComposition,
     DecisionCategory,
     DecisionSource,
 )
-from corpus_sc_toolkit.resources import SC_LOCAL_FOLDER, SC_BASE_URL
-from corpus_sc_toolkit.justice import CandidateJustice
+from corpus_sc_toolkit.resources import SC_BASE_URL, SC_LOCAL_FOLDER
 
 
-class InterimSegment(BaseModel):
-    id: str = Field(...)
-    opinion_id: str = Field(...)
-    decision_id: int = Field(...)
-    position: str = Field(...)
-    segment: str = Field(...)
-    char_count: int = Field(...)
+class InterimSegment(NamedTuple):
+    id: str
+    opinion_id: str
+    decision_id: int
+    position: str
+    segment: str
+    char_count: int
 
 
 class InterimOpinion(BaseModel):
@@ -167,9 +168,7 @@ class InterimDecision(BaseModel):
         from .from_pdf import decision_from_pdf_db
 
         sql_path = Path(__file__).parent / "sql" / "limit_extract.sql"
-        query = sql_path.read_text()
-        rows = db.execute_returning_dicts(query)
-        for row in rows:
+        for row in db.execute_returning_dicts(sql_path.read_text()):
             if result := decision_from_pdf_db(db, row):
                 yield result
 

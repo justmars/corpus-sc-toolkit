@@ -1,16 +1,18 @@
 from pathlib import Path
+
 import yaml
 from citation_utils import Citation
+from markdownify import markdownify
+from sqlite_utils import Database
+
 from corpus_sc_toolkit.justice import CandidateJustice
 from corpus_sc_toolkit.meta import (
-    get_id_from_citation,
-    DecisionSource,
     CourtComposition,
     DecisionCategory,
+    DecisionSource,
+    get_id_from_citation,
     voteline_clean,
 )
-from sqlite_utils import Database
-from markdownify import markdownify
 
 
 def decision_from_path(p: Path, db: Database) -> dict:
