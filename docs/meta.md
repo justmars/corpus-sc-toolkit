@@ -4,7 +4,7 @@
 
 ::: corpus_sc_toolkit.meta.source.DecisionSource
 
-## Court Category
+## Decision Category
 
 ::: corpus_sc_toolkit.meta.category.DecisionCategory
 
@@ -21,7 +21,6 @@
 ### Extract Citation from Fields
 
 ::: corpus_sc_toolkit.meta.citation.get_cite_from_fields
-
 
 ## Title Tags
 

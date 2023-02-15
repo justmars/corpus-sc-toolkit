@@ -2,7 +2,7 @@
 
 ## Interim Decision
 
-::: corpus_sc_toolkit.loader.models.InterimDecision
+::: corpus_sc_toolkit.modes.models.InterimDecision
 
 ## Source of Extraction
 
@@ -28,4 +28,4 @@ There is a pre-existing sqlite database that is replicated via litestream to the
 
 ## Contents of Row from Path
 
-::: corpus_sc_toolkit.loader.from_pdf.decision_from_pdf_db
+::: corpus_sc_toolkit.modes.from_pdf.decision_from_pdf_db

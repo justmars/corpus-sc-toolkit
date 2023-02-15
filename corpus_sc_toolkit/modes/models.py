@@ -30,22 +30,22 @@ class Fields(BaseModel):
     :--:|:--:|:--
     created | float | When was this model instantiated, for paths, this is when the file was actually made
     modified | float |  When was this model last modified, for paths, this is when the file was actually modified
-    id | str | The combination of various strings based on the source and citation, if available
-    source | DecisionSource | May either be `sc` or `legacy`.
+    id | str | The [combination of various strings][set-decision-id-from-values] based on the source and citation, if available.
+    source | [DecisionSource][decision-source] | May either be `sc` or `legacy`.
     origin | str | If `sc` source, this refers to the URL slug stem
-    title | str | The case title
+    title | str | The case title, this can be classified into [tags][title-tags]
     description | str | The citation display
     date | datetime.date | The date the case was promulgated
     date_scraped | datetime.date | The date the case was scraped
     citation | optional[Citation] | The citation object
-    composition | CourtComposition | Whether the court sat en banc or in division
-    category | DecisionCategory | Whether the case decided was a decision or a resolution
+    composition | [CourtComposition][court-composition] | Whether the court sat en banc or in division
+    category | [DecisionCategory][decision-category] | Whether the case decided was a decision or a resolution
     raw_ponente| optional[str] | Who decided the case, if available
-    justice_id | optional[int] | The Justice ID, if available
+    justice_id | optional[int] | The [justice id][justice], if available
     per_curiam | bool. Defaults to False. | Whether the case was decided per curiam
     is_pdf | bool. Defaults to False. | Whether the case originated from a PDF file
     fallo | optional[str] | Detected fallo / dispositive portion
-    voting | optional[str] | Detected fallo / dispositive portion
+    voting | optional[str] | Detected [voting line][vote-lines]
     emails | list[str] | Emails of authors
     """  # noqa: E501
 
