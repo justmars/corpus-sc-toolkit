@@ -16,7 +16,7 @@ from .resources import (
     TEMP_FOLDER,
     origin,
     CLIENT,
-    bucket_name,
+    BUCKET_NAME,
     SQL_QUERY,
 )
 
@@ -123,7 +123,7 @@ class InterimDecision(DecisionFields):
         if not loc:
             return False
 
-        exist = CLIENT.get_object(Bucket=bucket_name, Key=loc)
+        exist = CLIENT.get_object(Bucket=BUCKET_NAME, Key=loc)
         if not exist or (exist and override):
             origin.upload(file_like=self.dump_pdf(), loc=loc, args=self.meta)
             return True

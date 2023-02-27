@@ -14,15 +14,13 @@ from corpus_sc_toolkit.meta import (
     DecisionSource,
 )
 
-bucket_name = "sc-decisions"
-origin = CFR2_Bucket(name=bucket_name)
+BUCKET_NAME = "sc-decisions"
+origin = CFR2_Bucket(name=BUCKET_NAME)
 meta = origin.resource.meta
 if not meta:
     raise Exception("Bad bucket.")
 CLIENT = meta.client
 
-TEMP_FOLDER = Path(__file__).parent.parent / "tmp"
-TEMP_FOLDER.mkdir(exist_ok=True)
 
 DOCKETS: list[str] = ["GR", "AM", "OCA", "AC", "BM"]
 
@@ -36,11 +34,26 @@ SQL_QUERY = PDF_DECISION_SQL.read_text()
 
 OPINION_MD_H1 = re.compile(r"^#\s*(?P<label>).*$")
 
+TEMP_FOLDER = Path(__file__).parent.parent / "tmp"
+TEMP_FOLDER.mkdir(exist_ok=True)
 
-def get_headline(text: str) -> str:
-    if m := OPINION_MD_H1.search(text):
-        return m.group("label")
-    return "Not Found"
+
+def tmp_load(src: str, ext: str = "yaml") -> str | dict[str, Any] | None:
+    """Based on the `src` prefix, download the same into a temp file
+    and return its contents based on the extension. A `yaml` extension
+    should result in contents in `dict` format; where an `md` or `html`
+    extension results in `str`. The temp file is deleted after every
+    successful extraction of the `src` as content."""
+
+    path = TEMP_FOLDER / f"temp.{ext}"
+    origin.download(src, str(path))
+    content = None
+    if ext == "yaml":
+        content = yaml.safe_load(path.read_bytes())
+    elif ext in ["md", "html"]:
+        content = path.read_text()
+    path.unlink(missing_ok=True)
+    return content
 
 
 class DecisionFields(BaseModel):
@@ -163,14 +176,6 @@ class DecisionFields(BaseModel):
         return prefix.removesuffix("/").replace("/", "-").lower()
 
     @classmethod
-    def key_from_md_prefix(cls, prefix: str):
-        """Given a prefix containing a filename, e.g. `/hello/test/ponencia.md`,
-        get the identifying key of the filename, e.g. `ponencia`."""
-        if "/" in prefix and prefix.endswith(".md"):
-            return prefix.split("/")[-1].split(".")[0]
-        return "Invalid Key."
-
-    @classmethod
     def get_dated_prefixes(
         cls, dockets: list[str] = DOCKETS, years: tuple[int, int] = YEARS
     ) -> Iterator[str]:
@@ -192,28 +197,8 @@ class DecisionFields(BaseModel):
         a `CommonPrefixes` key."""
         for prefix in cls.get_dated_prefixes(dockets, years):
             yield CLIENT.list_objects_v2(
-                Bucket=bucket_name, Delimiter="/", Prefix=prefix
+                Bucket=BUCKET_NAME, Delimiter="/", Prefix=prefix
             )
-
-    @classmethod
-    def tmp_load(
-        cls, src: str, ext: str = "yaml"
-    ) -> str | dict[str, Any] | None:
-        """Based on the `src` prefix, download the same into a temp file
-        and return its contents based on the extension. A `yaml` extension
-        should result in contents in `dict` format; where an `md` or `html`
-        extension results in `str`. The temp file is deleted after every
-        successful extraction of the `src` as content."""
-
-        path = TEMP_FOLDER / f"temp.{ext}"
-        origin.download(src, str(path))
-        content = None
-        if ext == "yaml":
-            content = yaml.safe_load(path.read_bytes())
-        elif ext in ["md", "html"]:
-            content = path.read_text()
-        path.unlink(missing_ok=True)
-        return content
 
 
 class OpinionSegment(NamedTuple):
@@ -249,6 +234,60 @@ class DecisionOpinion(NamedTuple):
     remark: str | None = None
     concurs: list[dict] | None = None
     justice_id: int | None = None
+
+    @classmethod
+    def get_headline(cls, text: str) -> str:
+        if match := OPINION_MD_H1.search(text):
+            return match.group("label")
+        return "Not Found"
+
+    @classmethod
+    def key_from_md_prefix(cls, prefix: str):
+        """Given a prefix containing a filename, e.g. `/hello/test/ponencia.md`,
+        get the identifying key of the filename, e.g. `ponencia`."""
+        if "/" in prefix and prefix.endswith(".md"):
+            return prefix.split("/")[-1].split(".")[0]
+        return "Invalid Key."
+
+    @classmethod
+    def fetch_partial_opinion(
+        cls, base_prefix: str
+    ) -> Iterator[dict[str, Any]]:
+        """Uses the base_prefix to extract a "subfolder" /opinions of the
+        bucket and subsequently place each in a `dict`."""
+
+        result = CLIENT.list_objects_v2(
+            Bucket=BUCKET_NAME, Delimiter="/", Prefix=f"{base_prefix}opinions/"
+        )
+        for content in result["Contents"]:
+            if content["Key"].endswith(".md"):
+                op_key = DecisionOpinion.key_from_md_prefix(content["Key"])
+                if text := tmp_load(content["Key"], ext="md"):
+                    if isinstance(text, str):
+                        title = DecisionOpinion.get_headline(text)
+                        opx = {"op_key": op_key, "title": title, "text": text}
+                        yield opx
+
+    @classmethod
+    def fetch(
+        cls,
+        base_prefix: str,
+        decision_id: str,
+        ponente_id: int | None = None,
+    ):
+        for opinion in cls.fetch_partial_opinion(base_prefix):
+            yield cls(
+                id=f"{decision_id}-{opinion['op_key']}",
+                decision_id=decision_id,
+                title=opinion["title"],
+                text=opinion["text"],
+                tags=[],
+                justice_id=(
+                    ponente_id
+                    if opinion["op_key"] == "ponencia"
+                    else opinion["op_key"]
+                ),
+            )
 
     @property
     def segments(self) -> list[OpinionSegment]:
