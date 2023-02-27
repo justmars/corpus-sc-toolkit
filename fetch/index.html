@@ -12,21 +12,23 @@
         <meta name="author" content="Marcelino Veloso III">
       
       
+        <link rel="canonical" href="https://lawsql.com/fetch/">
       
       
-      <link rel="icon" href="/assets/images/favicon.png">
+      
+      <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.0.15">
     
     
       
-        <title>corpus-sc-toolkit Docs</title>
+        <title>Fetch Instance - corpus-sc-toolkit Docs</title>
       
     
     
-      <link rel="stylesheet" href="/assets/stylesheets/main.113286f1.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.113286f1.min.css">
       
         
-        <link rel="stylesheet" href="/assets/stylesheets/palette.a0c5b2b5.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.a0c5b2b5.min.css">
       
       
 
@@ -42,9 +44,9 @@
       
     
     
-      <link rel="stylesheet" href="/assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
     
-    <script>__md_scope=new URL("/",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -71,6 +73,11 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
+      
+        
+        <a href="#fetch-instance" class="md-skip">
+          Skip to content
+        </a>
       
     </div>
     <div data-md-component="announce">
@@ -101,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              
+              Fetch Instance
             
           </span>
         </div>
@@ -231,7 +238,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         Overview
       </a>
     </li>
@@ -246,7 +253,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/justice/" class="md-nav__link">
+      <a href="../justice/" class="md-nav__link">
         Justice Field
       </a>
     </li>
@@ -261,7 +268,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/meta/" class="md-nav__link">
+      <a href="../meta/" class="md-nav__link">
         Meta Field
       </a>
     </li>
@@ -285,6 +292,37 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#establish-database" class="md-nav__link">
+    Establish database
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interim-decisions" class="md-nav__link">
+    Interim Decisions
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stored-decisions" class="md-nav__link">
+    Stored Decisions
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -296,8 +334,49 @@
             <div class="md-content" data-md-component="content">
               <article class="md-content__inner md-typeset">
                 
-  <h1>404 - Not found</h1>
+                  
 
+  
+  
+
+
+<h1 id="fetch-instance">Fetch Instance</h1>
+<h2 id="establish-database">Establish database</h2>
+<p>A pre-existing sqlite database, found in <code>s3://corpus-pdf/db</code>, contains justices and decisions <a href="https://github.com/justmars/corpus-extractor">extracted from pdf files</a>. The database is replicated via the process below:</p>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">dotenv</span> <span class="kn">import</span> <span class="n">find_dotenv</span><span class="p">,</span> <span class="n">load_dotenv</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">pylts</span> <span class="kn">import</span> <span class="n">ConfigS3</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">sqlpyd</span> <span class="kn">import</span> <span class="n">Connection</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">load_dotenv</span><span class="p">(</span><span class="n">find_dotenv</span><span class="p">())</span> <span class="c1"># ensure presence of env variables for litestream</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">stream</span> <span class="o">=</span> <span class="n">ConfigS3</span><span class="p">(</span><span class="n">s3</span><span class="o">=</span><span class="s1">&#39;s3://corpus-pdf/db&#39;</span><span class="p">,</span> <span class="n">folder</span><span class="o">=</span><span class="n">Path</span><span class="p">()</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span> <span class="o">/</span> <span class="s2">&quot;data&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="o">&gt;&gt;&gt;</span> <span class="c1"># stream.restore() # will download the database</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">c</span> <span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">DatabasePath</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">stream</span><span class="o">.</span><span class="n">dbpath</span><span class="p">),</span> <span class="n">WAL</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># database access via `c.db`</span>
+</code></pre></div>
+<h2 id="interim-decisions">Interim Decisions</h2>
+<p>Since the pdf files from the database have not yet been replicated in the R2 storage, initialize
+instances of the same:</p>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">corpus_sc_toolkit</span> <span class="kn">import</span> <span class="n">InterimDecision</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">interim_objs</span> <span class="o">=</span> <span class="n">InterimDecision</span><span class="o">.</span><span class="n">fetch</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">db</span><span class="p">)</span> <span class="c1"># instances found in the database</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">interim_objs</span><span class="p">)</span> <span class="c1"># x is an instance of InterimDecision</span>
+</code></pre></div>
+<h2 id="stored-decisions">Stored Decisions</h2>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">corpus_sc_toolkit</span> <span class="kn">import</span> <span class="n">StoredDecision</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">temp_objs</span> <span class="o">=</span> <span class="n">StoredDecision</span><span class="o">.</span><span class="n">prefetch</span><span class="p">(</span><span class="n">dockets</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;GR&quot;</span><span class="p">],</span> <span class="n">years</span><span class="o">=</span><span class="p">(</span><span class="mi">1996</span><span class="p">,</span><span class="mi">1997</span><span class="p">))</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">y_obj</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">temp_objs</span><span class="p">)</span> <span class="c1"># instances are found in r2</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">y</span> <span class="o">=</span> <span class="n">StoredDecision</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="n">y_obj</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">db</span><span class="p">)</span> <span class="c1"># y is an instance of StoredDecision</span>
+</code></pre></div>
+<p>When the prefix is identified:</p>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">corpus_sc_toolkit</span> <span class="kn">import</span> <span class="n">StoredDecision</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">prefix</span> <span class="o">=</span> <span class="s2">&quot;GR/1999/6/95405/&quot;</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">z_obj</span> <span class="o">=</span> <span class="n">StoredDecision</span><span class="o">.</span><span class="n">get_detailed_opinions_from_storage</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">)</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">z</span> <span class="o">=</span> <span class="n">StoredDecision</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="n">z_obj</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">db</span><span class="p">)</span> <span class="c1"># z is an instance of StoredDecision</span>
+</code></pre></div>
+
+
+
+
+
+                
               </article>
             </div>
           
@@ -355,10 +434,10 @@
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
-    <script id="__config" type="application/json">{"base": "/", "features": [], "search": "/assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="/assets/javascripts/bundle.2a6f1dda.min.js"></script>
+      <script src="../assets/javascripts/bundle.2a6f1dda.min.js"></script>
       
     
   </body>
