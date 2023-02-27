@@ -75,7 +75,8 @@ class StoredDecision(DecisionFields):
         download the same, and convert the download
         into a dict record.
 
-        Since the fetched item is not yet complete, the method name is `prefetch`."""
+        Since the fetched item is not yet complete, the method name is `prefetch`.
+        """
         for collection in cls.iter_collections(dockets, years):
             for docket in collection["CommonPrefixes"]:
                 yield cls.get_detailed_opinions_from_storage(docket["Prefix"])
