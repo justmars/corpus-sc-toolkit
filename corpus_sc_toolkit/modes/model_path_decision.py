@@ -13,7 +13,7 @@ from corpus_sc_toolkit.meta import (
     get_id_from_citation,
     voteline_clean,
 )
-from .fields import DecisionFields
+from .resources import DecisionFields
 
 
 class PathDecision(DecisionFields):
@@ -65,11 +65,6 @@ class PathDecision(DecisionFields):
             return None
 
         return PathDecision(
-            id=get_id_from_citation(
-                folder_name=path.parent.name,
-                source=path.parent.parent.stem,
-                citation=cite,
-            ),
             created=path.stat().st_ctime,
             modified=path.stat().st_mtime,
             origin=path.parent.name,
@@ -88,4 +83,13 @@ class PathDecision(DecisionFields):
                 text=data.get("ponente"),
                 date_str=data.get("date_prom"),
             ).ponencia,
+        )
+
+    def set_id(self, path: Path):
+        if not self.citation:
+            return None
+        return get_id_from_citation(
+            folder_name=path.parent.name,
+            source=path.parent.parent.stem,
+            citation=self.citation,
         )

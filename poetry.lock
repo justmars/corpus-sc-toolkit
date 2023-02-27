@@ -1819,14 +1819,14 @@ tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 
 [[package]]
 name = "start-sdk"
-version = "0.0.4"
+version = "0.0.5"
 description = "Settings for Github, Cloudflare Images API"
 category = "main"
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "start_sdk-0.0.4-py3-none-any.whl", hash = "sha256:c38ac3b323b8df1645d0281a6beb63c0e4d381a7b4432726fa34a276076a4277"},
-    {file = "start_sdk-0.0.4.tar.gz", hash = "sha256:c7c498ddaf60a8a41f91a1e9239dd52b67485542658ac4263e5945acead4802c"},
+    {file = "start_sdk-0.0.5-py3-none-any.whl", hash = "sha256:2805d2fbdb4b99a5777c977c40d0eb7286dd8aad660cc3ec6b229dfa375057b0"},
+    {file = "start_sdk-0.0.5.tar.gz", hash = "sha256:39d6d5e39688a3532385e61fa638702f8f16a0d71af35fb9cda565cc8b3f870f"},
 ]
 
 [package.dependencies]
@@ -2034,4 +2034,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "21f08b7d8989d253a49058d8ba69cfb6ea9cedc3d8b0216b92f30badffdf6c5b"
+content-hash = "648d38881c5fc3308489fe06c7e1be9a3775b89d883b15be36971c5141fac95a"

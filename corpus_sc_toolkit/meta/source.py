@@ -1,4 +1,5 @@
 from enum import Enum
+import datetime
 
 
 class DecisionSource(str, Enum):
@@ -17,3 +18,9 @@ class DecisionSource(str, Enum):
 
     sc = "sc"
     legacy = "legacy"
+
+    @classmethod
+    def from_date(cls, d: datetime.date):
+        if d >= datetime.datetime(year=1996, month=1, day=1):
+            return DecisionSource.sc
+        return DecisionSource.legacy

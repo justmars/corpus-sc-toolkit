@@ -22,9 +22,6 @@ nav:
   - Overview: index.md
   - Justice Field: justice.md
   - Meta Field: meta.md
-  - Modes:
-    - YAML-Path: modes/path.md
-    - PDF-DB: modes/pdf.md
 extra:
   homepage: https://mv3.dev
   social:
