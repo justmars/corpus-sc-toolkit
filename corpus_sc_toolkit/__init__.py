@@ -1,4 +1,4 @@
-__version__ = "0.0.11"
+__version__ = "0.0.12"
 
 from .justice import (
     CandidateJustice,
@@ -19,13 +19,10 @@ from .meta import (
     voteline_clean,
 )
 from .modes import (
-    BaseDecision,
     DecisionHTMLConvertMarkdown,
     InterimDecision,
     InterimOpinion,
     add_markdown_file,
-    decision_from_path,
-    decision_from_pdf_db,
     segmentize,
     standardize,
 )
