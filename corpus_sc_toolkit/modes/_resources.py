@@ -246,14 +246,10 @@ class DecisionOpinion(NamedTuple):
         return "Invalid Key."
 
     @classmethod
-    def fetch_partial_opinion(
-        cls, base_prefix: str
-    ) -> Iterator[dict[str, Any]]:
-        """Uses the base_prefix to extract a "subfolder" /opinions of the
-        bucket and subsequently place each in a `dict`."""
-
+    def fetch_partial_opinion(cls, prefix: str) -> Iterator[dict[str, Any]]:
+        """Get each markdown file and place in a `dict`."""
         result = CLIENT.list_objects_v2(
-            Bucket=BUCKET_NAME, Delimiter="/", Prefix=f"{base_prefix}opinions/"
+            Bucket=BUCKET_NAME, Delimiter="/", Prefix=prefix
         )
         for content in result["Contents"]:
             if content["Key"].endswith(".md"):
@@ -271,7 +267,12 @@ class DecisionOpinion(NamedTuple):
         decision_id: str,
         ponente_id: int | None = None,
     ):
-        for opinion in cls.fetch_partial_opinion(base_prefix):
+        """The `base_prefix` is in the form of `<docket>/<year>/<month>/<serial>/`.
+        The opinion prefix is simply the addition of "opinions" to this base.
+
+        The `ponente_id`, if available, will be used to populate the ponencia
+        opinion."""
+        for opinion in cls.fetch_partial_opinion(f"{base_prefix}opinions"):
             yield cls(
                 id=f"{decision_id}-{opinion['op_key']}",
                 decision_id=decision_id,
