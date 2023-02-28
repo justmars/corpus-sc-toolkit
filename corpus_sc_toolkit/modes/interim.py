@@ -11,6 +11,7 @@ from dateutil.parser import parse
 from ..meta import CourtComposition, DecisionCategory, get_cite_from_fields
 from ..justice import CandidateJustice
 from ._resources import (
+    DecisionOpinion,
     DecisionFields,
     TEMP_FOLDER,
     origin,
@@ -25,7 +26,7 @@ class InterimOpinion(BaseModel):
     id: str = Field(default=...)
     decision_id: str = Field(default=...)
     candidate: CandidateJustice = Field(exclude=True)
-    title: str | None = Field(
+    title: str = Field(
         default=...,
         description=(
             "How is the opinion called, e.g. Ponencia, Concurring Opinion,"
@@ -49,12 +50,17 @@ class InterimOpinion(BaseModel):
         arbitrary_types_allowed = True
 
     @property
-    def row(self) -> dict[str, str]:
+    def row(self):
         """Row to be used in OpinionRow table."""
-        text = f"{self.body}\n----\n{self.annex}"
-        base = self.dict(include={"id", "decision_id", "pdf", "title"})
-        extended = {"justice_id": self.candidate.id, "text": text}
-        return base | extended
+        return DecisionOpinion(
+            id=f"{self.decision_id}-{self.candidate.id or self.id}",
+            decision_id=self.decision_id,
+            title=self.title,
+            pdf=self.pdf,
+            justice_id=self.candidate.id,
+            text=f"{self.body}\n\n----\n\n{self.annex}",
+            tags=[],
+        )
 
     @classmethod
     def setup(cls, idx: str, db: Database, data: dict) -> dict | None:
@@ -83,7 +89,7 @@ class InterimOpinion(BaseModel):
 
 
 class InterimDecision(DecisionFields):
-    opinions: list[dict] = Field(default_factory=list)
+    ...
 
     @classmethod
     def originate(cls, db: Database) -> Iterator[Self]:
@@ -126,8 +132,7 @@ class InterimDecision(DecisionFields):
             decision.raw_ponente = opx_data.get("raw_ponente", None)
             decision.per_curiam = opx_data.get("per_curiam", False)
             decision.justice_id = opx_data.get("justice_id", None)
-            opinions = opx_data["opinions"]
-            decision.opinions = [opinion.row for opinion in opinions]
+            decision.opinions = [op.row for op in opx_data["opinions"]]
             yield decision
 
     @property
@@ -155,14 +160,17 @@ class InterimDecision(DecisionFields):
         """
         if not (target_prefix := self.pdf_prefix):
             return None
-        instance = {"id": self.id} | self.dict()
+        instance = {
+            "id": self.id,
+            "opinions": [o._asdict() for o in self.opinions],
+        } | self.dict(exclude={"opinions"})
         temp_path = TEMP_FOLDER / "temp_pdf.yaml"
         temp_path.unlink(missing_ok=True)  # delete existing content, if any.
         with open(temp_path, "w+") as write_file:
             yaml.safe_dump(instance, write_file)
         return target_prefix, temp_path
 
-    def upload(self, override: bool = False) -> bool:
+    def upload(self, override: bool = False):
         """With a temporary file prepared, upload the object representing
         the Interim Decision instance to R2 storage.
 
@@ -176,11 +184,7 @@ class InterimDecision(DecisionFields):
         if not prep_pdf_upload:
             return False
         loc, file_like = prep_pdf_upload
-        exist = CLIENT.get_object(Bucket=BUCKET_NAME, Key=loc)
-        if not exist or (exist and override):
-            origin.upload(file_like=file_like, loc=loc, args=self.meta)
-            return True
-        return False
+        origin.upload(file_like=file_like, loc=loc, args=self.meta)
 
     @classmethod
     def get(cls, prefix: str) -> Self:
@@ -199,4 +203,5 @@ class InterimDecision(DecisionFields):
         data = tmp_load(src=prefix, ext="yaml")
         if not isinstance(data, dict):
             raise Exception(f"Could not originate {prefix=}")
-        return cls(**data)
+        opinions = [DecisionOpinion(**o) for o in data.pop("opinions")]
+        return cls(opinions=opinions, **data)

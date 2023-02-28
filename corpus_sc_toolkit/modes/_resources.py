@@ -7,12 +7,12 @@ from start_sdk import CFR2_Bucket
 from citation_utils import Citation
 from collections.abc import Iterator
 from pydantic import BaseModel, Field
-
 from corpus_sc_toolkit.meta import (
     CourtComposition,
     DecisionCategory,
     DecisionSource,
 )
+from .txt.splitter import segmentize
 
 BUCKET_NAME = "sc-decisions"
 origin = CFR2_Bucket(name=BUCKET_NAME)
@@ -54,6 +54,83 @@ def tmp_load(src: str, ext: str = "yaml") -> str | dict[str, Any] | None:
         content = path.read_text()
     path.unlink(missing_ok=True)
     return content
+
+
+class OpinionSegment(NamedTuple):
+    id: str
+    opinion_id: str
+    decision_id: str
+    position: str
+    segment: str
+    char_count: int
+
+
+class DecisionOpinion(NamedTuple):
+    id: str
+    decision_id: str
+    title: str
+    text: str
+    tags: list[str]
+    pdf: str | None = None
+    remark: str | None = None
+    concurs: list[dict] | None = None
+    justice_id: int | None = None
+
+    @property
+    def segments(self) -> Iterator[OpinionSegment]:
+        """Auto-generated segments based on the text of the opinion."""
+        for extract in segmentize(self.text):
+            yield OpinionSegment(
+                id=f"{self.id}-{extract['position']}",
+                decision_id=self.decision_id,
+                opinion_id=self.id,
+                **extract,
+            )
+
+    @classmethod
+    def get_headline(cls, text: str) -> str:
+        if match := OPINION_MD_H1.search(text):
+            return match.group("label")
+        return "Not Found"
+
+    @classmethod
+    def key_from_md_prefix(cls, prefix: str):
+        """Given a prefix containing a filename, e.g. `/hello/test/ponencia.md`,
+        get the identifying key of the filename, e.g. `ponencia`."""
+        if "/" in prefix and prefix.endswith(".md"):
+            return prefix.split("/")[-1].split(".")[0]
+        return "Invalid Key."
+
+    @classmethod
+    def fetch(
+        cls,
+        opinion_prefix: str,
+        decision_id: str,
+        ponente_id: int | None = None,
+    ):
+        """The `opinion_prefix` must be in the form of:
+
+        `<docket>/<year>/<month>/<serial>/opinions/`. Note the ending backslash.
+
+        The `ponente_id`, if present, will be used to populate the ponencia
+        opinion."""
+        result = CLIENT.list_objects_v2(
+            Bucket=BUCKET_NAME, Delimiter="/", Prefix=opinion_prefix
+        )
+        for content in result["Contents"]:
+            if content["Key"].endswith(".md"):
+                key = DecisionOpinion.key_from_md_prefix(content["Key"])
+                justice_id = ponente_id if key == "ponencia" else int(key)
+                if text := tmp_load(content["Key"], ext="md"):
+                    if isinstance(text, str):
+                        yield cls(
+                            id=f"{decision_id}-{key}",
+                            decision_id=decision_id,
+                            title=DecisionOpinion.get_headline(text),
+                            text=text,
+                            tags=[],
+                            justice_id=justice_id,
+                        )
 
 
 class DecisionFields(BaseModel):
@@ -101,6 +178,7 @@ class DecisionFields(BaseModel):
     fallo: str | None = None
     voting: str | None = None
     emails: list[str] = Field(default_factory=list)
+    opinions: list[DecisionOpinion] = Field(default_factory=list)
 
     class Config:
         use_enum_values = True
@@ -151,6 +229,8 @@ class DecisionFields(BaseModel):
 
     @property
     def meta(self):
+        """When uploading to R2, the metadata can be included as extra arguments to
+        the file."""
         if not self.docket_citation:
             return {}
         raw = {
@@ -195,104 +275,3 @@ class DecisionFields(BaseModel):
             yield CLIENT.list_objects_v2(
                 Bucket=BUCKET_NAME, Delimiter="/", Prefix=prefix
             )
-
-
-class OpinionSegment(NamedTuple):
-    id: str
-    opinion_id: str
-    decision_id: str
-    position: str
-    segment: str
-    char_count: int
-
-    @classmethod
-    def set_from_txt(
-        cls, decision_id: str, opinion_id: str, opinion_text: str
-    ):
-        from corpus_sc_toolkit import segmentize
-
-        for extract in segmentize(opinion_text):
-            yield cls(
-                id=f"{opinion_id}-{extract['position']}",
-                decision_id=decision_id,
-                opinion_id=opinion_id,
-                **extract,
-            )
-
-
-class DecisionOpinion(NamedTuple):
-    id: str
-    decision_id: str
-    title: str
-    text: str
-    tags: list[str]
-    pdf: str | None = None
-    remark: str | None = None
-    concurs: list[dict] | None = None
-    justice_id: int | None = None
-
-    @classmethod
-    def get_headline(cls, text: str) -> str:
-        if match := OPINION_MD_H1.search(text):
-            return match.group("label")
-        return "Not Found"
-
-    @classmethod
-    def key_from_md_prefix(cls, prefix: str):
-        """Given a prefix containing a filename, e.g. `/hello/test/ponencia.md`,
-        get the identifying key of the filename, e.g. `ponencia`."""
-        if "/" in prefix and prefix.endswith(".md"):
-            return prefix.split("/")[-1].split(".")[0]
-        return "Invalid Key."
-
-    @classmethod
-    def fetch_partial_opinion(cls, prefix: str) -> Iterator[dict[str, Any]]:
-        """Get each markdown file and place in a `dict`."""
-        result = CLIENT.list_objects_v2(
-            Bucket=BUCKET_NAME, Delimiter="/", Prefix=prefix
-        )
-        for content in result["Contents"]:
-            if content["Key"].endswith(".md"):
-                op_key = DecisionOpinion.key_from_md_prefix(content["Key"])
-                if text := tmp_load(content["Key"], ext="md"):
-                    if isinstance(text, str):
-                        title = DecisionOpinion.get_headline(text)
-                        opx = {"op_key": op_key, "title": title, "text": text}
-                        yield opx
-
-    @classmethod
-    def fetch(
-        cls,
-        opinion_prefix: str,
-        decision_id: str,
-        ponente_id: int | None = None,
-    ):
-        """The `opinion_prefix` is in the form of:
-
-        `<docket>/<year>/<month>/<serial>/opinions`.
-
-        The `ponente_id`, if available, will be used to populate the ponencia
-        opinion."""
-        for opinion in cls.fetch_partial_opinion(opinion_prefix):
-            yield cls(
-                id=f"{decision_id}-{opinion['op_key']}",
-                decision_id=decision_id,
-                title=opinion["title"],
-                text=opinion["text"],
-                tags=[],
-                justice_id=(
-                    ponente_id
-                    if opinion["op_key"] == "ponencia"
-                    else opinion["op_key"]
-                ),
-            )
-
-    @property
-    def segments(self) -> list[OpinionSegment]:
-        return list(
-            OpinionSegment.set_from_txt(
-                decision_id=self.decision_id,
-                opinion_id=self.id,
-                opinion_text=self.text,
-            )
-        )

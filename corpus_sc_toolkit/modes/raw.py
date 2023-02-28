@@ -21,7 +21,7 @@ from ._resources import (
 
 
 class RawDecision(DecisionFields):
-    opinions: list[DecisionOpinion] = Field(default_factory=list)
+    ...
 
     @classmethod
     def preget(cls, prefix: str) -> dict[str, Any]:
