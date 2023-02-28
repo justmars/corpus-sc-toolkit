@@ -18,6 +18,7 @@ from .resources import (
     CLIENT,
     BUCKET_NAME,
     SQL_QUERY,
+    tmp_load,
 )
 
 
@@ -137,7 +138,7 @@ class InterimDecision(DecisionFields):
         return False
 
     @classmethod
-    def fetch(cls, db: Database) -> Iterator[Self]:
+    def originate_from_db(cls, db: Database) -> Iterator[Self]:
         """Extract sql query (`/sql/limit_extract.sql`) from `db` to instantiate
         a list of rows to process.
 
@@ -182,3 +183,10 @@ class InterimDecision(DecisionFields):
             opinions = opx_data["opinions"]
             decision.opinions = [opinion.row for opinion in opinions]
             yield decision
+
+    @classmethod
+    def originate_from_r2(cls, prefix: str) -> Self:
+        data = tmp_load(src=prefix, ext="yaml")
+        if not isinstance(data, dict):
+            raise Exception(f"Could not originate {prefix=}")
+        return cls(**data)

@@ -23,7 +23,7 @@ Initialize instances of an Interim Decision:
 
 ```py
 >>> from corpus_sc_toolkit import InterimDecision
->>> interim_objs = InterimDecision.fetch(c.db) # raw data found in the database
+>>> interim_objs = InterimDecision.originate_from_db(c.db) # raw data found in the database
 >>> x = next(interim_objs) # x is an instance of InterimDecision
 ```
 
@@ -42,6 +42,13 @@ The dumped file may be uploaded to R2:
 False
 >>> x.upload(override=True) # will update the existing prefix data
 True # can now check R2 for the matching prefix in the bucket name with prefix GR/2021/10/227403/pdf.yaml
+```
+
+After being uploaded, it can be recalled from R2, if we know the prefix:
+
+```py
+>>> prefix = "GR/2021/10/227403/pdf.yaml"
+>>> output = InterimDecision.originate_from_r2(prefix)
 ```
 
 ## Stored Decisions
