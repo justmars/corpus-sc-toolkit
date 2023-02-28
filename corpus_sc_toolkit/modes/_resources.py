@@ -42,6 +42,11 @@ def tmp_load(src: str, ext: str = "yaml") -> str | dict[str, Any] | None:
 
 
 class OpinionSegment(NamedTuple):
+    """A decision is naturally subdivided into [opinions][decision opinions].
+    Breaking down opinions into segments is an attempt to narrow down the scope
+    of decisions to smaller portions for purposes of FTS search snippets and analysis.
+    """
+
     id: str
     opinion_id: str
     decision_id: str
@@ -54,6 +59,11 @@ OPINION_MD_H1 = re.compile(r"^#\s*(?P<label>).*$")
 
 
 class DecisionOpinion(NamedTuple):
+    """A decision may contain a single opinion entitled the Ponencia or span
+    multiple opinions depending on the justices of the Court who are charged to decide
+    a specific case.
+    """
+
     id: str
     decision_id: str
     title: str
@@ -146,9 +156,7 @@ CLIENT = meta.client
 
 class DecisionFields(BaseModel):
     """
-    # Decision Fields
-
-    A `Decision` relies on pre-processing of various fields.
+    A `Decision` relies on pre-processing various fields.
 
     This toolkit helps process some of those fields prior to insertion into a
     terminal database (even if they may previously originate from another
@@ -172,6 +180,7 @@ class DecisionFields(BaseModel):
     fallo | optional[str] | Detected fallo / dispositive portion
     voting | optional[str] | Detected [voting line][vote-lines]
     emails | list[str] | Emails of authors
+    opinions | list[DecisionOpinion] | [Opinion structures][decision opinions] which can be further [subdivided into segments][opinion segments]
     """  # noqa: E501
 
     origin: str
