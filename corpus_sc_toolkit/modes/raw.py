@@ -11,6 +11,8 @@ from corpus_sc_toolkit.meta import (
 )
 
 from ._resources import (
+    SUFFIX_OPINION,
+    DETAILS_FILE,
     DOCKETS,
     YEARS,
     DecisionFields,
@@ -35,9 +37,9 @@ class RawDecision(DecisionFields):
         Returns:
             dict[str, Any]: Identified dict from R2 containing the details.yaml prefix.
         """
-        if not prefix.endswith("/details.yaml"):
+        if not prefix.endswith(f"/{DETAILS_FILE}"):
             raise Exception("Method limited to details.yaml.")
-        candidate = prefix.removesuffix("/details.yaml")
+        candidate = prefix.removesuffix(f"/{DETAILS_FILE}")
         identity = {"prefix": candidate, "id": cls.set_id(candidate)}
         data = tmp_load(src=prefix, ext="yaml")
         if not isinstance(data, dict):
@@ -63,11 +65,8 @@ class RawDecision(DecisionFields):
         Yields:
             Iterator[dict]: Identified dicts from R2 containing details.yaml prefix.
         """
-        for collection in cls.iter_collections(dockets, years):
-            prefixed_dockets = collection["CommonPrefixes"]
-            for docket in prefixed_dockets:
-                prefix = f'{docket["Prefix"]}details.yaml'
-                yield cls.preget(prefix)
+        for prefix in cls.iter_dockets(dockets, years):
+            yield cls.preget(f"{prefix}{DETAILS_FILE}")
 
     @classmethod
     def make(cls, r2_data: dict, db: Database) -> Self | None:
@@ -84,7 +83,7 @@ class RawDecision(DecisionFields):
         )
         opinions = list(
             DecisionOpinion.fetch(
-                opinion_prefix=f"{r2_data['prefix']}/opinions/",
+                opinion_prefix=f"{r2_data['prefix']}{SUFFIX_OPINION}",
                 decision_id=r2_data["id"],
                 ponente_id=ponente.id,
             )

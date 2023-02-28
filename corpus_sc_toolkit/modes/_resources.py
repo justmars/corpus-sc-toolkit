@@ -7,11 +7,7 @@ from start_sdk import CFR2_Bucket
 from citation_utils import Citation
 from collections.abc import Iterator
 from pydantic import BaseModel, Field
-from corpus_sc_toolkit.meta import (
-    CourtComposition,
-    DecisionCategory,
-    DecisionSource,
-)
+from corpus_sc_toolkit.meta import CourtComposition, DecisionCategory
 from .txt.splitter import segmentize
 
 """Generic temporary file download."""
@@ -154,6 +150,19 @@ CLIENT = meta.client
 """R2 variables in order to perform operations from the library."""
 
 
+DETAILS_FILE = "details.yaml"
+"""Note that this does not have a backslash"""
+
+PDF_FILE = "pdf.yaml"
+"""Note that this does not have a backslash"""
+
+SUFFIX_PDF = f"/{PDF_FILE}"
+"""Note inclusion of start backslash"""
+
+SUFFIX_OPINION = "/opinions/"
+"""Note inclusion of start and end backslashes"""
+
+
 class DecisionFields(BaseModel):
     """
     A `Decision` relies on pre-processing various fields.
@@ -183,31 +192,49 @@ class DecisionFields(BaseModel):
     opinions | list[DecisionOpinion] | [Opinion structures][decision opinions] which can be further [subdivided into segments][opinion segments]
     """  # noqa: E501
 
-    origin: str
-    title: str
-    description: str
-    date: datetime.date
-    date_scraped: datetime.date
-    citation: Citation | None = None
-    composition: CourtComposition
-    category: DecisionCategory
-    raw_ponente: str | None = None
-    justice_id: int | None = None
-    per_curiam: bool = False
-    is_pdf: bool = False
-    fallo: str | None = None
-    voting: str | None = None
+    origin: str = Field(col=str, index=True)
+    title: str = Field(col=str, index=True, fts=True)
+    description: str = Field(col=str, index=True, fts=True)
+    date: datetime.date = Field(col=datetime.date, index=True)
+    date_scraped: datetime.date = Field(col=datetime.date, index=True)
+    citation: Citation | None = Field(default=None)
+    composition: CourtComposition = Field(default=None, col=str, index=True)
+    category: DecisionCategory = Field(default=None, col=str, index=True)
+    raw_ponente: str | None = Field(
+        default=None,
+        title="Ponente",
+        description=(
+            "After going through a cleaning process, this should be in"
+            " lowercase and be suitable for matching a justice id."
+        ),
+        col=str,
+        index=True,
+    )
+    justice_id: int | None = Field(
+        default=None,
+        title="Justice ID",
+        description=(
+            "Using the raw_ponente, determine the appropriate justice_id using"
+            " the `update_justice_ids.sql` template."
+        ),
+        col=int,
+        index=True,
+    )
+    per_curiam: bool = Field(
+        default=False,
+        title="Is Per Curiam",
+        description="If true, decision was penned anonymously.",
+        col=bool,
+        index=True,
+    )
+    is_pdf: bool | None = Field(default=False, col=bool, index=True)
+    fallo: str | None = Field(default=None, col=str, index=True, fts=True)
+    voting: str | None = Field(default=None, col=str, index=True, fts=True)
     emails: list[str] = Field(default_factory=list)
     opinions: list[DecisionOpinion] = Field(default_factory=list)
 
     class Config:
         use_enum_values = True
-
-    @property
-    def source(self) -> str:
-        """See [DecisionSource][decision-source], may either be `sc` or `legacy`,
-        depending on the `date` of the instance."""
-        return DecisionSource.from_date(self.date)
 
     @property
     def docket_citation(self) -> Citation | None:
@@ -221,7 +248,7 @@ class DecisionFields(BaseModel):
         return self.citation
 
     @property
-    def id(self) -> str | None:
+    def prefix_id(self) -> str | None:
         """Generate an id based on a prefix base, e.g. if the `@base_prefix` is
         `GR/2021/10/227403`, the generated id will be gr-2021-10-227403."""
         if not self.base_prefix:
@@ -295,3 +322,34 @@ class DecisionFields(BaseModel):
             yield CLIENT.list_objects_v2(
                 Bucket=BUCKET_NAME, Delimiter="/", Prefix=prefix
             )
+
+    @classmethod
+    def iter_dockets(
+        cls, dockets: list[str] = DOCKETS, years: tuple[int, int] = YEARS
+    ) -> Iterator[str]:
+        """For each item in the collection from `cls.iter_collections()`, produce
+        unique docket keys."""
+        for collection in cls.iter_collections(dockets, years):
+            for docket in collection["CommonPrefixes"]:
+                yield docket["Prefix"]
+
+    @classmethod
+    def get_raw_prefixed_key(cls, dated_prefix: str) -> str | None:
+        target_key = f"{dated_prefix}{DETAILS_FILE}"
+        if cls.get_obj(target_key):
+            return target_key
+        return None
+
+    @classmethod
+    def get_pdf_prefixed_key(cls, dated_prefix: str) -> str | None:
+        target_key = f"{dated_prefix}{PDF_FILE}"
+        if cls.get_obj(target_key):
+            return target_key
+        return None
+
+    @classmethod
+    def get_obj(cls, key: str) -> str | None:
+        try:
+            return CLIENT.get_object(Bucket=BUCKET_NAME, Key=key)
+        except Exception:
+            return None

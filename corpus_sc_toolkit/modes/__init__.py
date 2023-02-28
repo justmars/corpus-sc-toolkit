@@ -1,3 +1,4 @@
+from ._resources import DecisionFields
 from .interim import InterimDecision, InterimOpinion
 from .txt import (
     DecisionHTMLConvertMarkdown,

@@ -11,6 +11,7 @@ from dateutil.parser import parse
 from ..meta import CourtComposition, DecisionCategory, get_cite_from_fields
 from ..justice import CandidateJustice
 from ._resources import (
+    SUFFIX_PDF,
     DecisionOpinion,
     DecisionFields,
     TEMP_FOLDER,
@@ -119,13 +120,15 @@ class InterimDecision(DecisionFields):
                     row.get("category"), row.get("notice")
                 ),
             )
-            if not decision.id:
+            if not decision.prefix_id:
                 logger.error(f"Undetected decision ID, see {cite=}")
                 continue
 
-            opx_data = InterimOpinion.setup(idx=decision.id, db=db, data=row)
+            opx_data = InterimOpinion.setup(
+                idx=decision.prefix_id, db=db, data=row
+            )
             if not opx_data or not opx_data.get("opinions"):
-                logger.error(f"No opinions detected in {decision.id=}")
+                logger.error(f"No opinions detected in {decision.prefix_id=}")
                 continue
             decision.raw_ponente = opx_data.get("raw_ponente", None)
             decision.per_curiam = opx_data.get("per_curiam", False)
@@ -142,7 +145,7 @@ class InterimDecision(DecisionFields):
         if not self.is_pdf:
             logger.warning("Method limited to pdf-based files.")
             return None
-        return f"{self.base_prefix}/pdf.yaml"
+        return f"{self.base_prefix}{SUFFIX_PDF}"
 
     def dump(self) -> tuple[str, Path] | None:
         """Create a temporary yaml file containing the relevant fields
@@ -159,16 +162,17 @@ class InterimDecision(DecisionFields):
         if not (target_prefix := self.pdf_prefix):
             return None
         instance = {
-            "id": self.id,
+            "id": self.prefix_id,
             "opinions": [o._asdict() for o in self.opinions],
         } | self.dict(exclude={"opinions"})
         temp_path = TEMP_FOLDER / "temp_pdf.yaml"
         temp_path.unlink(missing_ok=True)  # delete existing content, if any.
         with open(temp_path, "w+") as write_file:
+            logger.info(f"Dumping {target_prefix=}")
             yaml.safe_dump(instance, write_file)
         return target_prefix, temp_path
 
-    def upload(self, override: bool = False):
+    def upload(self):
         """With a temporary file prepared, upload the object representing
         the Interim Decision instance to R2 storage.
 
@@ -182,6 +186,7 @@ class InterimDecision(DecisionFields):
         if not prep_pdf_upload:
             return False
         loc, file_like = prep_pdf_upload
+        logger.info(f"Uploading {loc=}")
         ORIGIN.upload(file_like=file_like, loc=loc, args=self.meta)
 
     @classmethod
@@ -196,7 +201,7 @@ class InterimDecision(DecisionFields):
         Returns:
             Self: Interim Decision instance from R2 prefix.
         """
-        if not prefix.endswith("/pdf.yaml"):
+        if not prefix.endswith(SUFFIX_PDF):
             raise Exception("Method limited to pdf-based files.")
         data = tmp_load(src=prefix, ext="yaml")
         if not isinstance(data, dict):
