@@ -12,8 +12,10 @@
         <meta name="author" content="Marcelino Veloso III">
       
       
-        <link rel="canonical" href="https://lawsql.com/fetch/">
+        <link rel="canonical" href="https://lawsql.com/modes/">
       
+      
+        <link rel="prev" href="../meta/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -21,7 +23,7 @@
     
     
       
-        <title>Fetch Instance - corpus-sc-toolkit Docs</title>
+        <title>Modes - corpus-sc-toolkit Docs</title>
       
     
     
@@ -108,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Fetch Instance
+              Modes
             
           </span>
         </div>
@@ -275,6 +277,110 @@
   
 
     
+      
+      
+      
+
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Modes
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Modes
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#establish-database" class="md-nav__link">
+    Establish database
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interim-decisions" class="md-nav__link">
+    Interim Decisions
+  </a>
+  
+    <nav class="md-nav" aria-label="Interim Decisions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#originate-from-db" class="md-nav__link">
+    Originate from DB
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dump-to-local" class="md-nav__link">
+    Dump to Local
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#upload-to-r2" class="md-nav__link">
+    Upload to R2
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-from-r2" class="md-nav__link">
+    Get from R2
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#raw-decisions" class="md-nav__link">
+    Raw Decisions
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -313,11 +419,45 @@
     Interim Decisions
   </a>
   
+    <nav class="md-nav" aria-label="Interim Decisions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#originate-from-db" class="md-nav__link">
+    Originate from DB
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dump-to-local" class="md-nav__link">
+    Dump to Local
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#upload-to-r2" class="md-nav__link">
+    Upload to R2
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-from-r2" class="md-nav__link">
+    Get from R2
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
-  <a href="#stored-decisions" class="md-nav__link">
-    Stored Decisions
+  <a href="#raw-decisions" class="md-nav__link">
+    Raw Decisions
   </a>
   
 </li>
@@ -353,23 +493,50 @@
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">c</span> <span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">DatabasePath</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">stream</span><span class="o">.</span><span class="n">dbpath</span><span class="p">),</span> <span class="n">WAL</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># database access via `c.db`</span>
 </code></pre></div>
 <h2 id="interim-decisions">Interim Decisions</h2>
-<p>Since the pdf files from the database have not yet been replicated in the R2 storage, initialize
-instances of the same:</p>
+<p>The pdf files from the database have not yet been replicated to R2 storage.</p>
+<h3 id="originate-from-db">Originate from DB</h3>
+<p>Initialize instances of an Interim Decision:</p>
 <div class="highlight"><span class="filename">Python</span><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">corpus_sc_toolkit</span> <span class="kn">import</span> <span class="n">InterimDecision</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">interim_objs</span> <span class="o">=</span> <span class="n">InterimDecision</span><span class="o">.</span><span class="n">fetch</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">db</span><span class="p">)</span> <span class="c1"># instances found in the database</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">interim_objs</span><span class="p">)</span> <span class="c1"># x is an instance of InterimDecision</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">interim_objs</span> <span class="o">=</span> <span class="n">InterimDecision</span><span class="o">.</span><span class="n">originate</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">db</span><span class="p">)</span> <span class="c1"># raw data found in the database</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">interim_objs</span><span class="p">)</span> <span class="c1"># x is an instance of an Interim Decision</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">pdf_prefix</span> <span class="c1"># the target prefix property of an Interim Decision</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="s1">&#39;GR/2021/10/227403/pdf.yaml&#39;</span> <span class="c1"># sample</span>
 </code></pre></div>
-<h2 id="stored-decisions">Stored Decisions</h2>
-<div class="highlight"><span class="filename">Python</span><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">corpus_sc_toolkit</span> <span class="kn">import</span> <span class="n">StoredDecision</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">temp_objs</span> <span class="o">=</span> <span class="n">StoredDecision</span><span class="o">.</span><span class="n">prefetch</span><span class="p">(</span><span class="n">dockets</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;GR&quot;</span><span class="p">],</span> <span class="n">years</span><span class="o">=</span><span class="p">(</span><span class="mi">1996</span><span class="p">,</span><span class="mi">1997</span><span class="p">))</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">y_obj</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">temp_objs</span><span class="p">)</span> <span class="c1"># instances are found in r2</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">y</span> <span class="o">=</span> <span class="n">StoredDecision</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="n">y_obj</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">db</span><span class="p">)</span> <span class="c1"># y is an instance of StoredDecision</span>
+<h3 id="dump-to-local">Dump to Local</h3>
+<p>Using the sample above, produce a temporary file found in <code>corpus_sc_toolkit/tmp/temp_pdf.yaml</code>:</p>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">dump</span><span class="p">()</span> <span class="c1">#</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="p">(</span><span class="s1">&#39;GR/2021/10/227403/pdf.yaml&#39;</span><span class="p">,</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a> <span class="n">PosixPath</span><span class="p">(</span><span class="s1">&#39;/Users/mv/Code/corpus-toolkit/corpus_sc_toolkit/tmp/temp_pdf.yaml&#39;</span><span class="p">))</span>
 </code></pre></div>
-<p>When the prefix is identified:</p>
-<div class="highlight"><span class="filename">Python</span><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">corpus_sc_toolkit</span> <span class="kn">import</span> <span class="n">StoredDecision</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">prefix</span> <span class="o">=</span> <span class="s2">&quot;GR/1999/6/95405/&quot;</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">z_obj</span> <span class="o">=</span> <span class="n">StoredDecision</span><span class="o">.</span><span class="n">get_detailed_opinions_from_storage</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">)</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">z</span> <span class="o">=</span> <span class="n">StoredDecision</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="n">z_obj</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">db</span><span class="p">)</span> <span class="c1"># z is an instance of StoredDecision</span>
+<h3 id="upload-to-r2">Upload to R2</h3>
+<p>Instead of creating a dump file, can automatically upload the same to R2:</p>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">upload</span><span class="p">()</span> <span class="c1"># if the file already exists, will return False</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kc">False</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">upload</span><span class="p">(</span><span class="n">override</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># will update the existing prefix data</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="kc">True</span> <span class="c1"># can now check R2 for the matching prefix in the bucket name with prefix GR/2021/10/227403/pdf.yaml</span>
+</code></pre></div>
+<h3 id="get-from-r2">Get from R2</h3>
+<p>After being uploaded, it can be recalled from R2, if we know the prefix:</p>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">output</span> <span class="o">=</span> <span class="n">InterimDecision</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;GR/2021/10/227403/pdf.yaml&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="o">&gt;&gt;&gt;</span> <span class="nb">type</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">corpus_sc_toolkit</span><span class="o">.</span><span class="n">modes</span><span class="o">.</span><span class="n">interim</span><span class="o">.</span><span class="n">InterimDecision</span>
+</code></pre></div>
+<h2 id="raw-decisions">Raw Decisions</h2>
+<p>An initial set of "raw decisions" have previously been uploaded to R2. Note that these are unprocessed content. We can make an instance of a <code>RawDecision</code> which downloads and compiles such unprocessed content with:</p>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">corpus_sc_toolkit</span> <span class="kn">import</span> <span class="n">RawDecision</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">temp_objs</span> <span class="o">=</span> <span class="n">RawDecision</span><span class="o">.</span><span class="n">prefetch</span><span class="p">(</span><span class="n">dockets</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;GR&quot;</span><span class="p">],</span> <span class="n">years</span><span class="o">=</span><span class="p">(</span><span class="mi">1996</span><span class="p">,</span><span class="mi">1997</span><span class="p">))</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">y_obj</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">temp_objs</span><span class="p">)</span> <span class="c1"># instances are found in r2</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">y</span> <span class="o">=</span> <span class="n">RawDecision</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="n">y_obj</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">db</span><span class="p">)</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="o">&gt;&gt;&gt;</span> <span class="nb">type</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">corpus_sc_toolkit</span><span class="o">.</span><span class="n">modes</span><span class="o">.</span><span class="n">raw</span><span class="o">.</span><span class="n">RawDecision</span>
+</code></pre></div>
+<p>When specific prefix is identified:</p>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">corpus_sc_toolkit</span> <span class="kn">import</span> <span class="n">RawDecision</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">prefix</span> <span class="o">=</span> <span class="s2">&quot;GR/1999/6/95405/details.yaml&quot;</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">z_obj</span> <span class="o">=</span> <span class="n">RawDecision</span><span class="o">.</span><span class="n">preget</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">)</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">z</span> <span class="o">=</span> <span class="n">RawDecision</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="n">z_obj</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">db</span><span class="p">)</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="o">&gt;&gt;&gt;</span> <span class="nb">type</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">corpus_sc_toolkit</span><span class="o">.</span><span class="n">modes</span><span class="o">.</span><span class="n">raw</span><span class="o">.</span><span class="n">RawDecision</span>
 </code></pre></div>
 
 
