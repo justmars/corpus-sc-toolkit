@@ -11,7 +11,7 @@ from dateutil.parser import parse
 
 from ..meta import CourtComposition, DecisionCategory, get_cite_from_fields
 from ..justice import CandidateJustice
-from .resources import (
+from ._resources import (
     DecisionFields,
     TEMP_FOLDER,
     origin,
@@ -86,8 +86,54 @@ class InterimOpinion(BaseModel):
 class InterimDecision(DecisionFields):
     opinions: list[dict] = Field(default_factory=list)
 
+    @classmethod
+    def originate(cls, db: Database) -> Iterator[Self]:
+        """Extract sql query (`/sql/limit_extract.sql`) from `db` to instantiate
+        a list of rows to process.
+
+        Args:
+            db (Database): Contains previously created pdf-based / justice tables.
+
+        Yields:
+            Iterator[Self]: Instances of the Interim Decision.
+        """
+        for row in db.execute_returning_dicts(SQL_QUERY):
+            if not (cite := get_cite_from_fields(row)):
+                logger.error(f"Bad citation in {row['id']=}")
+                continue
+
+            decision = cls(
+                is_pdf=True,
+                origin=row["id"],
+                title=row["title"],
+                description=cite.display,
+                date=parse(row["date"]).date(),
+                date_scraped=parse(row["scraped"]).date(),
+                citation=cite,
+                composition=CourtComposition._setter(text=row["composition"]),
+                emails=["bot@lawsql.com"],
+                category=DecisionCategory.set_category(
+                    row.get("category"), row.get("notice")
+                ),
+            )
+            if not decision.id:
+                logger.error(f"Undetected decision ID, see {cite=}")
+                continue
+
+            opx_data = InterimOpinion.setup(idx=decision.id, db=db, data=row)
+            if not opx_data or not opx_data.get("opinions"):
+                logger.error(f"No opinions detected in {decision.id=}")
+                continue
+            decision.raw_ponente = opx_data.get("raw_ponente", None)
+            decision.per_curiam = opx_data.get("per_curiam", False)
+            decision.justice_id = opx_data.get("justice_id", None)
+            opinions = opx_data["opinions"]
+            decision.opinions = [opinion.row for opinion in opinions]
+            yield decision
+
     @property
     def pdf_prefix(self) -> str | None:
+        """Represents the pdf prefix to be uploaded to R2."""
         if not self.base_prefix or not self.docket_citation:
             logger.warning(f"{self.base_prefix=} / {self.docket_citation=}")
             return None
@@ -155,50 +201,3 @@ class InterimDecision(DecisionFields):
         if not isinstance(data, dict):
             raise Exception(f"Could not originate {prefix=}")
         return cls(**data)
-
-    @classmethod
-    def originate(cls, db: Database) -> Iterator[Self]:
-        """Extract sql query (`/sql/limit_extract.sql`) from `db` to instantiate
-        a list of rows to process.
-
-        Args:
-            db (Database): Contains previously created pdf-based / justice tables.
-
-        Yields:
-            Iterator[Self]: Instances of the Interim Decision.
-        """
-        for row in db.execute_returning_dicts(SQL_QUERY):
-            if not (cite := get_cite_from_fields(row)):
-                logger.error(f"Bad citation in {row['id']=}")
-                continue
-
-            decision = cls(
-                is_pdf=True,
-                origin=row["id"],
-                title=row["title"],
-                description=cite.display,
-                created=datetime.datetime.now().timestamp(),
-                modified=datetime.datetime.now().timestamp(),
-                date=parse(row["date"]).date(),
-                date_scraped=parse(row["scraped"]).date(),
-                citation=cite,
-                composition=CourtComposition._setter(text=row["composition"]),
-                emails=["bot@lawsql.com"],
-                category=DecisionCategory.set_category(
-                    row.get("category"), row.get("notice")
-                ),
-            )
-            if not decision.id:
-                logger.error(f"Undetected decision ID, see {cite=}")
-                continue
-
-            opx_data = InterimOpinion.setup(idx=decision.id, db=db, data=row)
-            if not opx_data or not opx_data.get("opinions"):
-                logger.error(f"No opinions detected in {decision.id=}")
-                continue
-            decision.raw_ponente = opx_data.get("raw_ponente", None)
-            decision.per_curiam = opx_data.get("per_curiam", False)
-            decision.justice_id = opx_data.get("justice_id", None)
-            opinions = opx_data["opinions"]
-            decision.opinions = [opinion.row for opinion in opinions]
-            yield decision

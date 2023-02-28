@@ -68,8 +68,6 @@ class DecisionFields(BaseModel):
 
     Field | Type | Description
     :--:|:--:|:--
-    created | float | When was this model instantiated, for paths, this is when the file was actually made
-    modified | float |  When was this model last modified, for paths, this is when the file was actually modified
     id | str | The [combination of various strings][set-decision-id-from-values] based on the source and citation, if available.
     origin | str | Where the decision was sourced from
     title | str | The case title, this can be classified into [tags][title-tags]
@@ -88,8 +86,6 @@ class DecisionFields(BaseModel):
     emails | list[str] | Emails of authors
     """  # noqa: E501
 
-    created: float
-    modified: float
     origin: str
     title: str
     description: str

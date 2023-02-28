@@ -19,23 +19,31 @@ A pre-existing sqlite database, found in `s3://corpus-pdf/db`, contains justices
 
 The pdf files from the database have not yet been replicated to R2 storage.
 
+### Originate from DB
+
 Initialize instances of an Interim Decision:
 
 ```py
 >>> from corpus_sc_toolkit import InterimDecision
 >>> interim_objs = InterimDecision.originate(c.db) # raw data found in the database
->>> x = next(interim_objs) # x is an instance of InterimDecision
+>>> x = next(interim_objs) # x is an instance of an Interim Decision
+>>> x.pdf_prefix # the target prefix property of an Interim Decision
+'GR/2021/10/227403/pdf.yaml' # sample
 ```
 
-Each instance can now be dumped to a local file:
+### Dump to Local
+
+Using the sample above, produce a temporary file found in `corpus_sc_toolkit/tmp/temp_pdf.yaml`:
 
 ```py
->>> x.dump() # produces a file found in corpus_sc_toolkit/tmp/temp_pdf.yaml
-('GR/2021/10/227403/pdf.yaml', # a target prefix to use
- PosixPath('/Users/mv/Code/corpus-toolkit/corpus_sc_toolkit/tmp/temp_pdf.yaml')) # temporary file
+>>> x.dump() #
+('GR/2021/10/227403/pdf.yaml',
+ PosixPath('/Users/mv/Code/corpus-toolkit/corpus_sc_toolkit/tmp/temp_pdf.yaml'))
 ```
 
-The dumped file may be uploaded to R2:
+### Upload to R2
+
+Instead of creating a dump file, can automatically upload the same to R2:
 
 ```py
 >>> x.upload() # if the file already exists, will return False
@@ -44,11 +52,14 @@ False
 True # can now check R2 for the matching prefix in the bucket name with prefix GR/2021/10/227403/pdf.yaml
 ```
 
+### Get from R2
+
 After being uploaded, it can be recalled from R2, if we know the prefix:
 
 ```py
->>> prefix = "GR/2021/10/227403/pdf.yaml"
->>> output = InterimDecision.originate_from_r2(prefix)
+>>> output = InterimDecision.get(prefix="GR/2021/10/227403/pdf.yaml")
+>>> type(output)
+corpus_sc_toolkit.modes.interim.InterimDecision
 ```
 
 ## Stored Decisions
