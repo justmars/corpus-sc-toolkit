@@ -263,16 +263,17 @@ class DecisionOpinion(NamedTuple):
     @classmethod
     def fetch(
         cls,
-        base_prefix: str,
+        opinion_prefix: str,
         decision_id: str,
         ponente_id: int | None = None,
     ):
-        """The `base_prefix` is in the form of `<docket>/<year>/<month>/<serial>/`.
-        The opinion prefix is simply the addition of "opinions" to this base.
+        """The `opinion_prefix` is in the form of:
+
+        `<docket>/<year>/<month>/<serial>/opinions`.
 
         The `ponente_id`, if available, will be used to populate the ponencia
         opinion."""
-        for opinion in cls.fetch_partial_opinion(f"{base_prefix}opinions"):
+        for opinion in cls.fetch_partial_opinion(opinion_prefix):
             yield cls(
                 id=f"{decision_id}-{opinion['op_key']}",
                 decision_id=decision_id,

@@ -68,11 +68,10 @@ An initial set of "raw decisions" have previously been uploaded to R2. Note that
 
 ```py
 >>> from corpus_sc_toolkit import RawDecision
->>> temp_objs = RawDecision.prefetch(dockets=["GR"], years=(1996,1997))
->>> y_obj = next(temp_objs) # instances are found in r2
->>> y = RawDecision.make(y_obj, c.db)
+>>> temp_objs = RawDecision.prefetch(dockets=["GR"], years=(1996,1997)) # r2 filter
+>>> y = next(temp_objs)
 >>> type(y)
-corpus_sc_toolkit.modes.raw.RawDecision
+dict
 ```
 
 When specific prefix is identified:

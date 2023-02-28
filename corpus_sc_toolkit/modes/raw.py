@@ -73,17 +73,19 @@ class RawDecision(DecisionFields):
     @classmethod
     def make(cls, r2_data: dict, db: Database) -> Self | None:
         """Using a single `r2_data` dict from a `preget()` call, match justice data
-        from the `db`, to get the proper justice id for opinion which will (finally)
-        enable the construction of a single `RawDecision` instance."""
+        from the `db`. This enables construction of a single `RawDecision` instance.
+        """
+        if not (cite := Citation.extract_citation_from_data(r2_data)):
+            logger.error(f"Bad citation in {r2_data['id']=}")
+            return None
         ponente = CandidateJustice(
             db=db,
             text=r2_data.get("ponente"),
             date_str=r2_data.get("date_prom"),
         )
-
         opinions = list(
             DecisionOpinion.fetch(
-                base_prefix=r2_data["prefix"],
+                opinion_prefix=f"{r2_data['prefix']}/opinions/",
                 decision_id=r2_data["id"],
                 ponente_id=ponente.id,
             )
@@ -91,11 +93,6 @@ class RawDecision(DecisionFields):
         if not opinions:
             logger.error(f"No opinions detected in {r2_data['id']=}")
             return None
-
-        if not (cite := Citation.extract_citation_from_data(r2_data)):
-            logger.error(f"Bad citation in {r2_data['id']=}")
-            return None
-
         return cls(
             **ponente.ponencia,
             origin=r2_data["origin"],
