@@ -14,25 +14,7 @@ from corpus_sc_toolkit.meta import (
 )
 from .txt.splitter import segmentize
 
-BUCKET_NAME = "sc-decisions"
-origin = CFR2_Bucket(name=BUCKET_NAME)
-meta = origin.resource.meta
-if not meta:
-    raise Exception("Bad bucket.")
-CLIENT = meta.client
-
-
-DOCKETS: list[str] = ["GR", "AM", "OCA", "AC", "BM"]
-
-SC_START_YEAR = 1902
-PRESENT_YEAR = datetime.datetime.now().date().year
-YEARS: tuple[int, int] = (SC_START_YEAR, PRESENT_YEAR)
-months = range(1, 13)
-
-PDF_DECISION_SQL = Path(__file__).parent / "sql" / "limit_extract.sql"
-SQL_QUERY = PDF_DECISION_SQL.read_text()
-
-OPINION_MD_H1 = re.compile(r"^#\s*(?P<label>).*$")
+"""Generic temporary file download."""
 
 TEMP_FOLDER = Path(__file__).parent.parent / "tmp"
 TEMP_FOLDER.mkdir(exist_ok=True)
@@ -46,7 +28,7 @@ def tmp_load(src: str, ext: str = "yaml") -> str | dict[str, Any] | None:
     successful extraction of the `src` as content."""
 
     path = TEMP_FOLDER / f"temp.{ext}"
-    origin.download(src, str(path))
+    ORIGIN.download(src, str(path))
     content = None
     if ext == "yaml":
         content = yaml.safe_load(path.read_bytes())
@@ -56,6 +38,9 @@ def tmp_load(src: str, ext: str = "yaml") -> str | dict[str, Any] | None:
     return content
 
 
+"""Decision substructures: opinions and segments."""
+
+
 class OpinionSegment(NamedTuple):
     id: str
     opinion_id: str
@@ -63,6 +48,9 @@ class OpinionSegment(NamedTuple):
     position: str
     segment: str
     char_count: int
+
+
+OPINION_MD_H1 = re.compile(r"^#\s*(?P<label>).*$")
 
 
 class DecisionOpinion(NamedTuple):
@@ -131,6 +119,29 @@ class DecisionOpinion(NamedTuple):
                             tags=[],
                             justice_id=justice_id,
                         )
+
+
+"""Decision structure aspects."""
+
+DOCKETS: list[str] = ["GR", "AM", "OCA", "AC", "BM"]
+"""Default selection of docket types to serve as root prefixes in R2."""
+
+SC_START_YEAR = 1902
+PRESENT_YEAR = datetime.datetime.now().date().year
+YEARS: tuple[int, int] = (SC_START_YEAR, PRESENT_YEAR)
+"""Default range of years to serve as prefixes in R2"""
+
+PDF_DECISION_SQL = Path(__file__).parent / "sql" / "limit_extract.sql"
+SQL_QUERY = PDF_DECISION_SQL.read_text()
+"""Queries PDF-based tables for the a list of decisions and opinions."""
+
+BUCKET_NAME = "sc-decisions"
+ORIGIN = CFR2_Bucket(name=BUCKET_NAME)
+meta = ORIGIN.resource.meta
+if not meta:
+    raise Exception("Bad bucket.")
+CLIENT = meta.client
+"""R2 variables in order to perform operations from the library."""
 
 
 class DecisionFields(BaseModel):
@@ -260,7 +271,7 @@ class DecisionFields(BaseModel):
         for docket in dockets:
             cnt_year, end_year = years[0], years[1]
             while cnt_year <= end_year:
-                for month in months:
+                for month in range(1, 13):
                     yield f"{docket}/{cnt_year}/{month}/"
                 cnt_year += 1
 

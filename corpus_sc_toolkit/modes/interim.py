@@ -14,9 +14,7 @@ from ._resources import (
     DecisionOpinion,
     DecisionFields,
     TEMP_FOLDER,
-    origin,
-    CLIENT,
-    BUCKET_NAME,
+    ORIGIN,
     SQL_QUERY,
     tmp_load,
 )
@@ -184,7 +182,7 @@ class InterimDecision(DecisionFields):
         if not prep_pdf_upload:
             return False
         loc, file_like = prep_pdf_upload
-        origin.upload(file_like=file_like, loc=loc, args=self.meta)
+        ORIGIN.upload(file_like=file_like, loc=loc, args=self.meta)
 
     @classmethod
     def get(cls, prefix: str) -> Self:

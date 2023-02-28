@@ -2,7 +2,6 @@ from collections.abc import Iterator
 from typing import Any, Self
 from loguru import logger
 from sqlite_utils import Database
-from pydantic import Field
 from citation_utils import Citation
 from corpus_sc_toolkit.justice import CandidateJustice
 from corpus_sc_toolkit.meta import (
