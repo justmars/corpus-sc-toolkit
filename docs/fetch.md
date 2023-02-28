@@ -17,16 +17,36 @@ A pre-existing sqlite database, found in `s3://corpus-pdf/db`, contains justices
 
 ## Interim Decisions
 
-Since the pdf files from the database have not yet been replicated in the R2 storage, initialize
-instances of the same:
+The pdf files from the database have not yet been replicated to R2 storage.
+
+Initialize instances of an Interim Decision:
 
 ```py
 >>> from corpus_sc_toolkit import InterimDecision
->>> interim_objs = InterimDecision.fetch(c.db) # instances found in the database
+>>> interim_objs = InterimDecision.fetch(c.db) # raw data found in the database
 >>> x = next(interim_objs) # x is an instance of InterimDecision
 ```
 
+Each instance can now be dumped to a local file:
+
+```py
+>>> x.dump() # produces a file found in corpus_sc_toolkit/tmp/temp_pdf.yaml
+('GR/2021/10/227403/pdf.yaml', # a target prefix to use
+ PosixPath('/Users/mv/Code/corpus-toolkit/corpus_sc_toolkit/tmp/temp_pdf.yaml')) # temporary file
+```
+
+The dumped file may be uploaded to R2:
+
+```py
+>>> x.upload() # if the file already exists, will return False
+False
+>>> x.upload(override=True) # will update the existing prefix data
+True # can now check R2 for the matching prefix in the bucket name with prefix GR/2021/10/227403/pdf.yaml
+```
+
 ## Stored Decisions
+
+Non-PDF decisions are stored in R2 and they can be parsed using `StoredDecision` class:
 
 ```py
 >>> from corpus_sc_toolkit import StoredDecision
@@ -35,7 +55,7 @@ instances of the same:
 >>> y = StoredDecision.make(y_obj, c.db) # y is an instance of StoredDecision
 ```
 
-When the prefix is identified:
+When specific prefix is identified:
 
 ```py
 >>> from corpus_sc_toolkit import StoredDecision

@@ -22,6 +22,7 @@ nav:
   - Overview: index.md
   - Justice Field: justice.md
   - Meta Field: meta.md
+  - Prep Decisions: fetch.md
 extra:
   homepage: https://mv3.dev
   social:
