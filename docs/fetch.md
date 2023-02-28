@@ -23,7 +23,7 @@ Initialize instances of an Interim Decision:
 
 ```py
 >>> from corpus_sc_toolkit import InterimDecision
->>> interim_objs = InterimDecision.originate_from_db(c.db) # raw data found in the database
+>>> interim_objs = InterimDecision.originate(c.db) # raw data found in the database
 >>> x = next(interim_objs) # x is an instance of InterimDecision
 ```
 

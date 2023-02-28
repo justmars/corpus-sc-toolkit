@@ -138,7 +138,26 @@ class InterimDecision(DecisionFields):
         return False
 
     @classmethod
-    def originate_from_db(cls, db: Database) -> Iterator[Self]:
+    def get(cls, prefix: str) -> Self:
+        """Retrieve data represented by the `prefix` from R2 (implies previous
+        from `dump()` and `upload()`) and instantiate the Interim Decision based
+        on such retrieved data.
+
+        Args:
+            prefix (str): Must end with /pdf.yaml
+
+        Returns:
+            Self: Interim Decision instance from R2 prefix.
+        """
+        if not prefix.endswith("/pdf.yaml"):
+            raise Exception("Method limited to pdf-based files.")
+        data = tmp_load(src=prefix, ext="yaml")
+        if not isinstance(data, dict):
+            raise Exception(f"Could not originate {prefix=}")
+        return cls(**data)
+
+    @classmethod
+    def originate(cls, db: Database) -> Iterator[Self]:
         """Extract sql query (`/sql/limit_extract.sql`) from `db` to instantiate
         a list of rows to process.
 
@@ -183,10 +202,3 @@ class InterimDecision(DecisionFields):
             opinions = opx_data["opinions"]
             decision.opinions = [opinion.row for opinion in opinions]
             yield decision
-
-    @classmethod
-    def originate_from_r2(cls, prefix: str) -> Self:
-        data = tmp_load(src=prefix, ext="yaml")
-        if not isinstance(data, dict):
-            raise Exception(f"Could not originate {prefix=}")
-        return cls(**data)
