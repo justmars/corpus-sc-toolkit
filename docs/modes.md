@@ -62,22 +62,26 @@ After being uploaded, it can be recalled from R2, if we know the prefix:
 corpus_sc_toolkit.modes.interim.InterimDecision
 ```
 
-## Stored Decisions
+## Raw Decisions
 
-Non-PDF decisions are stored in R2 and they can be parsed using `StoredDecision` class:
+An initial set of "raw decisions" have previously been uploaded to R2. Note that these are unprocessed content. We can make an instance of a `RawDecision` which downloads and compiles such unprocessed content with:
 
 ```py
->>> from corpus_sc_toolkit import StoredDecision
->>> temp_objs = StoredDecision.prefetch(dockets=["GR"], years=(1996,1997))
+>>> from corpus_sc_toolkit import RawDecision
+>>> temp_objs = RawDecision.prefetch(dockets=["GR"], years=(1996,1997))
 >>> y_obj = next(temp_objs) # instances are found in r2
->>> y = StoredDecision.make(y_obj, c.db) # y is an instance of StoredDecision
+>>> y = RawDecision.make(y_obj, c.db)
+>>> type(y)
+corpus_sc_toolkit.modes.raw.RawDecision
 ```
 
 When specific prefix is identified:
 
 ```py
->>> from corpus_sc_toolkit import StoredDecision
->>> prefix = "GR/1999/6/95405/"
->>> z_obj = StoredDecision.get_detailed_opinions_from_storage(prefix=prefix)
->>> z = StoredDecision.make(z_obj, c.db) # z is an instance of StoredDecision
+>>> from corpus_sc_toolkit import RawDecision
+>>> prefix = "GR/1999/6/95405/details.yaml"
+>>> z_obj = RawDecision.preget(prefix=prefix)
+>>> z = RawDecision.make(z_obj, c.db)
+>>> type(z)
+corpus_sc_toolkit.modes.raw.RawDecision
 ```

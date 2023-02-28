@@ -5,6 +5,7 @@
 *.sqlite-*
 *.db
 *.db-*
+corpus_sc_toolkit/tmp/temp_pdf.yaml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

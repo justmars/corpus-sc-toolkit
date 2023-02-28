@@ -5,4 +5,4 @@ from .txt import (
     segmentize,
     standardize,
 )
-from .stored import StoredDecision
+from .stored import RawDecision

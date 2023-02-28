@@ -22,7 +22,7 @@ from .modes import (
     DecisionHTMLConvertMarkdown,
     InterimDecision,
     InterimOpinion,
-    StoredDecision,
+    RawDecision,
     add_markdown_file,
     segmentize,
     standardize,
