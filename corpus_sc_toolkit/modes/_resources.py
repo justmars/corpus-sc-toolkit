@@ -392,7 +392,7 @@ class DecisionFields(BaseModel):
                 for docket in collection["CommonPrefixes"]:
                     yield docket["Prefix"]
             else:
-                logger.error(f"Bad {collection=}")
+                logger.warning(f"Empty {collection=}")
 
     @classmethod
     def key_raw(cls, dated_prefix: str) -> str | None:

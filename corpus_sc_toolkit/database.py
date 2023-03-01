@@ -144,7 +144,9 @@ class ConfigDecisions(BaseModel):
                 if raw and raw.prefix_id:
                     yield DecisionRow(**raw.dict(), id=raw.prefix_id)
             elif key_pdf := DecisionRow.key_pdf(docket_prefix):
-                yield DecisionRow(**InterimDecision.get(key_pdf).dict())
+                pdf = InterimDecision.get(key_pdf)
+                if pdf.prefix_id:
+                    yield DecisionRow(**pdf.dict(), id=pdf.prefix_id)
 
     def add_decision(self, row: DecisionRow) -> str | None:
         """This creates a decision row and correlated metadata involving
