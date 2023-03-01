@@ -22,8 +22,18 @@ from .modes import (
     DecisionHTMLConvertMarkdown,
     InterimDecision,
     InterimOpinion,
+    DecisionOpinion,
     RawDecision,
     add_markdown_file,
     segmentize,
     standardize,
 )
+from .decision import (
+    DecisionRow,
+    CitationRow,
+    VoteLine,
+    TitleTagRow,
+    OpinionRow,
+    SegmentRow,
+)
+from .database import CorpusDatabase

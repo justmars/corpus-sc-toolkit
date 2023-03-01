@@ -64,10 +64,10 @@ class DecisionOpinion(NamedTuple):
     decision_id: str
     title: str
     text: str
-    tags: list[str]
     pdf: str | None = None
     remark: str | None = None
     concurs: list[dict] | None = None
+    tags: list[str] | None = None
     justice_id: int | None = None
 
     @property
@@ -122,7 +122,6 @@ class DecisionOpinion(NamedTuple):
                             decision_id=decision_id,
                             title=DecisionOpinion.get_headline(text),
                             text=text,
-                            tags=[],
                             justice_id=justice_id,
                         )
 
@@ -230,7 +229,7 @@ class DecisionFields(BaseModel):
     is_pdf: bool | None = Field(default=False, col=bool, index=True)
     fallo: str | None = Field(default=None, col=str, index=True, fts=True)
     voting: str | None = Field(default=None, col=str, index=True, fts=True)
-    emails: list[str] = Field(default_factory=list)
+    emails: list[str] = Field(default_factory=list, exclude=True)
     opinions: list[DecisionOpinion] = Field(default_factory=list)
 
     class Config:

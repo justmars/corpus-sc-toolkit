@@ -1,13 +1,9 @@
-from citation_utils import Citation
-
-from .justice import Justice
-from .modes import DecisionFields
 from loguru import logger
+from citation_utils import Citation
 from pydantic import Field, root_validator
-from sqlite_utils.db import Database
 from sqlpyd import TableConfig
-from .modes import RawDecision, InterimDecision
-from .modes._resources import DOCKETS, YEARS
+from .justice import Justice
+from .modes import DecisionFields, DecisionOpinion
 
 
 class DecisionRow(DecisionFields, TableConfig):
@@ -15,14 +11,14 @@ class DecisionRow(DecisionFields, TableConfig):
     __tablename__ = "decisions"
     __indexes__ = [
         ["date", "justice_id", "raw_ponente", "per_curiam"],
-        ["source", "origin", "date"],
-        ["source", "origin"],
+        ["origin", "date"],
         ["category", "composition"],
         ["id", "justice_id"],
         ["per_curiam", "raw_ponente"],
     ]
     id: str = Field(col=str)
     citation: Citation = Field(exclude=True)
+    opinions: list[DecisionOpinion] = Field(default_factory=list, exclude=True)
 
     @root_validator()
     def citation_date_is_object_date(cls, values):
@@ -40,29 +36,6 @@ class DecisionRow(DecisionFields, TableConfig):
     @property
     def citation_fk(self) -> dict:
         return self.citation.dict() | {"decision_id": self.id}
-
-    @classmethod
-    def restore(
-        cls,
-        db: Database,
-        dockets: list[str] = DOCKETS,
-        years: tuple[int, int] = YEARS,
-    ):
-        """R2 uploaded content is either formatted based on a `details.yaml` variant,
-        which is based on the Supreme Court e-library html content (see `RawDecision`),
-        or a `pdf.yaml` variant which is based on the main Supreme Court website
-        containing  links to PDF-formatted documents (see `InterimDEcision`).
-
-        Based on the filter from `dockets` and `years`, extract either
-        the `RawDecision` or the `InterimDecision`, with priority given to the former.
-        """
-        for docket_prefix in cls.iter_dockets(dockets, years):
-            if key := cls.get_raw_prefixed_key(docket_prefix):
-                raw = RawDecision.make(r2_data=RawDecision.preget(key), db=db)
-                if raw and raw.prefix_id:
-                    yield cls(**raw.dict(), id=raw.prefix_id)
-            elif key := cls.get_pdf_prefixed_key(docket_prefix):
-                yield cls(**InterimDecision.get(key).dict())
 
 
 DECISION_ID = Field(
