@@ -1,14 +1,25 @@
 import re
 import datetime
 import yaml
-from typing import NamedTuple, Any
+from loguru import logger
+from typing import Any
 from pathlib import Path
 from start_sdk import CFR2_Bucket
 from citation_utils import Citation
 from collections.abc import Iterator
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, root_validator
 from corpus_sc_toolkit.meta import CourtComposition, DecisionCategory
 from .txt.splitter import segmentize
+
+
+BUCKET_NAME = "sc-decisions"
+ORIGIN = CFR2_Bucket(name=BUCKET_NAME)
+meta = ORIGIN.resource.meta
+if not meta:
+    raise Exception("Bad bucket.")
+CLIENT = meta.client
+"""R2 variables in order to perform operations from the library."""
+
 
 """Generic temporary file download."""
 
@@ -37,38 +48,86 @@ def tmp_load(src: str, ext: str = "yaml") -> str | dict[str, Any] | None:
 """Decision substructures: opinions and segments."""
 
 
-class OpinionSegment(NamedTuple):
+class OpinionSegment(BaseModel):
     """A decision is naturally subdivided into [opinions][decision opinions].
     Breaking down opinions into segments is an attempt to narrow down the scope
     of decisions to smaller portions for purposes of FTS search snippets and analysis.
     """
 
-    id: str
-    opinion_id: str
-    decision_id: str
-    position: str
-    segment: str
-    char_count: int
+    opinion_id: str  # overriden in decisions.py
+    decision_id: str  # overriden in decisions.py
+    id: str = Field(..., col=str)
+    position: str = Field(
+        default=...,
+        title="Relative Position",
+        description="Line number of text stripped from source.",
+        col=int,
+        index=True,
+    )
+    char_count: int = Field(
+        default=...,
+        title="Character Count",
+        description="Makes it easier to discover patterns.",
+        col=int,
+        index=True,
+    )
+    segment: str = Field(
+        default=...,
+        title="Body Segment",
+        description="Partial fragment of opinion.",
+        col=str,
+        fts=True,
+    )
 
 
 OPINION_MD_H1 = re.compile(r"^#\s*(?P<label>).*$")
 
 
-class DecisionOpinion(NamedTuple):
+class DecisionOpinion(BaseModel):
     """A decision may contain a single opinion entitled the Ponencia or span
     multiple opinions depending on the justices of the Court who are charged to decide
     a specific case.
     """
 
-    id: str
-    decision_id: str
-    title: str
-    text: str
-    pdf: str | None = None
-    remark: str | None = None
-    concurs: list[dict] | None = None
-    tags: list[str] | None = None
+    decision_id: str  # overriden in decisions.py
     justice_id: int | None = None
+    id: str = Field(
+        ...,
+        title="Opinion ID",
+        description=(
+            "Based on combining decision_id with the justice_id, if found."
+        ),
+        col=str,
+    )
+    pdf: str | None = Field(
+        default=None,
+        title="PDF URL",
+        description="Links to downloadable PDF, if it exists",
+        col=str,
+    )
+    title: str | None = Field(
+        ...,
+        description="How opinion called, e.g. Ponencia, Concurring Opinion,",
+        col=str,
+    )
+    tags: list[str] | None = Field(
+        default=None,
+        description="e.g. main, dissenting, concurring, separate",
+    )
+    remark: str | None = Field(
+        default=None,
+        title="Short Remark on Opinion",
+        description="e.g. 'I reserve my right, etc.', 'On leave.', etc.",
+        col=str,
+        fts=True,
+    )
+    concurs: list[dict] | None = Field(default=None)
+    text: str = Field(
+        ...,
+        description="Text proper of opinion (ideally in markdown)",
+        col=str,
+        fts=True,
+    )
 
     @property
     def segments(self) -> Iterator[OpinionSegment]:
@@ -140,14 +199,6 @@ PDF_DECISION_SQL = Path(__file__).parent / "sql" / "limit_extract.sql"
 SQL_QUERY = PDF_DECISION_SQL.read_text()
 """Queries PDF-based tables for the a list of decisions and opinions."""
 
-BUCKET_NAME = "sc-decisions"
-ORIGIN = CFR2_Bucket(name=BUCKET_NAME)
-meta = ORIGIN.resource.meta
-if not meta:
-    raise Exception("Bad bucket.")
-CLIENT = meta.client
-"""R2 variables in order to perform operations from the library."""
-
 
 DETAILS_FILE = "details.yaml"
 """Note that this does not have a backslash"""
@@ -191,21 +242,18 @@ class DecisionFields(BaseModel):
     opinions | list[DecisionOpinion] | [Opinion structures][decision opinions] which can be further [subdivided into segments][opinion segments]
     """  # noqa: E501
 
+    citation: Citation | None = Field(default=None)  # overriden in decision.py
     origin: str = Field(col=str, index=True)
     title: str = Field(col=str, index=True, fts=True)
     description: str = Field(col=str, index=True, fts=True)
     date: datetime.date = Field(col=datetime.date, index=True)
     date_scraped: datetime.date = Field(col=datetime.date, index=True)
-    citation: Citation | None = Field(default=None)
     composition: CourtComposition = Field(default=None, col=str, index=True)
     category: DecisionCategory = Field(default=None, col=str, index=True)
     raw_ponente: str | None = Field(
         default=None,
         title="Ponente",
-        description=(
-            "After going through a cleaning process, this should be in"
-            " lowercase and be suitable for matching a justice id."
-        ),
+        description="Lowercase and be suitable for matching a justice id.",
         col=str,
         index=True,
     )
@@ -213,8 +261,7 @@ class DecisionFields(BaseModel):
         default=None,
         title="Justice ID",
         description=(
-            "Using the raw_ponente, determine the appropriate justice_id using"
-            " the `update_justice_ids.sql` template."
+            "Determine appropriate justice_id using `update_justice_ids.sql`."
         ),
         col=int,
         index=True,
@@ -230,7 +277,17 @@ class DecisionFields(BaseModel):
     fallo: str | None = Field(default=None, col=str, index=True, fts=True)
     voting: str | None = Field(default=None, col=str, index=True, fts=True)
     emails: list[str] = Field(default_factory=list, exclude=True)
-    opinions: list[DecisionOpinion] = Field(default_factory=list)
+    opinions: list[DecisionOpinion] = Field(default_factory=list, exclude=True)
+
+    @root_validator()
+    def citation_date_is_object_date(cls, values):
+        cite, date = values.get("citation"), values.get("date")
+        if cite and cite.docket_date:
+            if cite.docket_date != date:
+                msg = f"Inconsistent {cite.docket_date=} vs. {date=};"
+                logger.error(msg)
+                raise ValueError(msg)
+        return values
 
     class Config:
         use_enum_values = True
@@ -298,7 +355,7 @@ class DecisionFields(BaseModel):
         return prefix.removesuffix("/").replace("/", "-").lower()
 
     @classmethod
-    def get_dated_prefixes(
+    def iter_docket_dates(
         cls, dockets: list[str] = DOCKETS, years: tuple[int, int] = YEARS
     ) -> Iterator[str]:
         """Results in the following prefix format: `<docket>/<year>/<month>`
@@ -311,13 +368,13 @@ class DecisionFields(BaseModel):
                 cnt_year += 1
 
     @classmethod
-    def iter_collections(
+    def iter_docket_date_serials(
         cls, dockets: list[str] = DOCKETS, years: tuple[int, int] = YEARS
     ) -> Iterator[dict[str, Any]]:
-        """Based on a list of prefixes ordered by date, get the list of objects
-        per prefix. Each item in the collection is a dict which will contain
-        a `CommonPrefixes` key."""
-        for prefix in cls.get_dated_prefixes(dockets, years):
+        """Results in a collection based on the prefix format:
+        `<docket>/<year>/<month>/<serial>/` in ascending order. Each item in the
+        collection is a dict which will contain a `CommonPrefixes` key."""
+        for prefix in cls.iter_docket_dates(dockets, years):
             yield CLIENT.list_objects_v2(
                 Bucket=BUCKET_NAME, Delimiter="/", Prefix=prefix
             )
@@ -328,26 +385,26 @@ class DecisionFields(BaseModel):
     ) -> Iterator[str]:
         """For each item in the collection from `cls.iter_collections()`, produce
         unique docket keys."""
-        for collection in cls.iter_collections(dockets, years):
+        for collection in cls.iter_docket_date_serials(dockets, years):
             for docket in collection["CommonPrefixes"]:
                 yield docket["Prefix"]
 
     @classmethod
-    def get_raw_prefixed_key(cls, dated_prefix: str) -> str | None:
+    def key_raw(cls, dated_prefix: str) -> str | None:
+        """Is suffix `details.yaml` present in result of `cls.iter_dockets()`?"""
         target_key = f"{dated_prefix}{DETAILS_FILE}"
-        if cls.get_obj(target_key):
-            return target_key
-        return None
+        return target_key if cls.get_obj(target_key) else None
 
     @classmethod
-    def get_pdf_prefixed_key(cls, dated_prefix: str) -> str | None:
+    def key_pdf(cls, dated_prefix: str) -> str | None:
+        """Is suffix `pdf.yaml` present in result of `cls.iter_dockets()`?"""
         target_key = f"{dated_prefix}{PDF_FILE}"
-        if cls.get_obj(target_key):
-            return target_key
-        return None
+        return target_key if cls.get_obj(target_key) else None
 
     @classmethod
-    def get_obj(cls, key: str) -> str | None:
+    def get_obj(cls, key: str):
+        """A try/except block is needed since a `NoKeyFound` exception is raised
+        when a retrieval is made without a result."""
         try:
             return CLIENT.get_object(Bucket=BUCKET_NAME, Key=key)
         except Exception:

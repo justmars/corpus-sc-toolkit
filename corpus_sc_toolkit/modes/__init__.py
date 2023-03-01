@@ -7,4 +7,4 @@ from .txt import (
     standardize,
 )
 from .raw import RawDecision
-from ._resources import DOCKETS, YEARS, DecisionOpinion
+from ._resources import DOCKETS, YEARS, DecisionOpinion, OpinionSegment

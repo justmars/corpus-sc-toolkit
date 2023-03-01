@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "corpus-sc-toolkit"
 description = "Toolkit to process component elements of a Philippine Supreme Court decision."
-version = "0.0.12"
+version = "0.2.0"
 authors = ["Marcelino G. Veloso III <mars@veloso.one>"]
 readme = "README.md"
 license = "MIT"
@@ -24,10 +24,10 @@ loguru = "^0.6.0"
 httpx = "^0.23.3"
 markdownify = "^0.11.6"
 # custom
-pylts = "^0.0.7"
+pylts = "^0.0.7" # litestream, sqlite database
+sqlpyd = "^0.1.5" # sqlite-utils with pydantic
+start-sdk = "^0.0.5" # cloudflare, github api
 citation-utils = "^0.2.4"
-sqlpyd = "^0.1.5"
-start-sdk = "^0.0.5"
 corpus-pax = "^0.1.19"
 
 [tool.poetry.group.dev.dependencies]

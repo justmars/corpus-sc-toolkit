@@ -4,7 +4,7 @@ from pathlib import Path
 from sqlpyd import Connection
 from pylts import ConfigS3
 from loguru import logger
-from corpus_pax import delete_tables_with_prefix, setup_pax, Individual
+from corpus_pax import setup_pax, Individual
 from pydantic import BaseSettings, Field
 from sqlite_utils import Database
 from .justice import Justice, get_justices_file
@@ -22,7 +22,7 @@ from .decision import (
 DB_FOLDER = Path(__file__).parent.parent / "data"
 
 
-class CorpusDatabase(BaseSettings):
+class ConfigDecisions(BaseSettings):
     conn: Connection
     path: Path = Field(default=DB_FOLDER)
 
@@ -86,14 +86,14 @@ class CorpusDatabase(BaseSettings):
                 a `details.yaml` file or a `pdf.yaml` file.
         """
         for docket_prefix in DecisionRow.iter_dockets(dockets, years):
-            if key := DecisionRow.get_raw_prefixed_key(docket_prefix):
+            if key := DecisionRow.key_raw(docket_prefix):
                 raw = RawDecision.make(
                     r2_data=RawDecision.preget(key),
                     db=self.conn.db,
                 )
                 if raw and raw.prefix_id:
                     yield DecisionRow(**raw.dict(), id=raw.prefix_id)
-            elif key := DecisionRow.get_pdf_prefixed_key(docket_prefix):
+            elif key := DecisionRow.key_raw(docket_prefix):
                 yield DecisionRow(**InterimDecision.get(key).dict())
 
     def add_decision(self, row: DecisionRow) -> str | None:
@@ -152,9 +152,9 @@ class CorpusDatabase(BaseSettings):
             )
 
         for op in row.opinions:
-            self.conn.add_record(kls=OpinionRow, item=op._asdict())
+            self.conn.add_record(kls=OpinionRow, item=op.dict())
             self.conn.add_records(
-                kls=SegmentRow, items=list(op._asdict() for op in op.segments)
+                kls=SegmentRow, items=list(op.dict() for op in op.segments)
             )
 
         return row.id

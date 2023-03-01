@@ -1,12 +1,16 @@
-from loguru import logger
 from citation_utils import Citation
-from pydantic import Field, root_validator
+from pydantic import Field, BaseModel
 from sqlpyd import TableConfig
 from .justice import Justice
-from .modes import DecisionFields, DecisionOpinion
+from .modes import DecisionFields, DecisionOpinion, OpinionSegment
+import abc
 
 
 class DecisionRow(DecisionFields, TableConfig):
+    """The citation in a `DecisionRow` overrides `DecisionFields`
+    since the row implies a valid citation already exists and is uploaded in R2.
+    """
+
     __prefix__ = "sc"
     __tablename__ = "decisions"
     __indexes__ = [
@@ -16,76 +20,30 @@ class DecisionRow(DecisionFields, TableConfig):
         ["id", "justice_id"],
         ["per_curiam", "raw_ponente"],
     ]
-    id: str = Field(col=str)
-    citation: Citation = Field(exclude=True)
-    opinions: list[DecisionOpinion] = Field(default_factory=list, exclude=True)
-
-    @root_validator()
-    def citation_date_is_object_date(cls, values):
-        cite, date = values.get("citation"), values.get("date")
-        if cite.docket_date:
-            if cite.docket_date != date:
-                msg = f"Inconsistent {cite.docket_date=} vs. {date=};"
-                logger.error(msg)
-                raise ValueError(msg)
-        return values
-
-    class Config:
-        use_enum_values = True
+    id: str = Field(col=str, description="Constructed in DecisionFields.")
+    citation: Citation = Field(default=..., exclude=True)
 
     @property
     def citation_fk(self) -> dict:
         return self.citation.dict() | {"decision_id": self.id}
 
 
-DECISION_ID = Field(
-    default=...,
-    title="Decision ID",
-    description=(
-        "Foreign key used by other tables referencing the Decision table."
-    ),
-    col=str,
-    fk=(DecisionRow.__tablename__, "id"),
-)
+class DecisionComponent(BaseModel, abc.ABC):
+    """Reusable abstract class referencing the Decision row."""
 
-
-class CitationRow(Citation, TableConfig):
     __prefix__ = "sc"
-    __tablename__ = "citations"
-    __indexes__ = [
-        ["id", "decision_id"],
-        ["docket_category", "docket_serial", "docket_date"],
-        ["scra", "phil", "offg", "docket"],
-    ]
-    decision_id: str = DECISION_ID
-
-
-class VoteLine(TableConfig):
-    __prefix__ = "sc"
-    __tablename__ = "votelines"
-    __indexes__ = [["id", "decision_id"]]
-    decision_id: str = DECISION_ID
-    text: str = Field(
-        ...,
-        title="Voteline Text",
-        description=(
-            "Each decision may contain a vote line, e.g. a summary of which"
-            " justice voted for the main opinion and those who dissented, etc."
-        ),
+    decision_id: str = Field(
+        default=...,
+        title="Decision ID",
+        description="Foreign key to reference Decisions.",
         col=str,
-        index=True,
+        fk=(DecisionRow.__tablename__, "id"),
     )
 
 
-class TitleTagRow(TableConfig):
-    __prefix__ = "sc"
-    __tablename__ = "titletags"
-    decision_id: str = DECISION_ID
-    tag: str = Field(..., col=str, index=True)
+class OpinionRow(DecisionComponent, DecisionOpinion, TableConfig):
+    """Component opinion of a decision."""
 
-
-class OpinionRow(TableConfig):
-    __prefix__ = "sc"
     __tablename__ = "opinions"
     __indexes__ = [
         ["id", "title"],
@@ -93,97 +51,50 @@ class OpinionRow(TableConfig):
         ["id", "decision_id"],
         ["decision_id", "title"],
     ]
-    decision_id: str = DECISION_ID
-    id: str = Field(
-        ...,
-        description=(
-            "The opinion pk is based on combining the decision_id with the"
-            " justice_id"
-        ),
-        col=str,
-    )
-    pdf: str | None = Field(
-        default=None,
-        description=(
-            "The opinion pdf is the url that links to the downloadable PDF, if"
-            " it exists"
-        ),
-        col=str,
-    )
-    title: str | None = Field(
-        ...,
-        description=(
-            "How is the opinion called, e.g. Ponencia, Concurring Opinion,"
-            " Separate Opinion"
-        ),
-        col=str,
-    )
-    tags: list[str] | None = Field(
-        default=None,
-        description="e.g. main, dissenting, concurring, separate",
-    )
     justice_id: int | None = Field(
         default=None,
-        description=(
-            "The writer of the opinion; when not supplied could mean a Per"
-            " Curiam opinion, or unable to detect the proper justice."
-        ),
+        title="Justice ID",
+        description="If empty, a Per Curiam opinion or unable to detect ID.",
         col=int,
-        index=True,
         fk=(Justice.__tablename__, "id"),
     )
-    remark: str | None = Field(
-        default=None,
-        description=(
-            "Short description of the opinion, when available, i.e. 'I reserve"
-            " my right, etc.', 'On leave.', etc."
-        ),
-        col=str,
-        fts=True,
-    )
-    concurs: list[dict] | None = Field(default=None)
-    text: str = Field(
-        ...,
-        description=(
-            "Text proper of the opinion (should ideally be in markdown format)"
-        ),
-        col=str,
-        fts=True,
-    )
 
 
-class SegmentRow(TableConfig):
-    __prefix__ = "sc"
+class SegmentRow(DecisionComponent, OpinionSegment, TableConfig):
+    """Component element of an opinion of a decision."""
+
     __tablename__ = "segments"
     __indexes__ = [["opinion_id", "decision_id"]]
-    id: str = Field(..., col=str)
-    decision_id: str = DECISION_ID
-    opinion_id: str = Field(..., col=str, fk=(OpinionRow.__tablename__, "id"))
-    position: str = Field(
-        ...,
-        title="Relative Position",
-        description=(
-            "The line number of the text as stripped from its markdown source."
-        ),
-        col=int,
-        index=True,
-    )
-    char_count: int = Field(
-        ...,
-        title="Character Count",
-        description=(
-            "The number of characters of the text makes it easier to discover"
-            " patterns."
-        ),
-        col=int,
-        index=True,
-    )
-    segment: str = Field(
-        ...,
-        title="Body Segment",
-        description=(
-            "A partial text fragment of an opinion, exclusive of footnotes."
-        ),
+    opinion_id: str = Field(
+        default=...,
+        title="Opinion Id",
         col=str,
-        fts=True,
+        fk=(OpinionRow.__tablename__, "id"),
     )
+
+
+class CitationRow(DecisionComponent, Citation, TableConfig):
+    """How each decision is identified."""
+
+    __tablename__ = "citations"
+    __indexes__ = [
+        ["id", "decision_id"],
+        ["docket_category", "docket_serial", "docket_date"],
+        ["scra", "phil", "offg", "docket"],
+    ]
+
+
+class VoteLine(DecisionComponent, TableConfig):
+    """Each decision may contain a vote line, e.g. a summary of which
+    justice voted for the main opinion and those who dissented, etc."""
+
+    __tablename__ = "votelines"
+    __indexes__ = [["id", "decision_id"]]
+    text: str = Field(..., title="Voteline Text", col=str, index=True)
+
+
+class TitleTagRow(DecisionComponent, TableConfig):
+    """Enables some classifications based on the title of the decision."""
+
+    __tablename__ = "titletags"
+    tag: str = Field(..., col=str, index=True)

@@ -1,4 +1,4 @@
-__version__ = "0.0.12"
+__version__ = "0.2.0"
 
 from .justice import (
     CandidateJustice,
@@ -36,4 +36,4 @@ from .decision import (
     OpinionRow,
     SegmentRow,
 )
-from .database import CorpusDatabase
+from .database import ConfigDecisions
