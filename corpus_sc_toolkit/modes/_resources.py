@@ -388,8 +388,11 @@ class DecisionFields(BaseModel):
         """For each item in the collection from `cls.iter_collections()`, produce
         unique docket keys."""
         for collection in cls.iter_docket_date_serials(dockets, years):
-            for docket in collection["CommonPrefixes"]:
-                yield docket["Prefix"]
+            if collection.get("CommonPrefixes", None):
+                for docket in collection["CommonPrefixes"]:
+                    yield docket["Prefix"]
+            else:
+                logger.error(f"Bad {collection=}")
 
     @classmethod
     def key_raw(cls, dated_prefix: str) -> str | None:

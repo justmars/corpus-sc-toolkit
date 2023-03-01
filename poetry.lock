@@ -1368,14 +1368,14 @@ plugins = ["importlib-metadata"]
 
 [[package]]
 name = "pylts"
-version = "0.0.7"
+version = "0.0.8"
 description = "Pydantic wrapper around litestreamed database specific to an AWS bucket."
 category = "main"
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "pylts-0.0.7-py3-none-any.whl", hash = "sha256:25cd75ac53321dec8dd8169d8f502d0cb5d5559a0ca8d528e142cdba4ffe7a6b"},
-    {file = "pylts-0.0.7.tar.gz", hash = "sha256:e70f7a4e3f95ab998cede758cb9e6232997d5af7605ed57286300ef0734cf200"},
+    {file = "pylts-0.0.8-py3-none-any.whl", hash = "sha256:0cf4f55b8e656b481429edb6f2543581c4d27de9c64f1f76c08ffa33f4df1bc8"},
+    {file = "pylts-0.0.8.tar.gz", hash = "sha256:133974f36ff5258348a54978743bf995b600a4b15eb8aef83ab18c469e9b3cc9"},
 ]
 
 [package.dependencies]
@@ -2110,4 +2110,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "f52d230425c93655341eab15edf8d364d3fd7991d27ae98cda7cfd20d87350e1"
+content-hash = "833530c9d36ca3a44151f9756d746303236a46b3ffd77b6648dee1915d134759"
