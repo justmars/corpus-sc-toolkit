@@ -1,23 +1,25 @@
-import yaml
 from collections.abc import Iterator
 from pathlib import Path
-from sqlpyd import Connection
-from pylts import ConfigS3
+
+import yaml
+from corpus_pax import Individual, setup_pax
 from loguru import logger
-from corpus_pax import setup_pax, Individual
 from pydantic import BaseSettings, Field
+from pylts import ConfigS3
 from sqlite_utils import Database
-from .justice import Justice, get_justices_file
-from .meta import extract_votelines, tags_from_title
-from .modes import InterimDecision, RawDecision, DOCKETS, YEARS
+from sqlpyd import Connection
+
 from .decision import (
-    DecisionRow,
     CitationRow,
-    TitleTagRow,
-    VoteLine,
+    DecisionRow,
     OpinionRow,
     SegmentRow,
+    TitleTagRow,
+    VoteLine,
 )
+from .justice import Justice, get_justices_file
+from .meta import extract_votelines, tags_from_title
+from .modes import DOCKETS, YEARS, InterimDecision, RawDecision
 
 DB_FOLDER = Path(__file__).parent.parent / "data"
 

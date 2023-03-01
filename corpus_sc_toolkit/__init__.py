@@ -1,5 +1,14 @@
 __version__ = "0.2.0"
 
+from .database import ConfigDecisions
+from .decision import (
+    CitationRow,
+    DecisionRow,
+    OpinionRow,
+    SegmentRow,
+    TitleTagRow,
+    VoteLine,
+)
 from .justice import (
     CandidateJustice,
     Justice,
@@ -20,20 +29,11 @@ from .meta import (
 )
 from .modes import (
     DecisionHTMLConvertMarkdown,
+    DecisionOpinion,
     InterimDecision,
     InterimOpinion,
-    DecisionOpinion,
     RawDecision,
     add_markdown_file,
     segmentize,
     standardize,
 )
-from .decision import (
-    DecisionRow,
-    CitationRow,
-    VoteLine,
-    TitleTagRow,
-    OpinionRow,
-    SegmentRow,
-)
-from .database import ConfigDecisions

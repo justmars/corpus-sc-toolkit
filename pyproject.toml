@@ -49,6 +49,8 @@ testpaths = ["tests"]
 
 [tool.ruff]
 ignore = ["F401"]
+fixable = ["F", "E", "W", "I001"]
+select = ["F", "E", "W", "I001"]
 
 [tool.black]
 target-version = ['py311']

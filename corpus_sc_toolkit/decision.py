@@ -1,9 +1,11 @@
+import abc
+
 from citation_utils import Citation
-from pydantic import Field, BaseModel
+from pydantic import BaseModel, Field
 from sqlpyd import TableConfig
+
 from .justice import Justice
 from .modes import DecisionFields, DecisionOpinion, OpinionSegment
-import abc
 
 
 class DecisionRow(DecisionFields, TableConfig):

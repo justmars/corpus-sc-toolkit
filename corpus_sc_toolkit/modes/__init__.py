@@ -1,10 +1,15 @@
-from ._resources import DecisionFields
+from ._resources import (
+    DOCKETS,
+    YEARS,
+    DecisionFields,
+    DecisionOpinion,
+    OpinionSegment,
+)
 from .interim import InterimDecision, InterimOpinion
+from .raw import RawDecision
 from .txt import (
     DecisionHTMLConvertMarkdown,
     add_markdown_file,
     segmentize,
     standardize,
 )
-from .raw import RawDecision
-from ._resources import DOCKETS, YEARS, DecisionOpinion, OpinionSegment

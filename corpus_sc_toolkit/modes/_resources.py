@@ -1,16 +1,18 @@
-import re
 import datetime
-import yaml
-from loguru import logger
-from typing import Any
-from pathlib import Path
-from start_sdk import CFR2_Bucket
-from citation_utils import Citation
+import re
 from collections.abc import Iterator
-from pydantic import BaseModel, Field, root_validator
-from corpus_sc_toolkit.meta import CourtComposition, DecisionCategory
-from .txt.splitter import segmentize
+from pathlib import Path
+from typing import Any
 
+import yaml
+from citation_utils import Citation
+from loguru import logger
+from pydantic import BaseModel, Field, root_validator
+from start_sdk import CFR2_Bucket
+
+from corpus_sc_toolkit.meta import CourtComposition, DecisionCategory
+
+from .txt.splitter import segmentize
 
 BUCKET_NAME = "sc-decisions"
 ORIGIN = CFR2_Bucket(name=BUCKET_NAME)

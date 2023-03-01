@@ -1,22 +1,23 @@
-import yaml
 import json
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Self
-from loguru import logger
-from pydantic import Field, BaseModel
-from sqlite_utils import Database
-from dateutil.parser import parse
 
-from ..meta import CourtComposition, DecisionCategory, get_cite_from_fields
+import yaml
+from dateutil.parser import parse
+from loguru import logger
+from pydantic import BaseModel, Field
+from sqlite_utils import Database
+
 from ..justice import CandidateJustice
+from ..meta import CourtComposition, DecisionCategory, get_cite_from_fields
 from ._resources import (
-    SUFFIX_PDF,
-    DecisionOpinion,
-    DecisionFields,
-    TEMP_FOLDER,
     ORIGIN,
     SQL_QUERY,
+    SUFFIX_PDF,
+    TEMP_FOLDER,
+    DecisionFields,
+    DecisionOpinion,
     tmp_load,
 )
 
@@ -163,7 +164,7 @@ class InterimDecision(DecisionFields):
             return None
         instance = {
             "id": self.prefix_id,
-            "opinions": [o._asdict() for o in self.opinions],
+            "opinions": [o.dict() for o in self.opinions],
         } | self.dict(exclude={"opinions"})
         temp_path = TEMP_FOLDER / "temp_pdf.yaml"
         temp_path.unlink(missing_ok=True)  # delete existing content, if any.

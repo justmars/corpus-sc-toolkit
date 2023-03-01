@@ -1,8 +1,10 @@
 from collections.abc import Iterator
 from typing import Any, Self
+
+from citation_utils import Citation
 from loguru import logger
 from sqlite_utils import Database
-from citation_utils import Citation
+
 from corpus_sc_toolkit.justice import CandidateJustice
 from corpus_sc_toolkit.meta import (
     CourtComposition,
@@ -11,9 +13,9 @@ from corpus_sc_toolkit.meta import (
 )
 
 from ._resources import (
-    SUFFIX_OPINION,
     DETAILS_FILE,
     DOCKETS,
+    SUFFIX_OPINION,
     YEARS,
     DecisionFields,
     DecisionOpinion,
