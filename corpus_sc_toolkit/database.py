@@ -88,15 +88,13 @@ class ConfigDecisions(BaseSettings):
                 a `details.yaml` file or a `pdf.yaml` file.
         """
         for docket_prefix in DecisionRow.iter_dockets(dockets, years):
-            if key := DecisionRow.key_raw(docket_prefix):
-                raw = RawDecision.make(
-                    r2_data=RawDecision.preget(key),
-                    db=self.conn.db,
-                )
+            if key_raw := DecisionRow.key_raw(docket_prefix):
+                r2_data = RawDecision.preget(key_raw)
+                raw = RawDecision.make(r2_data=r2_data, db=self.conn.db)
                 if raw and raw.prefix_id:
                     yield DecisionRow(**raw.dict(), id=raw.prefix_id)
-            elif key := DecisionRow.key_raw(docket_prefix):
-                yield DecisionRow(**InterimDecision.get(key).dict())
+            elif key_pdf := DecisionRow.key_pdf(docket_prefix):
+                yield DecisionRow(**InterimDecision.get(key_pdf).dict())
 
     def add_decision(self, row: DecisionRow) -> str | None:
         """This creates a decision row and correlated metadata involving
@@ -115,10 +113,10 @@ class ConfigDecisions(BaseSettings):
             added = table.insert(record=row.dict(), pk="id")  # type: ignore
             logger.debug(f"Added {added.last_pk=}")
         except Exception as e:
-            logger.error(f"Skipping duplicate {row.id=}; {e=}")
+            logger.error(f"Skip duplicate: {row.id=}; {e=}")
             return None
         if not added.last_pk:
-            logger.error(f"Could not find decision_id for {row.dict()=}")
+            logger.error(f"Not made: {row.dict()=}")
             return None
 
         for email in row.emails:
@@ -130,17 +128,13 @@ class ConfigDecisions(BaseSettings):
             )  # note explicit m2m table name is `sc_`
 
         if row.citation and row.citation.has_citation:
-            self.conn.add_record(
-                kls=CitationRow,
-                item=row.citation_fk,
-            )
+            self.conn.add_record(kls=CitationRow, item=row.citation_fk)
 
         if row.voting:
             self.conn.add_records(
                 kls=VoteLine,
                 items=extract_votelines(
-                    decision_pk=added.last_pk,
-                    text=row.voting,
+                    decision_pk=added.last_pk, text=row.voting
                 ),
             )
 
@@ -148,8 +142,7 @@ class ConfigDecisions(BaseSettings):
             self.conn.add_records(
                 kls=TitleTagRow,
                 items=tags_from_title(
-                    decision_pk=added.last_pk,
-                    text=row.title,
+                    decision_pk=added.last_pk, text=row.title
                 ),
             )
 
