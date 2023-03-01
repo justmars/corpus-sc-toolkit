@@ -420,14 +420,14 @@ files = [
 
 [[package]]
 name = "corpus-pax"
-version = "0.1.19"
+version = "0.1.20"
 description = "Using Github API (to pull individuals, orgs, and article content), setup a local sqlite database, syncing images to Cloudflare."
 category = "main"
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "corpus_pax-0.1.19-py3-none-any.whl", hash = "sha256:7c30abbc5d932acf912ae754fb974af61f225020fd72a3fb21159a206fa19a35"},
-    {file = "corpus_pax-0.1.19.tar.gz", hash = "sha256:deaf611a38ae33fde4623cb69fd8f043082ecc996f8cddff37ccf839aeec3fcd"},
+    {file = "corpus_pax-0.1.20-py3-none-any.whl", hash = "sha256:3e84f224464bbdc3055ab78af5e332a2030f77fcc0c9b5ac13aaef491ee8706e"},
+    {file = "corpus_pax-0.1.20.tar.gz", hash = "sha256:c7c26cbdc79c902bf58b3568e601bada2eb58726c69fa5ac128bf757fff76391"},
 ]
 
 [package.dependencies]
@@ -2089,6 +2089,7 @@ category = "dev"
 optional = false
 python-versions = "*"
 files = [
+    {file = "wcwidth-0.2.6-py2.py3-none-any.whl", hash = "sha256:795b138f6875577cd91bba52baf9e445cd5118fd32723b460e30a0af30ea230e"},
     {file = "wcwidth-0.2.6.tar.gz", hash = "sha256:a5220780a404dbe3353789870978e472cfe477761f06ee55077256e509b156d0"},
 ]
 
@@ -2110,4 +2111,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "833530c9d36ca3a44151f9756d746303236a46b3ffd77b6648dee1915d134759"
+content-hash = "0d1575ff3ee56ccfca9b9f7e002aa9f2b2e6d9f784d15f8b0fea57e2c0bc55ce"
