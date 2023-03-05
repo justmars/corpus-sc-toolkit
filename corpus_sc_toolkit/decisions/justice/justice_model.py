@@ -2,19 +2,10 @@ import datetime
 
 from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta as rd
-from jinja2 import Environment, PackageLoader, select_autoescape
 from pydantic import Field, validator
 from sqlpyd import Connection, IndividualBio
 
 MAX_JUSTICE_AGE = 70
-
-
-justice_jinja_env = Environment(
-    loader=PackageLoader(
-        package_name="corpus_sc_toolkit", package_path="justice/sql"
-    ),
-    autoescape=select_autoescape(),
-)
 
 
 class Bio(IndividualBio):
@@ -221,12 +212,14 @@ class Justice(Bio):
     def view_chiefs(cls, c: Connection) -> list[dict]:
         """Get general information of the chief justices and their
         dates of appointment."""
+        from corpus_sc_toolkit.utils import sqlenv
+
         view = "chief_dates"
         if view in c.db.view_names():
             return list(c.db[view].rows)
         c.db.create_view(
             view,
-            sql=justice_jinja_env.get_template("chief_dates.sql").render(
+            sql=sqlenv.get_template("decisions/chief_dates.sql").render(
                 justice_table=Justice.__tablename__
             ),
         )

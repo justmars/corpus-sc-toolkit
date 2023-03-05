@@ -15,10 +15,8 @@ class StatuteUploadedPage(StatutePage):
         """Check if a valid docket citation exists and return the same."""
         if not self.statute_category:
             return False
-
         if not self.statute_serial_id:
             return False
-
         if not self.variant:
             return False
         return True
@@ -40,13 +38,7 @@ class StatuteUploadedPage(StatutePage):
     def meta(self):
         """When uploading to R2, the metadata can be included as extra arguments to
         the file."""
-        reqs = [
-            self.statute_category,
-            self.statute_serial_id,
-            self.date,
-            self.date,
-        ]
-        if not any(reqs):
+        if not any([self.statute_category, self.statute_serial_id, self.date]):
             return {}
         raw = {
             "Statute_Title": self.title,

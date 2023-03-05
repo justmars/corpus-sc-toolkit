@@ -8,16 +8,12 @@ from loguru import logger
 from pydantic import BaseModel, Field
 from sqlite_utils import Database
 
-from ..justice import CandidateJustice
-from ..meta import CourtComposition, DecisionCategory, get_cite_from_fields
-from ..utils import create_temp_yaml, download_to_temp
-from ._resources import (
-    ORIGIN,
-    SQL_QUERY,
-    SUFFIX_PDF,
-    DecisionFields,
-    DecisionOpinion,
-)
+from ..utils import create_temp_yaml, download_to_temp, sqlenv
+from ._resources import ORIGIN, SUFFIX_PDF
+from .decision_fields import DecisionFields
+from .decision_substructures import DecisionOpinion
+from .justice import CandidateJustice
+from .meta import CourtComposition, DecisionCategory, get_cite_from_fields
 
 
 class InterimOpinion(BaseModel):
@@ -100,7 +96,8 @@ class InterimDecision(DecisionFields):
         Yields:
             Iterator[Self]: Instances of the Interim Decision.
         """
-        for row in db.execute_returning_dicts(SQL_QUERY):
+        q = sqlenv.get_template("decisions/limit_extract.sql").render()
+        for row in db.execute_returning_dicts(q):
             if not (cite := get_cite_from_fields(row)):
                 logger.error(f"Bad citation in {row['id']=}")
                 continue

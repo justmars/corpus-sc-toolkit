@@ -1,0 +1,50 @@
+created: 1663728656.9834116
+date: 1971-06-19
+description: An Act Creating Certain Barrios In The Municipality Of Aliaga, Province
+  Of Nueva Ecija.
+id: ra-6249-june-19-1971
+modified: 1663728656.9834116
+statute_category: ra
+statute_serial_id: '6249'
+title: Republic Act No. 6249
+titles:
+- category: serial
+  statute_id: ra-6249-june-19-1971
+  text: Republic Act No. 6249
+- category: official
+  statute_id: ra-6249-june-19-1971
+  text: An Act Creating Certain Barrios In The Municipality Of Aliaga, Province Of
+    Nueva Ecija.
+tree:
+- caption: null
+  content: null
+  id: '1.'
+  item: Republic Act No. 6249
+  units:
+  - caption: null
+    content: 'The following sitios in the Municipality of Aliaga, Province of Nueva
+      Ecija, are hereby converted into barrios of said municipality, to wit:  \r\r
+      1. The sitio of Macabucod in the barrio of Sto. Tomas is converted into a distinct
+      and independent barrio of said municipality, to be known as the barrio of Macabucod;
+      and  \r\r 2. The sitio of San Felipe Bata in the barrio of San Felipe Matanda
+      is converted into a distinct and independent barrio of said municipality, to
+      be known as the barrio of San Felipe Bata.'
+    id: 1.1.
+    item: Section 1
+    units: []
+  - caption: null
+    content: This Act shall take effect upon its approval.  \r\r
+    id: 1.2.
+    item: Section 3
+    units: []
+units: '[{"item": "Republic Act No. 6249", "id": "1.", "units": [{"item": "Section
+  1", "content": "The following sitios in the Municipality of Aliaga, Province of
+  Nueva Ecija, are hereby converted into barrios of said municipality, to wit:  \\r\\r
+  1. The sitio of Macabucod in the barrio of Sto. Tomas is converted into a distinct
+  and independent barrio of said municipality, to be known as the barrio of Macabucod;
+  and  \\r\\r 2. The sitio of San Felipe Bata in the barrio of San Felipe Matanda
+  is converted into a distinct and independent barrio of said municipality, to be
+  known as the barrio of San Felipe Bata.", "id": "1.1.", "units": []}, {"item": "Section
+  3", "content": "This Act shall take effect upon its approval.  \\r\\r", "id": "1.2.",
+  "units": []}]}]'
+variant: 1

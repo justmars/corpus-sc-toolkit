@@ -5,12 +5,6 @@ from citation_utils import Citation
 from loguru import logger
 from sqlite_utils import Database
 
-from ..justice import CandidateJustice
-from ..meta import (
-    CourtComposition,
-    DecisionCategory,
-    voteline_clean,
-)
 from ..utils import download_to_temp
 from ._resources import (
     DETAILS_FILE,
@@ -18,8 +12,14 @@ from ._resources import (
     ORIGIN,
     SUFFIX_OPINION,
     YEARS,
-    DecisionFields,
-    DecisionOpinion,
+)
+from .decision_fields import DecisionFields
+from .decision_substructures import DecisionOpinion
+from .justice import CandidateJustice
+from .meta import (
+    CourtComposition,
+    DecisionCategory,
+    voteline_clean,
 )
 
 

@@ -17,14 +17,16 @@ from .decisions import (
     CitationRow,
     DecisionRow,
     InterimDecision,
+    Justice,
     OpinionRow,
     RawDecision,
     SegmentRow,
     TitleTagRow,
     VoteLine,
+    extract_votelines,
+    get_justices_file,
+    tags_from_title,
 )
-from .justice import Justice, get_justices_file
-from .meta import extract_votelines, tags_from_title
 
 DB_FOLDER = Path(__file__).parent.parent / "data"
 load_dotenv(find_dotenv())
