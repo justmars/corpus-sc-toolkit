@@ -22,7 +22,7 @@ from statute_trees import (
     generic_mp,
 )
 
-from .statutes import STATUTE_FILES, STATUTE_PATH, Integrator, sqlenv
+from ._resources import STATUTE_FILES, STATUTE_PATH, Integrator, sqlenv
 
 
 class StatuteRow(Page, StatuteBase, TableConfig):

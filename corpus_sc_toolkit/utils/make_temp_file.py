@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from loguru import logger
 from start_sdk import CFR2_Bucket
 
 """Generic temporary file download."""
@@ -11,11 +12,13 @@ TEMP_FOLDER.mkdir(exist_ok=True)
 
 
 def create_temp_yaml(data: dict) -> Path:
-    f = TEMP_FOLDER / "temp.yaml"
-    f.unlink(missing_ok=True)
-    with open(f, "w+"):
-        f.write_text(yaml.safe_dump(data))
-    return f
+    if data.get("id"):
+        logger.debug(f"Creating temp file for {data['id']=}")
+    temp_path = TEMP_FOLDER / "temp.yaml"
+    temp_path.unlink(missing_ok=True)  # delete existing content, if any.
+    with open(temp_path, "w+"):
+        temp_path.write_text(yaml.safe_dump(data))
+    return temp_path
 
 
 def download_to_temp(

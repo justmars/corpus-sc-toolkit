@@ -1,20 +1,18 @@
 __version__ = "0.2.0"
 
 from .database import ConfigDecisions
-from .decision import (
+from .decisions import (
     CitationRow,
+    DecisionHTMLConvertMarkdown,
+    DecisionOpinion,
     DecisionRow,
+    InterimDecision,
+    InterimOpinion,
     OpinionRow,
+    RawDecision,
     SegmentRow,
     TitleTagRow,
     VoteLine,
-)
-from .decisions import (
-    DecisionHTMLConvertMarkdown,
-    DecisionOpinion,
-    InterimDecision,
-    InterimOpinion,
-    RawDecision,
     add_markdown_file,
     segmentize,
     standardize,
@@ -37,3 +35,4 @@ from .meta import (
     tags_from_title,
     voteline_clean,
 )
+from .statutes import StatuteUploadedPage

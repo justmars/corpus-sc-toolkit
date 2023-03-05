@@ -11,15 +11,18 @@ from pylts import ConfigS3
 from sqlite_utils import Database
 from sqlpyd import Connection
 
-from .decision import (
+from .decisions import (
+    DOCKETS,
+    YEARS,
     CitationRow,
     DecisionRow,
+    InterimDecision,
     OpinionRow,
+    RawDecision,
     SegmentRow,
     TitleTagRow,
     VoteLine,
 )
-from .decisions import DOCKETS, YEARS, InterimDecision, RawDecision
 from .justice import Justice, get_justices_file
 from .meta import extract_votelines, tags_from_title
 

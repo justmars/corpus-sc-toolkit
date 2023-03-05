@@ -1,10 +1,9 @@
 from pathlib import Path
 
-import yaml
 from loguru import logger
 from statute_trees import StatutePage
 
-from ..utils import create_temp_yaml
+from ..utils import ascii_singleline, create_temp_yaml
 from ._resources import STATUTE_ORIGIN
 
 
@@ -33,7 +32,6 @@ class StatuteUploadedPage(StatutePage):
                     self.statute_category,
                     self.statute_serial_id,
                     self.variant,
-                    self.date,
                 ]
             )
         raise Exception("Bad identity.")
@@ -42,12 +40,17 @@ class StatuteUploadedPage(StatutePage):
     def meta(self):
         """When uploading to R2, the metadata can be included as extra arguments to
         the file."""
-        reqs = [self.statute_category, self.statute_serial_id, self.date]
+        reqs = [
+            self.statute_category,
+            self.statute_serial_id,
+            self.date,
+            self.date,
+        ]
         if not any(reqs):
             return {}
         raw = {
             "Statute_Title": self.title,
-            "Statute_Description": self.description,
+            "Statute_Description": ascii_singleline(self.description),
             "Statute_Category": self.statute_category,
             "Statute_Serial_Id": self.statute_serial_id,
             "Statute_Date": self.date.isoformat(),

@@ -5,6 +5,14 @@ from ._resources import (
     DecisionOpinion,
     OpinionSegment,
 )
+from .decision import (
+    CitationRow,
+    DecisionRow,
+    OpinionRow,
+    SegmentRow,
+    TitleTagRow,
+    VoteLine,
+)
 from .interim import InterimDecision, InterimOpinion
 from .raw import RawDecision
 from .txt import (

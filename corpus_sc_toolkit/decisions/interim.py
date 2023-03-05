@@ -3,7 +3,6 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Self
 
-import yaml
 from dateutil.parser import parse
 from loguru import logger
 from pydantic import BaseModel, Field
@@ -11,7 +10,7 @@ from sqlite_utils import Database
 
 from ..justice import CandidateJustice
 from ..meta import CourtComposition, DecisionCategory, get_cite_from_fields
-from ..utils import TEMP_FOLDER, download_to_temp
+from ..utils import create_temp_yaml, download_to_temp
 from ._resources import (
     ORIGIN,
     SQL_QUERY,
@@ -161,15 +160,13 @@ class InterimDecision(DecisionFields):
         """
         if not (target_prefix := self.pdf_prefix):
             return None
+        source = self.dict(exclude={"opinions"})
         instance = {
             "id": self.prefix_id,
             "opinions": [o.dict() for o in self.opinions],
-        } | self.dict(exclude={"opinions"})
-        temp_path = TEMP_FOLDER / "temp_pdf.yaml"
-        temp_path.unlink(missing_ok=True)  # delete existing content, if any.
-        with open(temp_path, "w+") as write_file:
-            logger.info(f"Dumping {target_prefix=}")
-            yaml.safe_dump(instance, write_file)
+        }
+        data = instance | source
+        temp_path = create_temp_yaml(data=data)
         return target_prefix, temp_path
 
     def upload(self):
