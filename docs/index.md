@@ -50,16 +50,16 @@ title--xseparate
 
 ## Decision Fields
 
-::: corpus_sc_toolkit.decisions_resources.DecisionFields
+::: corpus_sc_toolkit.decisions._resources.DecisionFields
 
 ## Decision Opinions
 
 Each decision is divided into opinions:
 
-::: corpus_sc_toolkit.decisions_resources.DecisionOpinion
+::: corpus_sc_toolkit.decisions._resources.DecisionOpinion
 
 ## Opinion Segments
 
 Each decision is divided into opinions:
 
-::: corpus_sc_toolkit.decisions_resources.OpinionSegment
+::: corpus_sc_toolkit.decisions._resources.OpinionSegment
