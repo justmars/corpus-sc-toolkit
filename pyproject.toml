@@ -39,7 +39,7 @@ pytest-cov = "^2.12.1"
 pre-commit = "^2.21"
 mkdocs = "^1.4.2"
 mkdocstrings = { extras = ["python"], version = "^0.20.0" }
-mkdocs-material = "^9.0.15"
+mkdocs-material = "^9.1"
 ipython = "^8.11.0"
 
 [tool.pytest]
