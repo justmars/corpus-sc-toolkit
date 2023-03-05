@@ -7,7 +7,7 @@ from start_sdk import CFR2_Bucket
 
 """Generic temporary file download."""
 
-TEMP_FOLDER = Path(__file__).parent.parent / "tmp"
+TEMP_FOLDER = Path(__file__).parent / "tmp"
 TEMP_FOLDER.mkdir(exist_ok=True)
 
 

@@ -27,7 +27,11 @@ from .decisions import (
     get_justices_file,
     tags_from_title,
 )
+from .statutes import Statute
 
+LOCAL_STATUTES = (
+    Path().home().joinpath("code/corpus/statutes").glob("**/details.yaml")
+)
 DB_FOLDER = Path(__file__).parent.parent / "data"
 load_dotenv(find_dotenv())
 
@@ -52,6 +56,18 @@ logger.configure(
         },
     ]
 )
+
+
+class ConfigStatutes(BaseModel):
+    @classmethod
+    def extract_local(cls):
+        for detail_path in LOCAL_STATUTES:
+            logger.debug(f"Extracting: {detail_path=}")
+            if obj := Statute.from_page(detail_path):
+                logger.debug(f"Uploading: {obj.id=}")
+                obj.upload()
+            else:
+                logger.error(f"Error uploading {detail_path=}")
 
 
 class ConfigDecisions(BaseModel):

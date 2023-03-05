@@ -1,2 +1,2 @@
 from ._resources import Integrator
-from .from_path import StatuteUploadedPage
+from .statute import Statute

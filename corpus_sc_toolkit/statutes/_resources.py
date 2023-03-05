@@ -15,6 +15,7 @@ meta = STATUTE_ORIGIN.resource.meta
 if not meta:
     raise Exception("Bad bucket.")
 STATUTE_CLIENT = meta.client
+STATUTE_DETAILS_SUFFIX = "details.yaml"
 
 
 class Integrator(BaseModel, abc.ABC):

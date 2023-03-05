@@ -1,14 +1,12 @@
 import sqlite3
 from collections.abc import Iterator
 from pathlib import Path
-from sqlite3 import IntegrityError
+from typing import Self
 
 from loguru import logger
 from pydantic import EmailStr, Field, ValidationError
 from sqlpyd import Connection, TableConfig
 from statute_patterns import (
-    Rule,
-    StatuteSerialCategory,
     StatuteTitleCategory,
     extract_rules,
 )
@@ -22,8 +20,13 @@ from statute_trees import (
     generic_mp,
 )
 
-from .._utils import sqlenv
-from ._resources import Integrator
+from .._utils import (
+    ascii_singleline,
+    create_temp_yaml,
+    download_to_temp,
+    sqlenv,
+)
+from ._resources import STATUTE_DETAILS_SUFFIX, STATUTE_ORIGIN, Integrator
 
 
 class StatuteRow(Page, StatuteBase, TableConfig):
@@ -235,12 +238,32 @@ class Statute(Integrator):
         ]
 
     @classmethod
-    def from_page(cls, details_path: Path):
+    def from_page(cls, details_path: Path) -> Self | None:
+        """Assumes a local directory from which to construct statutory objects.
+
+        Args:
+            details_path (Path): See `StatutePage` for original fields required in
+                the necessary yaml path.
+
+        Returns:
+            Self | None: If all fields validate, return an instance of an Integrated
+                Statute.
+        """
         # build and validate metadata from the path
-        page = StatutePage.build(details_path)
+        try:
+            page = StatutePage.build(details_path)
+        except ValidationError:
+            logger.error(f"Could not validate {details_path=}")
+            return None
 
         # assign row for creation
         meta = StatuteRow(**page.dict(exclude={"emails", "tree", "titles"}))
+
+        # use identifiers to create unique id
+        base_prefix = cls.get_base_prefix(meta)
+        if not base_prefix:
+            return None
+        statute_id = cls.set_prefix_id(base_prefix)
 
         # setup associated titles
         titles = [
@@ -251,13 +274,13 @@ class Statute(Integrator):
         # enable full text searches of contents of the tree; starts with `1.1.`
         fts = [
             StatuteUnitSearch(**unit)
-            for unit in StatuteUnit.searchables(page.id, page.tree)
+            for unit in StatuteUnit.searchables(statute_id, page.tree)
         ]
 
         # full text searches should includes a title row, i.e. node `1.``
         root_fts = [
             StatuteUnitSearch(
-                statute_id=page.id,
+                statute_id=statute_id,
                 material_path="1.",
                 unit_text=", ".join(
                     [f"{meta.statute_category} {meta.statute_serial_id}"]
@@ -267,7 +290,7 @@ class Statute(Integrator):
         ]
 
         return Statute(
-            id=page.id,
+            id=statute_id,
             emails=page.emails,
             meta=meta,
             tree=page.tree,
@@ -276,11 +299,13 @@ class Statute(Integrator):
             material_paths=[
                 StatuteMaterialPath(**unit)
                 for unit in StatuteUnit.granularize(
-                    pk=page.id, nodes=page.tree
+                    pk=statute_id, nodes=page.tree
                 )
             ],
             statutes_found=list(
-                StatuteFoundInUnit.extract_units(pk=page.id, units=page.tree)
+                StatuteFoundInUnit.extract_units(
+                    pk=statute_id, units=page.tree
+                )
             ),
         )
 
@@ -294,3 +319,80 @@ class Statute(Integrator):
         c.create_table(StatuteMaterialPath)
         c.create_table(StatuteFoundInUnit)
         c.db.index_foreign_keys()
+
+    @classmethod
+    def get_base_prefix(cls, statute_meta_obj: StatuteRow) -> str | None:
+        """If the model were to be stored in cloud storage like R2,
+        this property ensures a unique prefix for the instance. Should
+        be in the following format: `<statute_category>/<statute_serial_id>/<variant>/`,
+        e.g. `ra/386/1`
+        """
+        if not statute_meta_obj.statute_category:
+            return None
+        if not statute_meta_obj.statute_serial_id:
+            return None
+        if not statute_meta_obj.variant:
+            return None
+        return "/".join(
+            str(i)
+            for i in [
+                statute_meta_obj.statute_category,
+                statute_meta_obj.statute_serial_id,
+                statute_meta_obj.variant,
+            ]
+        )
+
+    @classmethod
+    def set_prefix_id(cls, text: str):
+        return text.replace("/", "-").lower()
+
+    @property
+    def base_prefix(self):
+        return self.id.replace("-", "/").lower()
+
+    @property
+    def storage_meta(self):
+        """When uploading to R2, the metadata can be included as extra arguments to
+        the file."""
+        if not any(
+            [
+                self.meta.statute_category,
+                self.meta.statute_serial_id,
+                self.meta.date,
+            ]
+        ):
+            return {}
+        raw = {
+            "Statute_Title": self.meta.title,
+            "Statute_Description": ascii_singleline(self.meta.description),
+            "Statute_Category": self.meta.statute_category,
+            "Statute_Serial_Id": self.meta.statute_serial_id,
+            "Statute_Date": self.meta.date.isoformat(),
+            "Statute_Variant": self.meta.variant,
+        }
+        return {"Metadata": {k: str(v) for k, v in raw.items() if v}}
+
+    def upload(self):
+        STATUTE_ORIGIN.upload(
+            file_like=create_temp_yaml(self.dict()),
+            loc=f"{self.base_prefix}/{STATUTE_DETAILS_SUFFIX}",
+            args=self.storage_meta,
+        )
+
+    @classmethod
+    def get(cls, prefix: str) -> Self:
+        """Retrieve data represented by the `prefix` from R2 (implies previous
+        `upload()`) and instantiate the Statute based on such retrieved data.
+
+        Args:
+            prefix (str): Must end with /DETAILS.yaml
+
+        Returns:
+            Self: Interim Decision instance from R2 prefix.
+        """
+        if not prefix.endswith(STATUTE_DETAILS_SUFFIX):
+            raise Exception("Method limited to details-based files.")
+        data = download_to_temp(bucket=STATUTE_ORIGIN, src=prefix, ext="yaml")
+        if not isinstance(data, dict):
+            raise Exception(f"Could not originate {prefix=}")
+        return cls(**data)

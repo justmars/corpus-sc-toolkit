@@ -10,7 +10,7 @@ from ._utils import (
     sqlenv,
     standardize,
 )
-from .database import ConfigDecisions
+from .db import ConfigDecisions, ConfigStatutes
 from .decisions import (
     CandidateJustice,
     CitationRow,
@@ -37,4 +37,3 @@ from .decisions import (
     tags_from_title,
     voteline_clean,
 )
-from .statutes import StatuteUploadedPage
