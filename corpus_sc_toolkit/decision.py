@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 from sqlpyd import TableConfig
 
 from .justice import Justice
-from .modes import DecisionFields, DecisionOpinion, OpinionSegment
+from .models import DecisionFields, DecisionOpinion, OpinionSegment
 
 
 class DecisionRow(DecisionFields, TableConfig):

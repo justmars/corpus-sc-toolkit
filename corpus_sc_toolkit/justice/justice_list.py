@@ -23,7 +23,9 @@ GITHUB_HEADERS = headers = {
 
 
 def get_justices_from_api() -> Iterator[dict]:
-    """A master list of [Justices][justice] is found in the github `/corpus` repository.
+    """A master list of [Justices][justice-model-instance] is found in the
+    github `/corpus` repository.
+
     Provided a `GH_TOKEN` is declared as an environment variable,
     this will pull that list into an iterator of dicts.
 

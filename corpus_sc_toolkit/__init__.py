@@ -27,7 +27,7 @@ from .meta import (
     tags_from_title,
     voteline_clean,
 )
-from .modes import (
+from .models import (
     DecisionHTMLConvertMarkdown,
     DecisionOpinion,
     InterimDecision,
