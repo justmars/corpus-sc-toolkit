@@ -41,4 +41,8 @@ jobs:
       - name: Install Python Dependencies
         run: poetry install
       - name: Test with Pytest
+        env:
+          CF_ACCT_ID: ${{secrets.CF_ACCT}}
+          CF_IMG_TOKEN: ${{secrets.CF_TOKEN}}
+          GH_TOKEN: ${{secrets.GH_TOKEN}}
         run: poetry run pytest --doctest-modules -vv
