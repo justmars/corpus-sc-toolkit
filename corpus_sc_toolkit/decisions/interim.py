@@ -11,14 +11,13 @@ from sqlite_utils import Database
 
 from ..justice import CandidateJustice
 from ..meta import CourtComposition, DecisionCategory, get_cite_from_fields
+from ..utils import TEMP_FOLDER, download_to_temp
 from ._resources import (
     ORIGIN,
     SQL_QUERY,
     SUFFIX_PDF,
-    TEMP_FOLDER,
     DecisionFields,
     DecisionOpinion,
-    tmp_load,
 )
 
 
@@ -204,7 +203,7 @@ class InterimDecision(DecisionFields):
         """
         if not prefix.endswith(SUFFIX_PDF):
             raise Exception("Method limited to pdf-based files.")
-        data = tmp_load(src=prefix, ext="yaml")
+        data = download_to_temp(bucket=ORIGIN, src=prefix, ext="yaml")
         if not isinstance(data, dict):
             raise Exception(f"Could not originate {prefix=}")
         opinions = [DecisionOpinion(**o) for o in data.pop("opinions")]

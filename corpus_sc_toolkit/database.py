@@ -19,9 +19,9 @@ from .decision import (
     TitleTagRow,
     VoteLine,
 )
+from .decisions import DOCKETS, YEARS, InterimDecision, RawDecision
 from .justice import Justice, get_justices_file
 from .meta import extract_votelines, tags_from_title
-from .models import DOCKETS, YEARS, InterimDecision, RawDecision
 
 DB_FOLDER = Path(__file__).parent.parent / "data"
 load_dotenv(find_dotenv())

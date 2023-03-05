@@ -4,8 +4,8 @@ from citation_utils import Citation
 from pydantic import BaseModel, Field
 from sqlpyd import TableConfig
 
+from .decisions import DecisionFields, DecisionOpinion, OpinionSegment
 from .justice import Justice
-from .models import DecisionFields, DecisionOpinion, OpinionSegment
 
 
 class DecisionRow(DecisionFields, TableConfig):

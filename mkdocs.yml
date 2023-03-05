@@ -22,7 +22,7 @@ nav:
   - Overview: index.md
   - Justice Field: justice.md
   - Meta Field: meta.md
-  - Decision Models: models.md
+  - Decision Models: decisionsmd
 extra:
   homepage: https://mv3.dev
   social:

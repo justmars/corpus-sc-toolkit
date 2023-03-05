@@ -4,14 +4,13 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
-import yaml
 from citation_utils import Citation
 from loguru import logger
 from pydantic import BaseModel, Field, root_validator
 from start_sdk import CFR2_Bucket
 
-from corpus_sc_toolkit.meta import CourtComposition, DecisionCategory
-
+from ..meta import CourtComposition, DecisionCategory
+from ..utils import download_to_temp
 from .txt.splitter import segmentize
 
 BUCKET_NAME = "sc-decisions"
@@ -21,30 +20,6 @@ if not meta:
     raise Exception("Bad bucket.")
 CLIENT = meta.client
 """R2 variables in order to perform operations from the library."""
-
-
-"""Generic temporary file download."""
-
-TEMP_FOLDER = Path(__file__).parent.parent / "tmp"
-TEMP_FOLDER.mkdir(exist_ok=True)
-
-
-def tmp_load(src: str, ext: str = "yaml") -> str | dict[str, Any] | None:
-    """Based on the `src` prefix, download the same into a temp file
-    and return its contents based on the extension. A `yaml` extension
-    should result in contents in `dict` format; where an `md` or `html`
-    extension results in `str`. The temp file is deleted after every
-    successful extraction of the `src` as content."""
-
-    path = TEMP_FOLDER / f"temp.{ext}"
-    ORIGIN.download(src, str(path))
-    content = None
-    if ext == "yaml":
-        content = yaml.safe_load(path.read_bytes())
-    elif ext in ["md", "html"]:
-        content = path.read_text()
-    path.unlink(missing_ok=True)
-    return content
 
 
 """Decision substructures: opinions and segments."""
@@ -176,13 +151,15 @@ class DecisionOpinion(BaseModel):
             if content["Key"].endswith(".md"):
                 key = DecisionOpinion.key_from_md_prefix(content["Key"])
                 justice_id = ponente_id if key == "ponencia" else int(key)
-                if text := tmp_load(content["Key"], ext="md"):
-                    if isinstance(text, str):
+                if tx := download_to_temp(
+                    bucket=ORIGIN, src=content["Key"], ext="md"
+                ):
+                    if isinstance(tx, str):
                         yield cls(
                             id=f"{decision_id}-{key}",
                             decision_id=decision_id,
-                            title=DecisionOpinion.get_headline(text),
-                            text=text,
+                            title=DecisionOpinion.get_headline(tx),
+                            text=tx,
                             justice_id=justice_id,
                         )
 

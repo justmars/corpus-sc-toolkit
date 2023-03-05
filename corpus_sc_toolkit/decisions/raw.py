@@ -5,21 +5,21 @@ from citation_utils import Citation
 from loguru import logger
 from sqlite_utils import Database
 
-from corpus_sc_toolkit.justice import CandidateJustice
-from corpus_sc_toolkit.meta import (
+from ..justice import CandidateJustice
+from ..meta import (
     CourtComposition,
     DecisionCategory,
     voteline_clean,
 )
-
+from ..utils import download_to_temp
 from ._resources import (
     DETAILS_FILE,
     DOCKETS,
+    ORIGIN,
     SUFFIX_OPINION,
     YEARS,
     DecisionFields,
     DecisionOpinion,
-    tmp_load,
 )
 
 
@@ -43,7 +43,7 @@ class RawDecision(DecisionFields):
             raise Exception("Method limited to details.yaml.")
         candidate = prefix.removesuffix(f"/{DETAILS_FILE}")
         identity = {"prefix": candidate, "id": cls.set_id(candidate)}
-        data = tmp_load(src=prefix, ext="yaml")
+        data = download_to_temp(bucket=ORIGIN, src=prefix, ext="yaml")
         if not isinstance(data, dict):
             raise Exception(f"Bad details.yaml from {prefix=}")
         return identity | data

@@ -9,6 +9,16 @@ from .decision import (
     TitleTagRow,
     VoteLine,
 )
+from .decisions import (
+    DecisionHTMLConvertMarkdown,
+    DecisionOpinion,
+    InterimDecision,
+    InterimOpinion,
+    RawDecision,
+    add_markdown_file,
+    segmentize,
+    standardize,
+)
 from .justice import (
     CandidateJustice,
     Justice,
@@ -26,14 +36,4 @@ from .meta import (
     get_id_from_citation,
     tags_from_title,
     voteline_clean,
-)
-from .models import (
-    DecisionHTMLConvertMarkdown,
-    DecisionOpinion,
-    InterimDecision,
-    InterimOpinion,
-    RawDecision,
-    add_markdown_file,
-    segmentize,
-    standardize,
 )
