@@ -44,7 +44,7 @@ jobs:
         env:
           R2_ACCESS_KEY_ID: ${{secrets.R2_ACCESS_KEY_ID}}
           R2_SECRET_ACCESS_KEY: ${{secrets.R2_SECRET_ACCESS_KEY}}
-          CF_ACCT_ID: ${{secrets.CF_ACCT}}
-          CF_IMG_TOKEN: ${{secrets.CF_TOKEN}}
+          CF_ACCT_ID: ${{secrets.CF_ACCT_ID}}
+          CF_IMG_TOKEN: ${{secrets.CF_IMG_TOKEN}}
           GH_TOKEN: ${{secrets.GH_TOKEN}}
         run: poetry run pytest --doctest-modules -vv
