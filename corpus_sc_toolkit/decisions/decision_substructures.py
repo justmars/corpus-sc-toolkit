@@ -5,7 +5,7 @@ from citation_utils import Citation
 from pydantic import BaseModel, Field
 from statute_patterns import count_rules
 
-from ..utils import download_to_temp, segmentize
+from .._utils import download_to_temp, segmentize
 from ._resources import BUCKET_NAME, CLIENT, ORIGIN
 
 """Decision substructures: opinions and segments."""

@@ -22,7 +22,8 @@ from statute_trees import (
     generic_mp,
 )
 
-from ._resources import STATUTE_FILES, STATUTE_PATH, Integrator, sqlenv
+from .._utils import sqlenv
+from ._resources import Integrator
 
 
 class StatuteRow(Page, StatuteBase, TableConfig):
@@ -284,19 +285,6 @@ class Statute(Integrator):
         )
 
     @classmethod
-    def create_via_catid(cls, c: Connection, cat: str, id: str):
-        """Create statute/s if the `cat` and `id` passed does not yet
-        exist in the `statutes` table of the database."""
-        if StatuteRow.get_id_via_catid(c, cat, id):
-            return
-        rule = Rule(cat=StatuteSerialCategory(cat), id=id)
-        for folder in rule.extract_folders(STATUTE_PATH):
-            obj = cls.from_page(folder / "details.yaml")
-            idx = obj.insert_objects(c, StatuteRow, obj.relations)
-            if idx:
-                logger.debug(f"Added statute (cat/id): {idx}")
-
-    @classmethod
     def make_tables(cls, c: Connection):
         """The bulk of the fields declared within the Statute
         container are table structures."""
@@ -306,20 +294,3 @@ class Statute(Integrator):
         c.create_table(StatuteMaterialPath)
         c.create_table(StatuteFoundInUnit)
         c.db.index_foreign_keys()
-
-    @classmethod
-    def add_rows(cls, c: Connection):
-        for detail in STATUTE_FILES:
-            cat = detail.parent.parent.stem
-            serial = detail.parent.stem
-            try:
-                obj = cls.from_page(detail)
-                obj.insert_objects(c, StatuteRow, obj.relations)
-                logger.debug(f"Added statute {cat=} {serial=} from {detail=}")
-            except IntegrityError:
-                logger.error(f"Already existing; skipped {cat=} {serial=}")
-            except ValidationError as e:
-                logger.error(f"Validation needed {detail=}; {e=}")
-            except Exception as e:
-                logger.error(f"Generic exception on insertion: {e=}")
-        StatuteFoundInUnit.update_statute_ids(c)

@@ -3,7 +3,7 @@ from pathlib import Path
 from loguru import logger
 from statute_trees import StatutePage
 
-from ..utils import ascii_singleline, create_temp_yaml
+from .._utils import ascii_singleline, create_temp_yaml
 from ._resources import STATUTE_ORIGIN
 
 

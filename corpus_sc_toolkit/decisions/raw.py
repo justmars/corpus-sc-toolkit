@@ -5,7 +5,7 @@ from citation_utils import Citation
 from loguru import logger
 from sqlite_utils import Database
 
-from ..utils import download_to_temp
+from .._utils import download_to_temp
 from ._resources import (
     DETAILS_FILE,
     DOCKETS,

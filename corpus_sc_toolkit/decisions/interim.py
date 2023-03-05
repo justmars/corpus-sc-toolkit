@@ -8,7 +8,7 @@ from loguru import logger
 from pydantic import BaseModel, Field
 from sqlite_utils import Database
 
-from ..utils import create_temp_yaml, download_to_temp, sqlenv
+from .._utils import create_temp_yaml, download_to_temp, sqlenv
 from ._resources import ORIGIN, SUFFIX_PDF
 from .decision_fields import DecisionFields
 from .decision_substructures import DecisionOpinion

@@ -212,7 +212,7 @@ class Justice(Bio):
     def view_chiefs(cls, c: Connection) -> list[dict]:
         """Get general information of the chief justices and their
         dates of appointment."""
-        from corpus_sc_toolkit.utils import sqlenv
+        from corpus_sc_toolkit._utils import sqlenv
 
         view = "chief_dates"
         if view in c.db.view_names():

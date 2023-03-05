@@ -3,10 +3,11 @@ from pathlib import Path
 from typing import Any
 
 from corpus_pax import Individual
-from jinja2 import Environment, PackageLoader, select_autoescape
 from pydantic import BaseModel, EmailStr
 from sqlpyd import Connection
 from start_sdk import CFR2_Bucket
+
+from .._utils import sqlenv
 
 STATUTE_BUCKET_NAME = "ph-statutes"
 STATUTE_ORIGIN = CFR2_Bucket(name=STATUTE_BUCKET_NAME)
@@ -14,19 +15,6 @@ meta = STATUTE_ORIGIN.resource.meta
 if not meta:
     raise Exception("Bad bucket.")
 STATUTE_CLIENT = meta.client
-
-BASE = "code/corpus"
-"""Source of all local files"""
-
-STATUTE_PATH = Path().home().joinpath(f"{BASE}/statutes")
-STATUTE_FILES = STATUTE_PATH.glob("**/*/details.yaml")
-INCLUSION_FILE = "inclusions.yaml"
-"""Name of the file that will host all the included components of a decision"""
-
-sqlenv = Environment(
-    loader=PackageLoader(package_name="corpus_sc_toolkit", package_path="sql"),
-    autoescape=select_autoescape(),
-)
 
 
 class Integrator(BaseModel, abc.ABC):
@@ -60,14 +48,6 @@ class Integrator(BaseModel, abc.ABC):
     def make_tables(cls, c: Connection) -> None:
         """Common process for creatng the tables associated
         with the concrete class."""
-        raise NotImplementedError
-
-    @classmethod
-    @abc.abstractmethod
-    def add_rows(cls, c: Connection) -> None:
-        """Common process for creating objects from the source
-        files for these to become prospective rows to
-        the tables created."""
         raise NotImplementedError
 
     @classmethod

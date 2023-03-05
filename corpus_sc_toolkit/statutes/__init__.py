@@ -1,2 +1,2 @@
-from ._resources import STATUTE_FILES, STATUTE_PATH, Integrator, sqlenv
+from ._resources import Integrator
 from .from_path import StatuteUploadedPage
