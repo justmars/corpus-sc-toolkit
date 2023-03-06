@@ -5,48 +5,25 @@ from citation_utils import Citation
 from loguru import logger
 from sqlite_utils import Database
 
-from .._utils import download_to_temp
 from ._resources import (
     DETAILS_FILE,
     DOCKETS,
-    ORIGIN,
     SUFFIX_OPINION,
     YEARS,
+    decision_storage,
 )
 from .decision_fields import DecisionFields
 from .decision_substructures import DecisionOpinion
-from .justice import CandidateJustice
-from .meta import (
+from .fields import (
     CourtComposition,
     DecisionCategory,
     voteline_clean,
 )
+from .justice import CandidateJustice
 
 
 class RawDecision(DecisionFields):
     ...
-
-    @classmethod
-    def preget(cls, prefix: str) -> dict[str, Any]:
-        """Used in tandem with `prefetch()`, this extracts key-value pairs
-        from the prefix ending with `/details.yaml`. Note that what is returned
-        is a `dict` instance rather than a `Raw Decision`. This is because
-        it's still missing fields that can only be supplied by using a database.
-
-        Args:
-            prefix (str): Must end with `/details.yaml`
-
-        Returns:
-            dict[str, Any]: Identified dict from R2 containing the details.yaml prefix.
-        """
-        if not prefix.endswith(f"/{DETAILS_FILE}"):
-            raise Exception("Method limited to details.yaml.")
-        candidate = prefix.removesuffix(f"/{DETAILS_FILE}")
-        identity = {"prefix": candidate, "id": cls.set_id(candidate)}
-        data = download_to_temp(bucket=ORIGIN, src=prefix, ext="yaml")
-        if not isinstance(data, dict):
-            raise Exception(f"Bad details.yaml from {prefix=}")
-        return identity | data
 
     @classmethod
     def prefetch(
@@ -68,21 +45,39 @@ class RawDecision(DecisionFields):
             Iterator[dict]: Identified dicts from R2 containing details.yaml prefix.
         """
         for prefix in cls.iter_dockets(dockets, years):
-            yield cls.preget(f"{prefix}{DETAILS_FILE}")
+            target = f"{prefix}{DETAILS_FILE}"
+            if result := decision_storage.restore_temp_yaml(
+                yaml_suffix=target
+            ):
+                yield result
 
     @classmethod
     def make(cls, r2_data: dict, db: Database) -> Self | None:
         """Using a single `r2_data` dict from a `preget()` call, match justice data
         from the `db`. This enables construction of a single `RawDecision` instance.
         """
-        if not (cite := Citation.extract_citation_from_data(r2_data)):
+
+        cite = Citation.extract_citation_from_data(r2_data)
+        if not cite:
             logger.error(f"Bad citation in {r2_data['id']=}")
             return None
+
+        decision_id = cite.prefix_db_key
+        if not decision_id:
+            logger.error(f"Bad decision_id in {r2_data['id']=}")
+            return None
+
+        decision_prefix = cite.storage_prefix
+        if not decision_prefix:
+            logger.error(f"Bad decision_prefix in {r2_data['id']=}")
+            return None
+
         ponente = CandidateJustice(
             db=db,
             text=r2_data.get("ponente"),
             date_str=r2_data.get("date_prom"),
         )
+
         opinions = list(
             DecisionOpinion.fetch(
                 opinion_prefix=f"{r2_data['prefix']}{SUFFIX_OPINION}",
@@ -93,8 +88,10 @@ class RawDecision(DecisionFields):
         if not opinions:
             logger.error(f"No opinions detected in {r2_data['id']=}")
             return None
+
         return cls(
-            **ponente.ponencia,
+            id=decision_id,
+            prefix=decision_prefix,
             origin=r2_data["origin"],
             title=r2_data["case_title"],
             description=cite.display,
@@ -107,4 +104,5 @@ class RawDecision(DecisionFields):
             composition=CourtComposition._setter(r2_data.get("composition")),
             category=DecisionCategory._setter(r2_data.get("category")),
             opinions=opinions,
+            **ponente.ponencia,
         )

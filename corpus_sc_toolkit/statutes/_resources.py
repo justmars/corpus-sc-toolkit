@@ -5,17 +5,23 @@ from typing import Any
 from corpus_pax import Individual
 from pydantic import BaseModel, EmailStr
 from sqlpyd import Connection
-from start_sdk import CFR2_Bucket
+from start_sdk.cf_r2 import StorageUtils
 
 from .._utils import sqlenv
 
+"""R2 variables in order to perform operations from the library."""
+
+STATUTE_TEMP_FOLDER = Path(__file__).parent / "_tmp"
+STATUTE_TEMP_FOLDER.mkdir(exist_ok=True)
+
 STATUTE_BUCKET_NAME = "ph-statutes"
-STATUTE_ORIGIN = CFR2_Bucket(name=STATUTE_BUCKET_NAME)
-meta = STATUTE_ORIGIN.resource.meta
+statute_storage = StorageUtils(
+    name=STATUTE_BUCKET_NAME, temp_folder=STATUTE_TEMP_FOLDER
+)
+meta = statute_storage.resource.meta
 if not meta:
     raise Exception("Bad bucket.")
 STATUTE_CLIENT = meta.client
-STATUTE_DETAILS_SUFFIX = "details.yaml"
 
 
 class Integrator(BaseModel, abc.ABC):

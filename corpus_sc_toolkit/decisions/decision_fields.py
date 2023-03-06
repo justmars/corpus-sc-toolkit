@@ -5,17 +5,20 @@ from typing import Any
 from citation_utils import Citation
 from loguru import logger
 from pydantic import BaseModel, Field, root_validator
+from start_sdk.cf_r2 import StorageUtils
 
+from .._utils import get_from_prefix
 from ._resources import (
-    BUCKET_NAME,
-    CLIENT,
+    DECISION_BUCKET_NAME,
+    DECISION_CLIENT,
     DETAILS_FILE,
     DOCKETS,
     PDF_FILE,
     YEARS,
+    decision_storage,
 )
 from .decision_substructures import DecisionOpinion
-from .meta import CourtComposition, DecisionCategory
+from .fields import CourtComposition, DecisionCategory
 
 
 class DecisionFields(BaseModel):
@@ -47,6 +50,8 @@ class DecisionFields(BaseModel):
     opinions | list[DecisionOpinion] | [Opinion structures][decision opinions] which can be further [subdivided into segments][opinion segments]
     """  # noqa: E501
 
+    id: str
+    prefix: str
     citation: Citation | None = Field(default=None)  # overriden in decision.py
     origin: str = Field(col=str, index=True)
     title: str = Field(col=str, index=True, fts=True)
@@ -98,66 +103,22 @@ class DecisionFields(BaseModel):
         use_enum_values = True
 
     @property
-    def docket_citation(self) -> Citation | None:
-        """Check if a valid docket citation exists and return the same."""
-        if not self.citation:
-            return None
-        if not self.citation.docket_serial:
-            return None
-        if not self.citation.docket_category:
-            return None
-        return self.citation
-
-    @property
-    def prefix_id(self) -> str | None:
-        """Generate an id based on a prefix base, e.g. if the `@base_prefix` is
-        `GR/2021/10/227403`, the generated id will be gr-2021-10-227403."""
-        if not self.base_prefix:
-            return None
-        return self.base_prefix.replace("/", "-").lower()
-
-    @property
-    def base_prefix(self) -> str | None:
-        """If the model were to be stored in cloud storage like R2,
-        this property ensures a unique prefix for the instance. Should
-        be in the following format: `<category>/<year>/<month>/<serial>`,
-        e.g. `GR/2021/10/227403`
-        """
-        if not self.docket_citation:
-            return None
-        return "/".join(
-            str(i)
-            for i in [
-                self.docket_citation.docket_category,
-                self.date.year,
-                self.date.month,
-                self.docket_citation.docket_serial,
-            ]
-        )
-
-    @property
-    def meta(self):
+    def storage_meta(self):
         """When uploading to R2, the metadata can be included as extra arguments to
         the file."""
-        if not self.docket_citation:
+        if not self.citation or not self.citation.storage_prefix:
             return {}
-        raw = {
-            "Decision_Title": self.title,
-            "Decision_Category": self.category,
-            "Court_Composition": self.composition,
-            "Docket_Category": self.docket_citation.docket_category,
-            "Docket_ID": self.docket_citation.docket_serial,
+        return {
+            "Title": self.title,
+            "Category": self.category,
+            "Composition": self.composition,
+            "Docket_Category": self.citation.docket_category,
+            "Docket_ID": self.citation.docket_serial,
             "Docket_Date": self.date.isoformat(),
-            "Report_Phil": self.docket_citation.phil,
-            "Report_Scra": self.docket_citation.scra,
-            "Report_Off_Gaz": self.docket_citation.offg,
+            "Report_Phil": self.citation.phil,
+            "Report_Scra": self.citation.scra,
+            "Report_Off_Gaz": self.citation.offg,
         }
-        return {"Metadata": {k: str(v) for k, v in raw.items() if v}}
-
-    @classmethod
-    def set_id(cls, prefix: str):
-        """Converts a prefix to a slug."""
-        return prefix.removesuffix("/").replace("/", "-").lower()
 
     @classmethod
     def iter_docket_dates(
@@ -180,8 +141,8 @@ class DecisionFields(BaseModel):
         `<docket>/<year>/<month>/<serial>/` in ascending order. Each item in the
         collection is a dict which will contain a `CommonPrefixes` key."""
         for prefix in cls.iter_docket_dates(dockets, years):
-            yield CLIENT.list_objects_v2(
-                Bucket=BUCKET_NAME, Delimiter="/", Prefix=prefix
+            yield DECISION_CLIENT.list_objects_v2(
+                Bucket=DECISION_BUCKET_NAME, Delimiter="/", Prefix=prefix
             )
 
     @classmethod
@@ -201,19 +162,20 @@ class DecisionFields(BaseModel):
     def key_raw(cls, dated_prefix: str) -> str | None:
         """Is suffix `details.yaml` present in result of `cls.iter_dockets()`?"""
         target_key = f"{dated_prefix}{DETAILS_FILE}"
-        return target_key if cls.get_obj(target_key) else None
+        res = get_from_prefix(
+            client=DECISION_CLIENT,
+            bucket_name=DECISION_BUCKET_NAME,
+            key=target_key,
+        )
+        return target_key if res else None
 
     @classmethod
     def key_pdf(cls, dated_prefix: str) -> str | None:
         """Is suffix `pdf.yaml` present in result of `cls.iter_dockets()`?"""
         target_key = f"{dated_prefix}{PDF_FILE}"
-        return target_key if cls.get_obj(target_key) else None
-
-    @classmethod
-    def get_obj(cls, key: str):
-        """A try/except block is needed since a `NoKeyFound` exception is raised
-        when a retrieval is made without a result."""
-        try:
-            return CLIENT.get_object(Bucket=BUCKET_NAME, Key=key)
-        except Exception:
-            return None
+        res = get_from_prefix(
+            client=DECISION_CLIENT,
+            bucket_name=DECISION_BUCKET_NAME,
+            key=target_key,
+        )
+        return target_key if res else None

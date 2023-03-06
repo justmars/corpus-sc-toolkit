@@ -6,6 +6,7 @@ from typing import Self
 from loguru import logger
 from pydantic import EmailStr, Field, ValidationError
 from sqlpyd import Connection, TableConfig
+from start_sdk.cf_r2 import StorageUtils
 from statute_patterns import (
     StatuteTitleCategory,
     extract_rules,
@@ -20,13 +21,8 @@ from statute_trees import (
     generic_mp,
 )
 
-from .._utils import (
-    ascii_singleline,
-    create_temp_yaml,
-    download_to_temp,
-    sqlenv,
-)
-from ._resources import STATUTE_DETAILS_SUFFIX, STATUTE_ORIGIN, Integrator
+from .._utils import sqlenv
+from ._resources import Integrator, statute_storage
 
 
 class StatuteRow(Page, StatuteBase, TableConfig):
@@ -220,6 +216,7 @@ class StatuteFoundInUnit(StatuteBase, TableConfig):
 
 class Statute(Integrator):
     id: str
+    prefix: str
     emails: list[EmailStr]
     meta: StatuteRow
     titles: list[StatuteTitleRow]
@@ -227,6 +224,19 @@ class Statute(Integrator):
     unit_fts: list[StatuteUnitSearch]
     material_paths: list[StatuteMaterialPath]
     statutes_found: list[StatuteFoundInUnit]
+
+    @property
+    def storage_meta(self) -> dict:
+        return {
+            "ID": self.id,
+            "Prefix": self.prefix,
+            "Title": self.meta.title,
+            "Description": self.meta.description,
+            "Category": self.meta.statute_category,
+            "SerialId": self.meta.statute_serial_id,
+            "Date": self.meta.date.isoformat(),
+            "Variant": self.meta.variant,
+        }
 
     @property
     def relations(self):
@@ -256,14 +266,16 @@ class Statute(Integrator):
             logger.error(f"Could not validate {details_path=}")
             return None
 
+        if not page.prefix_db_key:
+            logger.error(f"Could not make key {details_path=}")
+            return None
+        if not page.storage_prefix:
+            logger.error(f"Could not make storage_prefix {details_path=}")
+            return None
+        statute_id = page.prefix_db_key
+
         # assign row for creation
         meta = StatuteRow(**page.dict(exclude={"emails", "tree", "titles"}))
-
-        # use identifiers to create unique id
-        base_prefix = cls.get_base_prefix(meta)
-        if not base_prefix:
-            return None
-        statute_id = cls.set_prefix_id(base_prefix)
 
         # setup associated titles
         titles = [
@@ -291,6 +303,7 @@ class Statute(Integrator):
 
         return Statute(
             id=statute_id,
+            prefix=page.storage_prefix,
             emails=page.emails,
             meta=meta,
             tree=page.tree,
@@ -320,63 +333,13 @@ class Statute(Integrator):
         c.create_table(StatuteFoundInUnit)
         c.db.index_foreign_keys()
 
-    @classmethod
-    def get_base_prefix(cls, statute_meta_obj: StatuteRow) -> str | None:
-        """If the model were to be stored in cloud storage like R2,
-        this property ensures a unique prefix for the instance. Should
-        be in the following format: `<statute_category>/<statute_serial_id>/<variant>/`,
-        e.g. `ra/386/1`
-        """
-        if not statute_meta_obj.statute_category:
-            return None
-        if not statute_meta_obj.statute_serial_id:
-            return None
-        if not statute_meta_obj.variant:
-            return None
-        return "/".join(
-            str(i)
-            for i in [
-                statute_meta_obj.statute_category,
-                statute_meta_obj.statute_serial_id,
-                statute_meta_obj.variant,
-            ]
-        )
-
-    @classmethod
-    def set_prefix_id(cls, text: str):
-        return text.replace("/", "-").lower()
-
-    @property
-    def base_prefix(self):
-        return self.id.replace("-", "/").lower()
-
-    @property
-    def storage_meta(self):
-        """When uploading to R2, the metadata can be included as extra arguments to
-        the file."""
-        if not any(
-            [
-                self.meta.statute_category,
-                self.meta.statute_serial_id,
-                self.meta.date,
-            ]
-        ):
-            return {}
-        raw = {
-            "Statute_Title": self.meta.title,
-            "Statute_Description": ascii_singleline(self.meta.description),
-            "Statute_Category": self.meta.statute_category,
-            "Statute_Serial_Id": self.meta.statute_serial_id,
-            "Statute_Date": self.meta.date.isoformat(),
-            "Statute_Variant": self.meta.variant,
-        }
-        return {"Metadata": {k: str(v) for k, v in raw.items() if v}}
-
     def upload(self):
-        STATUTE_ORIGIN.upload(
-            file_like=create_temp_yaml(self.dict()),
-            loc=f"{self.base_prefix}/{STATUTE_DETAILS_SUFFIX}",
-            args=self.storage_meta,
+        statute_storage.upload(
+            file_like=statute_storage.make_temp_yaml_path_from_data(
+                self.dict()
+            ),
+            loc=f"{self.prefix}/details.yaml",
+            args=StorageUtils.set_extra_meta(self.storage_meta),
         )
 
     @classmethod
@@ -385,14 +348,11 @@ class Statute(Integrator):
         `upload()`) and instantiate the Statute based on such retrieved data.
 
         Args:
-            prefix (str): Must end with /DETAILS.yaml
+            prefix (str): Must end with .yaml
 
         Returns:
-            Self: Interim Decision instance from R2 prefix.
+            Self: Integrated Statute instance from R2 prefix.
         """
-        if not prefix.endswith(STATUTE_DETAILS_SUFFIX):
-            raise Exception("Method limited to details-based files.")
-        data = download_to_temp(bucket=STATUTE_ORIGIN, src=prefix, ext="yaml")
-        if not isinstance(data, dict):
+        if not (data := statute_storage.restore_temp_yaml(yaml_suffix=prefix)):
             raise Exception(f"Could not originate {prefix=}")
         return cls(**data)

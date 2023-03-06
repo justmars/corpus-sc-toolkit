@@ -360,20 +360,20 @@ pydantic = ">=1.10.4,<2.0.0"
 
 [[package]]
 name = "citation-utils"
-version = "0.2.4"
+version = "0.2.6"
 description = "Regex-based docket- and report- styled citations based on Philippine Supreme Court decisions."
 category = "main"
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "citation_utils-0.2.4-py3-none-any.whl", hash = "sha256:b7873b5c22b54df0ccb0709b6974a58eea7267047f2a183cf6ce950e66d22c6a"},
-    {file = "citation_utils-0.2.4.tar.gz", hash = "sha256:f6b87c4909e1774fbc5f3c3cd002abae51c4bfc9e0d5b2a489bd23ca7bf13f0e"},
+    {file = "citation_utils-0.2.6-py3-none-any.whl", hash = "sha256:ce597c0a818267186d779e6d072d4ab8a36447bd22c9e1655eec2f03d8bdb6f9"},
+    {file = "citation_utils-0.2.6.tar.gz", hash = "sha256:09ca89ba44b547cc5e4bc7a7df881c2ad88662c10e4550cc6362c0cba3527ee8"},
 ]
 
 [package.dependencies]
 citation-docket = ">=0.1.2,<0.2.0"
 loguru = ">=0.6.0,<0.7.0"
-python-slugify = ">=6.1.2,<7.0.0"
+python-slugify = ">=8.0,<9.0"
 sqlite-utils = ">=3.30,<4.0"
 
 [[package]]
@@ -420,14 +420,14 @@ files = [
 
 [[package]]
 name = "corpus-pax"
-version = "0.1.21"
+version = "0.1.23"
 description = "Using Github API (to pull individuals, orgs, and article content), setup a local sqlite database, syncing images to Cloudflare."
 category = "main"
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "corpus_pax-0.1.21-py3-none-any.whl", hash = "sha256:618b8bd797ee690bf30da36be3f1a5d94e433cf592ba98091b9fbc12a101e9fd"},
-    {file = "corpus_pax-0.1.21.tar.gz", hash = "sha256:5e39c189a939961abb06ec486b263f16366486b4f21beece5f43026d5e785a35"},
+    {file = "corpus_pax-0.1.23-py3-none-any.whl", hash = "sha256:139755851150254e50d65bb316b4950ee9dc558e812a7d0a0ef873aa1263db7c"},
+    {file = "corpus_pax-0.1.23.tar.gz", hash = "sha256:a60cebc60e451ae74c69b72f8f2c2ccd284c99a6622f7eaef69621f8718f1e54"},
 ]
 
 [package.dependencies]
@@ -436,7 +436,7 @@ httpx = ">=0.23.0,<0.24.0"
 jinja2 = ">=3.1.2,<4.0.0"
 python-frontmatter = ">=1.0.0,<2.0.0"
 sqlpyd = ">=0.1.5,<0.2.0"
-start-sdk = ">=0.0.5,<0.0.6"
+start-sdk = ">=0.0.7,<0.0.8"
 
 [[package]]
 name = "coverage"
@@ -1036,14 +1036,14 @@ mkdocs = ">=1.1"
 
 [[package]]
 name = "mkdocs-material"
-version = "9.1.0"
+version = "9.1.1"
 description = "Documentation that simply works"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "mkdocs_material-9.1.0-py3-none-any.whl", hash = "sha256:7b8a84594611e6b2c5391d996ccc2b3a2b410acd1027a65ce7533a3a43ff612b"},
-    {file = "mkdocs_material-9.1.0.tar.gz", hash = "sha256:8ce03306df37fc49300f0f1feea6f111004579c2050b5f6cb4924bbb4ca1ef1c"},
+    {file = "mkdocs_material-9.1.1-py3-none-any.whl", hash = "sha256:3b20d4e9ee28b2c276d391eb2c4e599ff8865e6c7dcab8146a7fd9805ca59263"},
+    {file = "mkdocs_material-9.1.1.tar.gz", hash = "sha256:836f0066c9346afc05b1962c146ea097025512bbb607c5f04a38248d7415f165"},
 ]
 
 [package.dependencies]
@@ -1386,18 +1386,19 @@ python-dotenv = ">=0.21,<0.22"
 
 [[package]]
 name = "pymdown-extensions"
-version = "9.9.2"
+version = "9.10"
 description = "Extension pack for Python Markdown."
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "pymdown_extensions-9.9.2-py3-none-any.whl", hash = "sha256:c3d804eb4a42b85bafb5f36436342a5ad38df03878bb24db8855a4aa8b08b765"},
-    {file = "pymdown_extensions-9.9.2.tar.gz", hash = "sha256:ebb33069bafcb64d5f5988043331d4ea4929325dc678a6bcf247ddfcf96499f8"},
+    {file = "pymdown_extensions-9.10-py3-none-any.whl", hash = "sha256:31eaa76ce6f96aabfcea98787c2fff2c5c0611b20a53a94213970cfbf05f02b8"},
+    {file = "pymdown_extensions-9.10.tar.gz", hash = "sha256:562c38eee4ce3f101ce631b804bfc2177a8a76c7e4dc908871fb6741a90257a7"},
 ]
 
 [package.dependencies]
 markdown = ">=3.2"
+pyyaml = "*"
 
 [[package]]
 name = "pytest"
@@ -1507,14 +1508,14 @@ test = ["pyaml", "pytest", "toml"]
 
 [[package]]
 name = "python-slugify"
-version = "6.1.2"
+version = "8.0.1"
 description = "A Python slugify application that also handles Unicode"
 category = "main"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"
+python-versions = ">=3.7"
 files = [
-    {file = "python-slugify-6.1.2.tar.gz", hash = "sha256:272d106cb31ab99b3496ba085e3fea0e9e76dcde967b5e9992500d1f785ce4e1"},
-    {file = "python_slugify-6.1.2-py2.py3-none-any.whl", hash = "sha256:7b2c274c308b62f4269a9ba701aa69a797e9bca41aeee5b3a9e79e36b6656927"},
+    {file = "python-slugify-8.0.1.tar.gz", hash = "sha256:ce0d46ddb668b3be82f4ed5e503dbc33dd815d83e2eb6824211310d3fb172a27"},
+    {file = "python_slugify-8.0.1-py2.py3-none-any.whl", hash = "sha256:70ca6ea68fe63ecc8fa4fcf00ae651fc8a5d02d93dcd12ae6d4fc7ca46c4d395"},
 ]
 
 [package.dependencies]
@@ -1765,14 +1766,14 @@ crt = ["botocore[crt] (>=1.20.29,<2.0a.0)"]
 
 [[package]]
 name = "setuptools"
-version = "67.4.0"
+version = "67.5.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "setuptools-67.4.0-py3-none-any.whl", hash = "sha256:f106dee1b506dee5102cc3f3e9e68137bbad6d47b616be7991714b0c62204251"},
-    {file = "setuptools-67.4.0.tar.gz", hash = "sha256:e5fd0a713141a4a105412233c63dc4e17ba0090c8e8334594ac790ec97792330"},
+    {file = "setuptools-67.5.0-py3-none-any.whl", hash = "sha256:9f0004c0daa3d41ef4465934a89498da3eef994039f48845d6eb8202aa13b2e9"},
+    {file = "setuptools-67.5.0.tar.gz", hash = "sha256:113ff8d482b826d2f3b99f26adb1fe505e526a94a08e68cdf392d1dff9ce0595"},
 ]
 
 [package.extras]
@@ -1895,32 +1896,33 @@ tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 
 [[package]]
 name = "start-sdk"
-version = "0.0.5"
+version = "0.0.7"
 description = "Settings for Github, Cloudflare Images API"
 category = "main"
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "start_sdk-0.0.5-py3-none-any.whl", hash = "sha256:2805d2fbdb4b99a5777c977c40d0eb7286dd8aad660cc3ec6b229dfa375057b0"},
-    {file = "start_sdk-0.0.5.tar.gz", hash = "sha256:39d6d5e39688a3532385e61fa638702f8f16a0d71af35fb9cda565cc8b3f870f"},
+    {file = "start_sdk-0.0.7-py3-none-any.whl", hash = "sha256:f24072b698276082d41e2450e43cfc45ef27592c3ed29580b64be5095059a07b"},
+    {file = "start_sdk-0.0.7.tar.gz", hash = "sha256:3c0469f22fee5b6fc799d4fc654715fce817c645827b0ec86763685364657427"},
 ]
 
 [package.dependencies]
-boto3 = ">=1.26.79,<2.0.0"
+boto3 = ">=1.26.84,<2.0.0"
 httpx = ">=0.23.3,<0.24.0"
+loguru = ">=0.6.0,<0.7.0"
 pydantic = ">=1.10.5,<2.0.0"
 python-dotenv = ">=0.21,<0.22"
 
 [[package]]
 name = "statute-patterns"
-version = "0.2.1"
+version = "0.2.2"
 description = "Philippine statutory law pattern matching and unit retrieval."
 category = "main"
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "statute_patterns-0.2.1-py3-none-any.whl", hash = "sha256:1eef285f1349a08501fb3ea192841cabaad2a32bfeffaf3fea6917dcce7502ee"},
-    {file = "statute_patterns-0.2.1.tar.gz", hash = "sha256:33464bc09a9a2b44c67cf9c06e16c9bc49197a9a621a04ae821f7b87ee016d02"},
+    {file = "statute_patterns-0.2.2-py3-none-any.whl", hash = "sha256:79090ab551e81e5cc63d9c2a1092bcb750c6b2c0245c9940e62a1d7d20c44a72"},
+    {file = "statute_patterns-0.2.2.tar.gz", hash = "sha256:6cdd57669c8cccda6fa2d6a6e8e29ca19e4e3f11247f356c5d93594bc90395b8"},
 ]
 
 [package.dependencies]
@@ -1928,23 +1930,23 @@ email-validator = ">=1.3.0,<2.0.0"
 pydantic = ">=1.10.5,<2.0.0"
 python-dateutil = ">=2.8.2,<3.0.0"
 python-dotenv = ">=0.21,<0.22"
-python-slugify = ">=6.1.2,<7.0.0"
+python-slugify = ">=8.0,<9.0"
 
 [[package]]
 name = "statute-trees"
-version = "0.1.1"
+version = "0.1.2"
 description = "Tree-based Philippine Codifications, Statutes, and Documents, using a uniform node structure (i.e., leaves of a tree) identified by a given material path."
 category = "main"
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "statute_trees-0.1.1-py3-none-any.whl", hash = "sha256:7260e452706a8ae33eb89da8d5df523c8d913e486bdc01dd1e15a46707b39a71"},
-    {file = "statute_trees-0.1.1.tar.gz", hash = "sha256:2c26dea3927b27a6da03c3f6e0dca8a2a084448f121a2e3cd3ec9873f3cad0c9"},
+    {file = "statute_trees-0.1.2-py3-none-any.whl", hash = "sha256:f7dadf54b3d50e6d53d4a6211fa33ac95b5782bad4b32ea80d06772dc3e897ce"},
+    {file = "statute_trees-0.1.2.tar.gz", hash = "sha256:31473fba3d55ba43796a0585112d1a69a061e50b6dbfa554f701fb4b6ddb5269"},
 ]
 
 [package.dependencies]
-citation-utils = ">=0.2.3,<0.3.0"
-statute-patterns = ">=0.2.0,<0.3.0"
+citation-utils = ">=0.2.6,<0.3.0"
+statute-patterns = ">=0.2.2,<0.3.0"
 
 [[package]]
 name = "tabulate"
@@ -2145,4 +2147,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "aeb9176b53ff357b1ce095ff80effb49d703ba6be26a1972366a11129bcdd2f7"
+content-hash = "c4903378a285ad1d4c2ec75241ba60f146766b9d1ecb5e9e12efcc4dff90f679"

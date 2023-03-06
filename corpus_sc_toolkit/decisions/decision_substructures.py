@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from statute_patterns import count_rules
 
 from .._utils import download_to_temp, segmentize
-from ._resources import BUCKET_NAME, CLIENT, ORIGIN
+from ._resources import DECISION_BUCKET_NAME, DECISION_CLIENT, decision_storage
 
 """Decision substructures: opinions and segments."""
 
@@ -140,15 +140,15 @@ class DecisionOpinion(BaseModel):
 
         The `ponente_id`, if present, will be used to populate the ponencia
         opinion."""
-        result = CLIENT.list_objects_v2(
-            Bucket=BUCKET_NAME, Delimiter="/", Prefix=opinion_prefix
+        result = DECISION_CLIENT.list_objects_v2(
+            Bucket=DECISION_BUCKET_NAME, Delimiter="/", Prefix=opinion_prefix
         )
         for content in result["Contents"]:
             if content["Key"].endswith(".md"):
                 key = DecisionOpinion.key_from_md_prefix(content["Key"])
                 justice_id = ponente_id if key == "ponencia" else int(key)
                 if tx := download_to_temp(
-                    bucket=ORIGIN, src=content["Key"], ext="md"
+                    bucket=decision_storage, src=content["Key"], ext="md"
                 ):
                     if isinstance(tx, str):
                         yield cls(

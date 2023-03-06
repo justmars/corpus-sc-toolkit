@@ -12,14 +12,10 @@ from sqlite_utils import Database
 from sqlpyd import Connection
 
 from .decisions import (
-    DOCKETS,
-    YEARS,
     CitationRow,
     DecisionRow,
-    InterimDecision,
     Justice,
     OpinionRow,
-    RawDecision,
     SegmentRow,
     TitleTagRow,
     VoteLine,
@@ -62,12 +58,14 @@ class ConfigStatutes(BaseModel):
     @classmethod
     def extract_local(cls):
         for detail_path in LOCAL_STATUTES:
-            logger.debug(f"Extracting: {detail_path=}")
-            if obj := Statute.from_page(detail_path):
-                logger.debug(f"Uploading: {obj.id=}")
-                obj.upload()
-            else:
-                logger.error(f"Error uploading {detail_path=}")
+            try:
+                if obj := Statute.from_page(detail_path):
+                    logger.debug(f"Uploading: {obj.id=}")
+                    obj.upload()
+                else:
+                    logger.error(f"Error uploading {detail_path=}")
+            except Exception as e:
+                logger.error(f"Bad {detail_path=}; see {e=}")
 
 
 class ConfigDecisions(BaseModel):
@@ -137,38 +135,6 @@ class ConfigDecisions(BaseModel):
         logger.info("Decision-based tables ready.")
         return self.conn.db
 
-    def iter_decisions(
-        self, dockets: list[str] = DOCKETS, years: tuple[int, int] = YEARS
-    ) -> Iterator[DecisionRow]:
-        """R2 uploaded content is formatted via:
-
-        1. `RawDecision`: `details.yaml` variant SC e-library html content;
-        2. `InterimDecision`: `pdf.yaml` variant SC links to PDF docs.
-
-        Based on a filter from `dockets` and `years`, fetch from R2 storage either
-        the `RawDecision` or the `InterimDecision`, with priority given to the former,
-        i.e. if the `RawDecision` exists, use this; otherwise use `InterimDecision`.
-
-        Args:
-            db (Database): Will be used for `RawDecision.make()`
-            dockets (list[str], optional): See `DecisionFields`. Defaults to DOCKETS.
-            years (tuple[int, int], optional): See `DecisionFields`. Defaults to YEARS.
-
-        Yields:
-            Iterator[Self]: Unified decision item regardless of whether the source is
-                a `details.yaml` file or a `pdf.yaml` file.
-        """
-        for docket_prefix in DecisionRow.iter_dockets(dockets, years):
-            if key_raw := DecisionRow.key_raw(docket_prefix):
-                r2_data = RawDecision.preget(key_raw)
-                raw = RawDecision.make(r2_data=r2_data, db=self.conn.db)
-                if raw and raw.prefix_id:
-                    yield DecisionRow(**raw.dict(), id=raw.prefix_id)
-            elif key_pdf := DecisionRow.key_pdf(docket_prefix):
-                pdf = InterimDecision.get(key_pdf)
-                if pdf.prefix_id:
-                    yield DecisionRow(**pdf.dict(), id=pdf.prefix_id)
-
     def add_decision(self, row: DecisionRow) -> str | None:
         """This creates a decision row and correlated metadata involving
         the decision, i.e. the citation, voting text, tags from the title, etc.,
@@ -232,7 +198,8 @@ class ConfigDecisions(BaseModel):
         config = cls.setup(reset=True)
         setup_pax(str(config.conn.path_to_db))
         config.build_tables()
-        for index, item in enumerate(config.iter_decisions()):
+        objs = DecisionRow.from_cloud_storage(db=config.conn.db)
+        for index, item in enumerate(objs):
             logger.info(f"{item.id=}; {index=}")
             if decision_added := config.add_decision(item):
                 logger.success(f"{decision_added=}")

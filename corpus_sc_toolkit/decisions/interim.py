@@ -9,11 +9,11 @@ from pydantic import BaseModel, Field
 from sqlite_utils import Database
 
 from .._utils import create_temp_yaml, download_to_temp, sqlenv
-from ._resources import ORIGIN, SUFFIX_PDF
+from ._resources import SUFFIX_PDF, decision_storage
 from .decision_fields import DecisionFields
 from .decision_substructures import DecisionOpinion
+from .fields import CourtComposition, DecisionCategory, get_cite_from_fields
 from .justice import CandidateJustice
-from .meta import CourtComposition, DecisionCategory, get_cite_from_fields
 
 
 class InterimOpinion(BaseModel):
@@ -98,11 +98,25 @@ class InterimDecision(DecisionFields):
         """
         q = sqlenv.get_template("decisions/limit_extract.sql").render()
         for row in db.execute_returning_dicts(q):
-            if not (cite := get_cite_from_fields(row)):
+
+            cite = get_cite_from_fields(row)
+            if not cite:
                 logger.error(f"Bad citation in {row['id']=}")
                 continue
 
+            decision_id = cite.prefix_db_key
+            if not decision_id:
+                logger.error(f"Bad decision_id in {row['id']=}")
+                continue
+
+            decision_prefix = cite.storage_prefix
+            if not decision_prefix:
+                logger.error(f"Bad decision_prefix in {row['id']=}")
+                continue
+
             decision = cls(
+                id=decision_id,
+                prefix=decision_prefix,
                 is_pdf=True,
                 origin=row["id"],
                 title=row["title"],
@@ -116,16 +130,12 @@ class InterimDecision(DecisionFields):
                     row.get("category"), row.get("notice")
                 ),
             )
-            if not decision.prefix_id:
-                logger.error(f"Undetected decision ID, see {cite=}")
+
+            opx_data = InterimOpinion.setup(idx=decision_id, db=db, data=row)
+            if not opx_data or not opx_data.get("opinions"):
+                logger.error(f"No opinions detected in {decision_id=}")
                 continue
 
-            opx_data = InterimOpinion.setup(
-                idx=decision.prefix_id, db=db, data=row
-            )
-            if not opx_data or not opx_data.get("opinions"):
-                logger.error(f"No opinions detected in {decision.prefix_id=}")
-                continue
             decision.raw_ponente = opx_data.get("raw_ponente", None)
             decision.per_curiam = opx_data.get("per_curiam", False)
             decision.justice_id = opx_data.get("justice_id", None)
@@ -135,13 +145,10 @@ class InterimDecision(DecisionFields):
     @property
     def pdf_prefix(self) -> str | None:
         """Represents the pdf prefix to be uploaded to R2."""
-        if not self.base_prefix or not self.docket_citation:
-            logger.warning(f"{self.base_prefix=} / {self.docket_citation=}")
-            return None
         if not self.is_pdf:
             logger.warning("Method limited to pdf-based files.")
             return None
-        return f"{self.base_prefix}{SUFFIX_PDF}"
+        return f"{self.prefix}{SUFFIX_PDF}"
 
     def dump(self) -> tuple[str, Path] | None:
         """Create a temporary yaml file containing the relevant fields
@@ -155,16 +162,12 @@ class InterimDecision(DecisionFields):
         Returns:
             tuple[str, Path] | None: prefix and Path, if the prefix exists.
         """
-        if not (target_prefix := self.pdf_prefix):
+        if not self.pdf_prefix:
             return None
         source = self.dict(exclude={"opinions"})
-        instance = {
-            "id": self.prefix_id,
-            "opinions": [o.dict() for o in self.opinions],
-        }
-        data = instance | source
+        data = source | {"opinions": [o.dict() for o in self.opinions]}
         temp_path = create_temp_yaml(data=data)
-        return target_prefix, temp_path
+        return self.pdf_prefix, temp_path
 
     def upload(self):
         """With a temporary file prepared, upload the object representing
@@ -181,7 +184,9 @@ class InterimDecision(DecisionFields):
             return False
         loc, file_like = prep_pdf_upload
         logger.info(f"Uploading {loc=}")
-        ORIGIN.upload(file_like=file_like, loc=loc, args=self.meta)
+        decision_storage.upload(
+            file_like=file_like, loc=loc, args=self.storage_meta
+        )
 
     @classmethod
     def get(cls, prefix: str) -> Self:
@@ -197,7 +202,9 @@ class InterimDecision(DecisionFields):
         """
         if not prefix.endswith(SUFFIX_PDF):
             raise Exception("Method limited to pdf-based files.")
-        data = download_to_temp(bucket=ORIGIN, src=prefix, ext="yaml")
+        data = download_to_temp(
+            bucket=decision_storage, src=prefix, ext="yaml"
+        )
         if not isinstance(data, dict):
             raise Exception(f"Could not originate {prefix=}")
         opinions = [DecisionOpinion(**o) for o in data.pop("opinions")]
