@@ -5,7 +5,6 @@ from typing import Any
 from citation_utils import Citation
 from loguru import logger
 from pydantic import BaseModel, Field, root_validator
-from start_sdk.cf_r2 import StorageUtils
 
 from .._utils import get_from_prefix
 from ._resources import (
@@ -15,7 +14,6 @@ from ._resources import (
     DOCKETS,
     PDF_FILE,
     YEARS,
-    decision_storage,
 )
 from .decision_substructures import DecisionOpinion
 from .fields import CourtComposition, DecisionCategory

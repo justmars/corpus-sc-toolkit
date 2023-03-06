@@ -98,7 +98,6 @@ class InterimDecision(DecisionFields):
         """
         q = sqlenv.get_template("decisions/limit_extract.sql").render()
         for row in db.execute_returning_dicts(q):
-
             cite = get_cite_from_fields(row)
             if not cite:
                 logger.error(f"Bad citation in {row['id']=}")

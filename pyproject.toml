@@ -38,9 +38,10 @@ mkdocstrings = { extras = ["python"], version = "^0.20.0" }
 mkdocs-material = "^9.1"
 ipython = "^8.11.0"
 
-[tool.pytest]
+[tool.pytest.ini_options]
 minversion = "7.2"
-addopts = "-ra -q --cov=corpus_sc_toolkit tests/"
+filterwarnings = ['ignore::DeprecationWarning']
+addopts = "-ra -q --doctest-modules --cov=corpus_sc_toolkit tests/"
 testpaths = ["tests"]
 
 [tool.ruff]

@@ -5,8 +5,8 @@
 *.sqlite-*
 *.db
 *.db-*
-decisions/_tmp/*
-statutes/_tmp/*
+corpus_sc_toolkit/decisions/_tmp
+corpus_sc_toolkit/statutes/_tmp
 corpus_sc_toolkit/tmp/temp_pdf.yaml
 
 # Byte-compiled / optimized / DLL files
