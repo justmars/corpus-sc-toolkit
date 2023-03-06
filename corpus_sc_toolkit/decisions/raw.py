@@ -1,6 +1,8 @@
 from collections.abc import Iterator
-from typing import Any, Self
+from pathlib import Path
+from typing import Self
 
+import yaml
 from citation_utils import Citation
 from loguru import logger
 from sqlite_utils import Database
@@ -52,32 +54,62 @@ class RawDecision(DecisionFields):
                 yield result
 
     @classmethod
+    def get_common(
+        cls, data: dict, db: Database
+    ) -> tuple[str, str, Citation, CandidateJustice] | None:
+        result = Citation.extract_id_prefix_citation_from_data(data)
+        if not result:
+            return None
+        ponente = CandidateJustice(
+            db=db,
+            text=data.get("ponente"),
+            date_str=data.get("date_prom"),
+        )
+        return *result, ponente
+
+    @classmethod
+    def from_path(cls, local_path: Path, db: Database):
+        local = yaml.safe_load(local_path.read_bytes())
+        result = cls.get_common(local, db)
+        if not result:
+            return None
+        decision_id, prefix, cite, ponente = result
+        opinion_path = local_path.parent / "opinions"
+        if not opinion_path.exists():
+            return None
+        opinions = []
+        for opinion in opinion_path.glob("*.md"):
+            opinions.append(opinion)
+        if not opinions:
+            logger.error(f"No opinions detected in {local_path=} {id=}")
+            return None
+        return cls(
+            id=decision_id,
+            prefix=prefix,
+            citation=cite,
+            origin=local["origin"],
+            title=local["case_title"],
+            description=cite.display,
+            date=local["date_prom"],
+            date_scraped=local["date_scraped"],
+            fallo=None,
+            voting=voteline_clean(local.get("voting")),
+            emails=local.get("emails", ["bot@lawsql.com"]),
+            composition=CourtComposition._setter(local.get("composition")),
+            category=DecisionCategory._setter(local.get("category")),
+            opinions=opinions,
+            **ponente.ponencia,
+        )
+
+    @classmethod
     def make(cls, r2_data: dict, db: Database) -> Self | None:
         """Using a single `r2_data` dict from a `preget()` call, match justice data
         from the `db`. This enables construction of a single `RawDecision` instance.
         """
-
-        cite = Citation.extract_citation_from_data(r2_data)
-        if not cite:
-            logger.error(f"Bad citation in {r2_data['id']=}")
+        result = cls.get_common(r2_data, db)
+        if not result:
             return None
-
-        decision_id = cite.prefix_db_key
-        if not decision_id:
-            logger.error(f"Bad decision_id in {r2_data['id']=}")
-            return None
-
-        decision_prefix = cite.storage_prefix
-        if not decision_prefix:
-            logger.error(f"Bad decision_prefix in {r2_data['id']=}")
-            return None
-
-        ponente = CandidateJustice(
-            db=db,
-            text=r2_data.get("ponente"),
-            date_str=r2_data.get("date_prom"),
-        )
-
+        decision_id, prefix, cite, ponente = result
         opinions = list(
             DecisionOpinion.fetch(
                 opinion_prefix=f"{r2_data['prefix']}{SUFFIX_OPINION}",
@@ -91,7 +123,8 @@ class RawDecision(DecisionFields):
 
         return cls(
             id=decision_id,
-            prefix=decision_prefix,
+            prefix=prefix,
+            citation=cite,
             origin=r2_data["origin"],
             title=r2_data["case_title"],
             description=cite.display,
@@ -99,7 +132,6 @@ class RawDecision(DecisionFields):
             date_scraped=r2_data["date_scraped"],
             fallo=None,
             voting=voteline_clean(r2_data.get("voting")),
-            citation=cite,
             emails=r2_data.get("emails", ["bot@lawsql.com"]),
             composition=CourtComposition._setter(r2_data.get("composition")),
             category=DecisionCategory._setter(r2_data.get("category")),
