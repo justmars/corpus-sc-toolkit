@@ -347,14 +347,14 @@ pydantic = ">=1.10.4,<2.0.0"
 
 [[package]]
 name = "citation-utils"
-version = "0.2.7"
+version = "0.2.8"
 description = "Regex-based docket- and report- styled citations based on Philippine Supreme Court decisions."
 category = "main"
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "citation_utils-0.2.7-py3-none-any.whl", hash = "sha256:e36be2a04ec9c6f1a54313088b424c9f163b5793eff3e5d057972c5c8a4fcca5"},
-    {file = "citation_utils-0.2.7.tar.gz", hash = "sha256:c7094a65e91fac236b38b7deac3c9a528826aab54ca911728ea1eebb207b3a4e"},
+    {file = "citation_utils-0.2.8-py3-none-any.whl", hash = "sha256:b81ecc00720ddf4fd267e3effe3f719baf0ba64371332105481d15b0d85b5f38"},
+    {file = "citation_utils-0.2.8.tar.gz", hash = "sha256:8074a2e5394b1743b768ee8257550081c22b77c46e0e88fedb1047baab3d5aef"},
 ]
 
 [package.dependencies]
@@ -1921,18 +1921,18 @@ python-slugify = ">=8.0,<9.0"
 
 [[package]]
 name = "statute-trees"
-version = "0.1.3"
+version = "0.1.4"
 description = "Tree-based Philippine Codifications, Statutes, and Documents, using a uniform node structure (i.e., leaves of a tree) identified by a given material path."
 category = "main"
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "statute_trees-0.1.3-py3-none-any.whl", hash = "sha256:113e6f4b5e39620a6d262bf56e26555defb56d21d61108a55b1200c94873c4cb"},
-    {file = "statute_trees-0.1.3.tar.gz", hash = "sha256:987458cb998d82d922d0cd668f93dc5b5ea863beb3783c5061f03a5319cd788a"},
+    {file = "statute_trees-0.1.4-py3-none-any.whl", hash = "sha256:050584100645506e597845b453e9ed10e63715f552898025da29b97e744eb5d4"},
+    {file = "statute_trees-0.1.4.tar.gz", hash = "sha256:f558caf120406a78879a7c6f94b0a4753a60dc08c50d4f708288b88b24fe2b0c"},
 ]
 
 [package.dependencies]
-citation-utils = ">=0.2.7,<0.3.0"
+citation-utils = ">=0.2.8,<0.3.0"
 statute-patterns = ">=0.2.2,<0.3.0"
 
 [[package]]
@@ -2134,4 +2134,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "358db05aca2a6cd0c1da789926b8d12f7bc655adabc10424845f2361b8257c65"
+content-hash = "90be6612c4023a90882e10e4ac1d408cb2d674c11e63a59c2d88c800c447bda7"

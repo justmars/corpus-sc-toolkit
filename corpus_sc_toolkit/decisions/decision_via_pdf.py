@@ -7,11 +7,11 @@ from dateutil.parser import parse
 from loguru import logger
 from pydantic import BaseModel, Field
 from sqlite_utils import Database
+from statute_trees import MentionedStatute
 
 from corpus_sc_toolkit.utils import sqlenv
 
-from ._resources import PDF_FILE, decision_storage
-from .decision_components import MentionedStatute, OpinionSegment
+from .decision_components import OpinionSegment
 from .decision_fields import DecisionFields
 from .decision_opinions import DecisionOpinion
 from .fields import CourtComposition, DecisionCategory
@@ -127,7 +127,7 @@ class DecisionPDF(DecisionFields):
 
     def to_storage(self):
         # Uses `pdf.yaml` to upload decision fields represented by instance.
-        self.put_in_storage(PDF_FILE)
+        self.put_in_storage("pdf.yaml")
 
         # Upload txt-based opinion files
         for opinion in self.opinions:

@@ -6,15 +6,7 @@ from citation_utils import Citation
 from loguru import logger
 from pydantic import BaseModel, Field, root_validator
 
-from ._resources import (
-    DECISION_BUCKET_NAME,
-    DECISION_CLIENT,
-    DETAILS_FILE,
-    DOCKETS,
-    PDF_FILE,
-    YEARS,
-    decision_storage,
-)
+from ._resources import DECISION_BUCKET_NAME, DECISION_CLIENT, decision_storage
 from .decision_opinions import DecisionOpinion
 from .fields import CourtComposition, DecisionCategory
 
@@ -120,47 +112,9 @@ class DecisionFields(BaseModel):
         }
 
     @classmethod
-    def iter_docket_dates(
-        cls, dockets: list[str] = DOCKETS, years: tuple[int, int] = YEARS
-    ) -> Iterator[str]:
-        """Results in the following prefix format: `<docket>/<year>/<month>`
-        in ascending order."""
-        for docket in dockets:
-            cnt_year, end_year = years[0], years[1]
-            while cnt_year <= end_year:
-                for month in range(1, 13):
-                    yield f"{docket}/{cnt_year}/{month}/"
-                cnt_year += 1
-
-    @classmethod
-    def iter_docket_date_serials(
-        cls, dockets: list[str] = DOCKETS, years: tuple[int, int] = YEARS
-    ) -> Iterator[dict[str, Any]]:
-        """Results in a collection based on the prefix format:
-        `<docket>/<year>/<month>/<serial>/` in ascending order. Each item in the
-        collection is a dict which will contain a `CommonPrefixes` key."""
-        for prefix in cls.iter_docket_dates(dockets, years):
-            yield DECISION_CLIENT.list_objects_v2(
-                Bucket=DECISION_BUCKET_NAME, Delimiter="/", Prefix=prefix
-            )
-
-    @classmethod
-    def iter_dockets(
-        cls, dockets: list[str] = DOCKETS, years: tuple[int, int] = YEARS
-    ) -> Iterator[str]:
-        """For each item in the collection from `cls.iter_docket_dates()`, produce
-        unique docket keys."""
-        for collection in cls.iter_docket_date_serials(dockets, years):
-            if collection.get("CommonPrefixes", None):
-                for docket in collection["CommonPrefixes"]:
-                    yield docket["Prefix"]
-            else:
-                logger.warning(f"Empty {collection=}")
-
-    @classmethod
     def key_raw(cls, dated_prefix: str) -> str | None:
         """Is suffix `details.yaml` present in result of `cls.iter_dockets()`?"""
-        key = f"{dated_prefix}{DETAILS_FILE}"
+        key = f"{dated_prefix}details.yaml"
         try:
             DECISION_CLIENT.get_object(Bucket=DECISION_BUCKET_NAME, Key=key)
             return key
@@ -170,7 +124,7 @@ class DecisionFields(BaseModel):
     @classmethod
     def key_pdf(cls, dated_prefix: str) -> str | None:
         """Is suffix `pdf.yaml` present in result of `cls.iter_dockets()`?"""
-        key = f"{dated_prefix}{PDF_FILE}"
+        key = f"{dated_prefix}pdf.yaml"
         try:
             DECISION_CLIENT.get_object(Bucket=DECISION_BUCKET_NAME, Key=key)
             return key

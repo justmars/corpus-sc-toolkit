@@ -5,9 +5,10 @@ from pathlib import Path
 from citation_utils import Citation
 from loguru import logger
 from pydantic import BaseModel, Field
+from statute_trees import MentionedStatute
 
 from ._resources import decision_storage
-from .decision_components import MentionedStatute, OpinionSegment
+from .decision_components import OpinionSegment
 
 OPINION_MD_H1 = re.compile(r"^#\s*(?P<label>.*)")
 

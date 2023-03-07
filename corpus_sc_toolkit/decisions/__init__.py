@@ -1,4 +1,4 @@
-from ._resources import DOCKETS, YEARS, decision_storage
+from ._resources import decision_storage
 from .decision import (
     CitationRow,
     DecisionRow,
@@ -7,7 +7,7 @@ from .decision import (
     TitleTagRow,
     VoteLine,
 )
-from .decision_components import MentionedStatute, OpinionSegment
+from .decision_components import OpinionSegment
 from .decision_fields import DecisionFields
 from .decision_opinions import DecisionOpinion
 from .decision_via_html import DecisionHTML

@@ -1,13 +1,10 @@
 import abc
-from collections.abc import Iterator
 from typing import Self
 
 from citation_utils import Citation
 from pydantic import BaseModel, Field
-from sqlite_utils.db import Database
 from sqlpyd import TableConfig
 
-from ._resources import DOCKETS, YEARS
 from .decision_components import OpinionSegment
 from .decision_fields import DecisionFields
 from .decision_opinions import DecisionOpinion
@@ -39,12 +36,7 @@ class DecisionRow(DecisionFields, TableConfig):
         return self.citation.dict() | {"decision_id": self.id}
 
     @classmethod
-    def from_cloud_storage(
-        cls,
-        db: Database,
-        dockets: list[str] = DOCKETS,
-        years: tuple[int, int] = YEARS,
-    ) -> Iterator[Self]:
+    def from_cloud_storage(cls, docket_prefix: str) -> Self | None:
         """R2 uploaded content is formatted via:
 
         1. `DecisionHTML`: `details.yaml` variant SC e-library html content;
@@ -63,13 +55,13 @@ class DecisionRow(DecisionFields, TableConfig):
             Iterator[Self]: Unified decision item regardless of whether the source is
                 a `details.yaml` file or a `pdf.yaml` file.
         """
-        for docket_prefix in cls.iter_dockets(dockets, years):
-            if key_html := cls.key_raw(docket_prefix):
-                if html := DecisionHTML.get_from_storage(key_html):
-                    yield cls(**html.dict())
-            elif key_pdf := cls.key_pdf(docket_prefix):
-                if pdf := DecisionPDF.get_from_storage(key_pdf):
-                    yield cls(**pdf.dict())
+        if key_html := cls.key_raw(docket_prefix):
+            if html := DecisionHTML.get_from_storage(key_html):
+                return cls(**html.dict())
+        elif key_pdf := cls.key_pdf(docket_prefix):
+            if pdf := DecisionPDF.get_from_storage(key_pdf):
+                return cls(**pdf.dict())
+        return None
 
 
 class DecisionComponent(BaseModel, abc.ABC):

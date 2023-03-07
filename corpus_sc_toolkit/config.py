@@ -208,10 +208,3 @@ class ConfigDecisions(BaseModel):
         config = cls.setup(reset=True)
         setup_pax(str(config.conn.path_to_db))
         config.build_tables()
-        objs = DecisionRow.from_cloud_storage(db=config.conn.db)
-        for index, item in enumerate(objs):
-            logger.info(f"{item.id=}; {index=}")
-            if decision_added := config.add_decision(item):
-                logger.success(f"{decision_added=}")
-            else:
-                logger.error(f"{item.id=}")

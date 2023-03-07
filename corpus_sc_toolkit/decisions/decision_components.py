@@ -3,8 +3,6 @@ from collections.abc import Iterator
 from typing import Self
 
 from pydantic import BaseModel, Field
-from statute_patterns import count_rules
-from statute_trees import StatuteBase
 
 
 def standardize(text: str):
@@ -17,21 +15,6 @@ def standardize(text: str):
         .replace("’", "'")
         .strip()
     )
-
-
-class MentionedStatute(StatuteBase):
-    mentions: int
-
-    @classmethod
-    def set_counted_statute(cls, text: str):
-        for rule in count_rules(text):
-            if mentions := rule.get("mentions"):
-                if isinstance(mentions, int) and mentions >= 1:
-                    yield cls(
-                        statute_category=rule.get("cat"),
-                        statute_serial_id=rule.get("id"),
-                        mentions=mentions,
-                    )
 
 
 single_spaced = re.compile(r"\s*\n\s*")

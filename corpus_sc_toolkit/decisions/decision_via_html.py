@@ -1,4 +1,3 @@
-from collections.abc import Iterator
 from pathlib import Path
 
 import yaml
@@ -8,12 +7,7 @@ from markdownify import markdownify
 from pydantic import Field
 from sqlite_utils import Database
 
-from ._resources import (
-    DETAILS_FILE,
-    DOCKETS,
-    YEARS,
-    decision_storage,
-)
+from ._resources import decision_storage
 from .decision_fields import DecisionFields
 from .decision_opinions import DecisionOpinion
 from .fields import (
@@ -29,7 +23,7 @@ class DecisionHTML(DecisionFields):
 
     def to_storage(self):
         # Uses `details.yaml` to upload decision fields represented by instance.
-        self.put_in_storage(DETAILS_FILE)
+        self.put_in_storage("details.yaml")
 
         # Upload legacy html files
         if self.home_html and self.home_html.exists():
@@ -39,31 +33,6 @@ class DecisionHTML(DecisionFields):
         # Upload markdown-based opinion files
         for opinion in self.opinions:
             opinion.to_storage(self.prefix)
-
-    @classmethod
-    def prefetch(
-        cls, dockets: list[str] = DOCKETS, years: tuple[int, int] = YEARS
-    ) -> Iterator[dict]:
-        """Using prefixes from `iter_collections`, the results from R2 storage
-        can be filtered based on `dockets` and `years`. Each result can then be
-        used to get the main `details.yaml` object, download the same, and convert
-        the download into a dict record. Since the fetched item is not yet complete,
-        the method name is `prefetch`.
-
-        Args:
-            dockets (list[str], optional): Selection of docket types e.g. ["GR", "AM"].
-                Defaults to DOCKETS.
-            years (tuple[int, int], optional): Range of years e.g. (1996,1998).
-                Defaults to YEARS.
-
-        Yields:
-            Iterator[dict]: Identified dicts from R2 containing details.yaml prefix.
-        """
-        for prefix in cls.iter_dockets(dockets, years):
-            target = f"{prefix}{DETAILS_FILE}"
-            result = decision_storage.restore_temp_yaml(yaml_suffix=target)
-            if result:
-                yield result
 
     @classmethod
     def get_common(
