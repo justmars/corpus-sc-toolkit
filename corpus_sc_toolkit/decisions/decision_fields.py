@@ -15,7 +15,7 @@ from ._resources import (
     YEARS,
     decision_storage,
 )
-from .decision_components import DecisionOpinion
+from .decision_opinions import DecisionOpinion
 from .fields import CourtComposition, DecisionCategory
 
 
@@ -183,7 +183,9 @@ class DecisionFields(BaseModel):
         if suffix not in ("details.yaml", "pdf.yaml"):
             raise Exception("Invalid upload path.")
         remote_loc = f"{self.prefix}/{suffix}"
-        temp_file = decision_storage.make_temp_yaml_path_from_data(self.dict())
+        temp_file = decision_storage.make_temp_yaml_path_from_data(
+            self.dict(exclude_none=True)
+        )
         args = decision_storage.set_extra_meta(self.storage_meta)
         logger.info(f"Uploading file to {remote_loc=}")
         decision_storage.upload(file_like=temp_file, loc=remote_loc, args=args)
@@ -196,8 +198,10 @@ class DecisionFields(BaseModel):
         the dict as a class instance."""
         if not prefix.endswith(("details.yaml", "pdf.yaml")):
             raise Exception("Bad path for DecisionFields base class.")
+
         data = decision_storage.restore_temp_yaml(prefix)
         if not data:
             raise Exception(f"Could not originate {prefix=}")
+
         logger.info(f"Retrieved file from {prefix=}")
         return cls(**data)

@@ -12,12 +12,9 @@ from sqlite_utils import Database
 from corpus_sc_toolkit.utils import sqlenv
 
 from ._resources import PDF_FILE, decision_storage
-from .decision_components import (
-    DecisionOpinion,
-    MentionedStatute,
-    OpinionSegment,
-)
+from .decision_components import MentionedStatute, OpinionSegment
 from .decision_fields import DecisionFields
+from .decision_opinions import DecisionOpinion
 from .fields import CourtComposition, DecisionCategory
 from .justice import CandidateJustice
 
@@ -191,6 +188,6 @@ class DecisionPDF(DecisionFields):
         return (
             f"{self.prefix}/{PDF_FILE}",
             decision_storage.make_temp_yaml_path_from_data(
-                self.dict(exclude=None)
+                self.dict(exclude_none=True)
             ),
         )

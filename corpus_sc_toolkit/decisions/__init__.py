@@ -7,8 +7,9 @@ from .decision import (
     TitleTagRow,
     VoteLine,
 )
-from .decision_components import DecisionOpinion, OpinionSegment
+from .decision_components import MentionedStatute, OpinionSegment
 from .decision_fields import DecisionFields
+from .decision_opinions import DecisionOpinion
 from .decision_via_html import DecisionHTML
 from .decision_via_pdf import DecisionPDF, InterimOpinion
 from .fields import (

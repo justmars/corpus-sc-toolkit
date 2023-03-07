@@ -8,8 +8,9 @@ from sqlite_utils.db import Database
 from sqlpyd import TableConfig
 
 from ._resources import DOCKETS, YEARS
-from .decision_components import DecisionOpinion, OpinionSegment
+from .decision_components import OpinionSegment
 from .decision_fields import DecisionFields
+from .decision_opinions import DecisionOpinion
 from .decision_via_html import DecisionHTML
 from .decision_via_pdf import DecisionPDF
 from .justice import Justice

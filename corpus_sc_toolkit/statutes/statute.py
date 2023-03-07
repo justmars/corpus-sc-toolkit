@@ -335,7 +335,8 @@ class Statute(Integrator):
 
     def to_storage(self):
         loc = f"{self.prefix}/details.yaml"
-        temp_file = statute_storage.make_temp_yaml_path_from_data(self.dict())
+        data = self.dict(exclude_none=True)
+        temp_file = statute_storage.make_temp_yaml_path_from_data(data)
         args = statute_storage.set_extra_meta(self.storage_meta)
         statute_storage.upload(file_like=temp_file, loc=loc, args=args)
         temp_file.unlink()

@@ -12,12 +12,11 @@ from sqlite_utils import Database
 from ._resources import (
     DETAILS_FILE,
     DOCKETS,
-    SUFFIX_OPINION,
     YEARS,
     decision_storage,
 )
-from .decision_components import DecisionOpinion
 from .decision_fields import DecisionFields
+from .decision_opinions import DecisionOpinion
 from .fields import (
     CourtComposition,
     DecisionCategory,
@@ -132,43 +131,3 @@ class DecisionHTML(DecisionFields):
             **ponente.ponencia,
         )
         return decision
-
-    @classmethod
-    def make_from_storage(cls, r2_data: dict, db: Database) -> Self | None:
-        """Implies `r2_data` extraction from `decision_storage.restore_temp_yaml()`.
-        Based on this result, match justice data from the `db`.
-        This enables construction of a single `DecisionHTML` instance.
-        """
-        if not (extracted := cls.get_common(r2_data, db)):
-            logger.error(f"Missing extraction {r2_data['prefix']=}")
-            return None
-        decision_id, prefix, cite, ponente = extracted
-
-        opinions = list(
-            DecisionOpinion.from_storage(  # from storage vs. from storage
-                opinion_prefix=f"{r2_data['prefix']}{SUFFIX_OPINION}",
-                decision_id=decision_id,
-                ponente_id=ponente.id,
-            )
-        )
-        if not opinions:
-            logger.error(f"No opinions detected in {decision_id=}")
-            return None
-
-        return cls(
-            id=decision_id,
-            prefix=prefix,
-            citation=cite,
-            origin=r2_data["origin"],
-            title=r2_data["case_title"],
-            description=cite.display,
-            date=r2_data["date_prom"],
-            date_scraped=r2_data["date_scraped"],
-            fallo=None,
-            voting=voteline_clean(r2_data.get("voting")),
-            emails=r2_data.get("emails", ["bot@lawsql.com"]),
-            composition=CourtComposition._setter(r2_data.get("composition")),
-            category=DecisionCategory._setter(r2_data.get("category")),
-            opinions=opinions,
-            **ponente.ponencia,
-        )

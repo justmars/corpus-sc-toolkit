@@ -122,16 +122,13 @@ class ConfigDecisions(BaseModel):
 
     @classmethod
     def setup(cls, reset: bool = False):
-        """
-        Get the sqlite database from aws containing pdf tables via litestream.
-        The database file becomes the focal point of the instance.
-        """
+        """Get sqlite db containing pdf tables from aws via litestream."""
         dbpath: Path = cls.get_pdf_db(reset=reset)
         conn = Connection(DatabasePath=str(dbpath), WAL=True)
         return cls(conn=conn)
 
     def build_tables(self) -> Database:
-        """Create all the relevant tables involving a decision object."""
+        """Create all relevant tables involving decision object."""
         logger.info("Ensure tables are created.")
         # Populate pax tables so that authors can be associated with decisions
         try:

@@ -3,8 +3,6 @@ from pathlib import Path
 
 from start_sdk.cf_r2 import StorageUtils
 
-"""R2 variables in order to perform operations from the library."""
-
 DECISION_TEMP_FOLDER = Path(__file__).parent / "_tmp"
 DECISION_TEMP_FOLDER.mkdir(exist_ok=True)
 
@@ -30,9 +28,3 @@ DETAILS_FILE = "details.yaml"
 
 PDF_FILE = "pdf.yaml"
 """Note that this does not have a backslash"""
-
-SUFFIX_PDF = f"/{PDF_FILE}"
-"""Note inclusion of start backslash"""
-
-SUFFIX_OPINION = "/opinions/"
-"""Note inclusion of start and end backslashes"""
