@@ -64,7 +64,7 @@ class DecisionRow(DecisionFields, TableConfig):
         for docket_prefix in cls.iter_dockets(dockets, years):
             if raw_k := cls.key_raw(docket_prefix):
                 if rx := decision_storage.restore_temp_yaml(yaml_suffix=raw_k):
-                    if raw := RawDecision.make(r2_data=rx, db=db):
+                    if raw := RawDecision.make_from_storage(r2_data=rx, db=db):
                         yield cls(**raw.dict())
             elif key_pdf := cls.key_pdf(docket_prefix):
                 if pdf := InterimDecision.get(key_pdf):

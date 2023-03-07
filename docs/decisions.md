@@ -77,10 +77,10 @@ dict
 When specific prefix is identified:
 
 ```py
->>> from corpus_sc_toolkit import RawDecision
+>>> from corpus_sc_toolkit import RawDecision, decision_storage
 >>> prefix = "GR/1999/6/95405/details.yaml"
->>> z_obj = RawDecision.preget(prefix=prefix)
->>> z = RawDecision.make(z_obj, c.db)
+>>> z_obj = decision_storage.restore_temp_yaml(yaml_suffix=prefix)
+>>> z = RawDecision(**z_obj)
 >>> type(z)
 corpus_sc_toolkit.modes.raw.RawDecision
 ```

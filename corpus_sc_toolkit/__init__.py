@@ -30,8 +30,6 @@ from .decisions import (
     TitleTagRow,
     VoteLine,
     extract_votelines,
-    get_cite_from_fields,
-    get_id_from_citation,
     get_justices_file,
     get_justices_from_api,
     tags_from_title,

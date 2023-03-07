@@ -12,16 +12,6 @@
 
 ::: corpus_sc_toolkit.decisions.meta.composition.CourtComposition
 
-## Citation Aspects
-
-### Set Decision ID from Values
-
-::: corpus_sc_toolkit.decisions.meta.citation.get_id_from_citation
-
-### Extract Citation from Fields
-
-::: corpus_sc_toolkit.decisions.meta.citation.get_cite_from_fields
-
 ## Title Tags
 
 ::: corpus_sc_toolkit.decisions.meta.tags.tags_from_title

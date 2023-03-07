@@ -68,7 +68,10 @@ class RawDecision(DecisionFields):
         return *result, ponente
 
     @classmethod
-    def from_path(cls, local_path: Path, db: Database):
+    def make_from_path(cls, local_path: Path, db: Database):
+        """Using local_path, match justice data containing a ponente field and a date
+        from the `db`. This enables construction of a single `RawDecision` instance.
+        """
         local = yaml.safe_load(local_path.read_bytes())
         result = cls.get_common(local, db)
         if not result:
@@ -102,9 +105,10 @@ class RawDecision(DecisionFields):
         )
 
     @classmethod
-    def make(cls, r2_data: dict, db: Database) -> Self | None:
-        """Using a single `r2_data` dict from a `preget()` call, match justice data
-        from the `db`. This enables construction of a single `RawDecision` instance.
+    def make_from_storage(cls, r2_data: dict, db: Database) -> Self | None:
+        """Implies `r2_data` result from `decision_storage.restore_temp_yaml()`.
+        Based on this result, match justice data from the `db`.
+        This enables construction of a single `RawDecision` instance.
         """
         result = cls.get_common(r2_data, db)
         if not result:
@@ -120,7 +124,6 @@ class RawDecision(DecisionFields):
         if not opinions:
             logger.error(f"No opinions detected in {r2_data['id']=}")
             return None
-
         return cls(
             id=decision_id,
             prefix=prefix,

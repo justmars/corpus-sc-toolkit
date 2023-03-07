@@ -3,6 +3,7 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Self
 
+from citation_utils import Citation
 from dateutil.parser import parse
 from loguru import logger
 from pydantic import BaseModel, Field
@@ -12,8 +13,35 @@ from .._utils import create_temp_yaml, download_to_temp, sqlenv
 from ._resources import SUFFIX_PDF, decision_storage
 from .decision_fields import DecisionFields
 from .decision_substructures import DecisionOpinion
-from .fields import CourtComposition, DecisionCategory, get_cite_from_fields
+from .fields import CourtComposition, DecisionCategory
 from .justice import CandidateJustice
+
+
+def extract_citation_ids(data: dict) -> tuple[str, str, Citation] | None:
+    """Because of inconsistent data declaration in the PDF table,
+    need a separate citation extractor. This oresumes existence of
+    the following keys:
+
+    1. docket_category
+    2. serial
+    3. date
+    """
+    keys = ["docket_category", "serial", "date"]
+    if not all([data.get(k) for k in keys]):
+        return None
+    date_obj = parse(data["date"]).date()
+    docket_partial = f"{data['docket_category']} No. {data['serial']}"
+    docket_str = f"{docket_partial}, {date_obj.strftime('%b %-d, %Y')}"
+    cite = Citation.extract_citation(docket_str)
+    if not cite:
+        return None
+    decision_id = cite.prefix_db_key
+    if not decision_id:
+        return None
+    decision_prefix = cite.storage_prefix
+    if not decision_prefix:
+        return None
+    return decision_id, decision_prefix, cite
 
 
 class InterimOpinion(BaseModel):
@@ -98,21 +126,13 @@ class InterimDecision(DecisionFields):
         """
         q = sqlenv.get_template("decisions/limit_extract.sql").render()
         for row in db.execute_returning_dicts(q):
-            cite = get_cite_from_fields(row)
-            if not cite:
-                logger.error(f"Bad citation in {row['id']=}")
+            result = extract_citation_ids(row)
+            if not result:
+                logger.error(
+                    f"No citation from {row.get('docket_category')=} {row.get('serial')=} {row.get('date')=}"  # noqa: E501
+                )
                 continue
-
-            decision_id = cite.prefix_db_key
-            if not decision_id:
-                logger.error(f"Bad decision_id in {row['id']=}")
-                continue
-
-            decision_prefix = cite.storage_prefix
-            if not decision_prefix:
-                logger.error(f"Bad decision_prefix in {row['id']=}")
-                continue
-
+            decision_id, decision_prefix, cite = result
             decision = cls(
                 id=decision_id,
                 prefix=decision_prefix,
@@ -129,7 +149,6 @@ class InterimDecision(DecisionFields):
                     row.get("category"), row.get("notice")
                 ),
             )
-
             opx_data = InterimOpinion.setup(idx=decision_id, db=db, data=row)
             if not opx_data or not opx_data.get("opinions"):
                 logger.error(f"No opinions detected in {decision_id=}")

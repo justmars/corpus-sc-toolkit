@@ -14,8 +14,6 @@ from .fields import (
     DecisionCategory,
     DecisionSource,
     extract_votelines,
-    get_cite_from_fields,
-    get_id_from_citation,
     tags_from_title,
     voteline_clean,
 )
