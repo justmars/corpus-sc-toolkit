@@ -12,11 +12,11 @@ Key | Value | Description
 --:|:-- |:--
 title | _Trans-Asia Phils. Employees Association (Tapea) And Arnel Galvez, Petitioners, Vs. National Labor Relations Commission, Trans-Asia (Phils.) And Ernesto S. De Castro, Respondents._ | The title of the case
 docket_category | GR | The part of the docket citation indicating the category
-docket_date | 1999-12-13 | The date found in the docket citation
 docket_id | 118289 | The serial id of the docket
+docket_date | 1999-12-13 | The date found in the docket citation
 report_phil | 378 Phil. 300 | The report citation for Philippine Reports
 
-When downloaded, `gr/1999/12/118289/13/details.yaml` contains [fields](decisions/fields.md), detected opinions.
+When downloaded, `gr/118289/1999/12/13/details.yaml` contains [fields](decisions/fields.md), detected opinions.
 
 ## prefix-based statutes
 
