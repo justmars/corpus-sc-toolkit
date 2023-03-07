@@ -26,4 +26,4 @@ Each decision is divided into opinions:
 
 Each decision is divided into opinions:
 
-::: corpus_sc_toolkit.decisions.decision_components.OpinionSegment
+::: corpus_sc_toolkit.decisions.decision_opinion_segments.OpinionSegment

@@ -11,8 +11,8 @@ from statute_trees import MentionedStatute
 
 from corpus_sc_toolkit.utils import sqlenv
 
-from .decision_components import OpinionSegment
 from .decision_fields import DecisionFields
+from .decision_opinion_segments import OpinionSegment
 from .decision_opinions import DecisionOpinion
 from .fields import CourtComposition, DecisionCategory
 from .justice import CandidateJustice

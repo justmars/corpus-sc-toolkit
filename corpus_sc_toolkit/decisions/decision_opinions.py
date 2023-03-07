@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 from statute_trees import MentionedStatute
 
 from ._resources import decision_storage
-from .decision_components import OpinionSegment
+from .decision_opinion_segments import OpinionSegment
 
 OPINION_MD_H1 = re.compile(r"^#\s*(?P<label>.*)")
 

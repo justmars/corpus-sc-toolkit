@@ -13,12 +13,6 @@ from .fields import CourtComposition, DecisionCategory
 
 class DecisionFields(BaseModel):
     """
-    A `Decision` relies on pre-processing various fields.
-
-    This toolkit helps process some of those fields prior to insertion into a
-    terminal database (even if they may previously originate from another
-    third-party database.)
-
     Field | Type | Description
     :--:|:--:|:--
     id | str | Using the docket citation as identifier, uses `.` as dividing mechanism
@@ -97,24 +91,24 @@ class DecisionFields(BaseModel):
         if not self.citation or not self.citation.storage_prefix:
             return {}
         return {
-            "ID": self.id,
-            "Prefix": self.prefix,
-            "Title": self.title,
-            "Category": self.category,
-            "Composition": self.composition,
-            "Docket_Category": self.citation.docket_category,
-            "Docket_ID": self.citation.docket_serial,
-            "Docket_Date": self.date.isoformat(),
-            "Report_Phil": self.citation.phil,
-            "Report_Scra": self.citation.scra,
-            "Report_Off_Gaz": self.citation.offg,
-            "Has_PDF": self.is_pdf,
+            "id": self.id,
+            "prefix": self.prefix,
+            "title": self.title,
+            "category": self.category,
+            "composition": self.composition,
+            "docket_category": self.citation.docket_category,
+            "docket_id": self.citation.docket_serial,
+            "docket_date": self.date.isoformat(),
+            "report_phil": self.citation.phil,
+            "report_scra": self.citation.scra,
+            "report_off_gaz": self.citation.offg,
+            "has_pdf": self.is_pdf,
         }
 
     @classmethod
     def key_raw(cls, dated_prefix: str) -> str | None:
         """Is suffix `details.yaml` present in result of `cls.iter_dockets()`?"""
-        key = f"{dated_prefix}details.yaml"
+        key = f"{dated_prefix}/details.yaml"
         try:
             DECISION_CLIENT.get_object(Bucket=DECISION_BUCKET_NAME, Key=key)
             return key
@@ -124,7 +118,7 @@ class DecisionFields(BaseModel):
     @classmethod
     def key_pdf(cls, dated_prefix: str) -> str | None:
         """Is suffix `pdf.yaml` present in result of `cls.iter_dockets()`?"""
-        key = f"{dated_prefix}pdf.yaml"
+        key = f"{dated_prefix}/pdf.yaml"
         try:
             DECISION_CLIENT.get_object(Bucket=DECISION_BUCKET_NAME, Key=key)
             return key
@@ -136,10 +130,9 @@ class DecisionFields(BaseModel):
         R2, depending on the value of `suffix`."""
         if suffix not in ("details.yaml", "pdf.yaml"):
             raise Exception("Invalid upload path.")
+        output_data = self.dict(exclude_none=True)
         remote_loc = f"{self.prefix}/{suffix}"
-        temp_file = decision_storage.make_temp_yaml_path_from_data(
-            self.dict(exclude_none=True)
-        )
+        temp_file = decision_storage.make_temp_yaml_path_from_data(output_data)
         args = decision_storage.set_extra_meta(self.storage_meta)
         logger.info(f"Uploading file to {remote_loc=}")
         decision_storage.upload(file_like=temp_file, loc=remote_loc, args=args)
@@ -152,10 +145,8 @@ class DecisionFields(BaseModel):
         the dict as a class instance."""
         if not prefix.endswith(("details.yaml", "pdf.yaml")):
             raise Exception("Bad path for DecisionFields base class.")
-
         data = decision_storage.restore_temp_yaml(prefix)
         if not data:
             raise Exception(f"Could not originate {prefix=}")
-
         logger.info(f"Retrieved file from {prefix=}")
         return cls(**data)

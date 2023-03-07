@@ -5,18 +5,15 @@ from citation_utils import Citation
 from pydantic import BaseModel, Field
 from sqlpyd import TableConfig
 
-from .decision_components import OpinionSegment
 from .decision_fields import DecisionFields
+from .decision_fields_via_html import DecisionHTML
+from .decision_fields_via_pdf import DecisionPDF
+from .decision_opinion_segments import OpinionSegment
 from .decision_opinions import DecisionOpinion
-from .decision_via_html import DecisionHTML
-from .decision_via_pdf import DecisionPDF
 from .justice import Justice
 
 
 class DecisionRow(DecisionFields, TableConfig):
-    """Citation in a `DecisionRow` overrides `DecisionFields` since row implies valid
-    citation already exists and is uploaded in R2."""
-
     __prefix__ = "sc"
     __tablename__ = "decisions"
     __indexes__ = [
@@ -26,7 +23,7 @@ class DecisionRow(DecisionFields, TableConfig):
         ["id", "justice_id"],
         ["per_curiam", "raw_ponente"],
     ]
-    # see overriden DecisionFields: citation, emails, opinions
+    # overriden: citation, emails, opinions
     citation: Citation = Field(default=..., exclude=True)
     emails: list[str] = Field(default_factory=list, exclude=True)
     opinions: list[DecisionOpinion] = Field(default_factory=list, exclude=True)
@@ -39,21 +36,16 @@ class DecisionRow(DecisionFields, TableConfig):
     def from_cloud_storage(cls, docket_prefix: str) -> Self | None:
         """R2 uploaded content is formatted via:
 
-        1. `DecisionHTML`: `details.yaml` variant SC e-library html content;
-        2. `DecisionPDF`: `pdf.yaml` variant SC links to PDF docs.
-
-        Based on a filter from `dockets` and `years`, fetch from R2 storage either
-        the `DecisionHTML` or the `DecisionPDF`, with priority given to the former,
-        i.e. if the `DecisionHTML` exists, use this; otherwise use `DecisionPDF`.
+        Variant | Suffix | Source
+        :--:|:--:|:--"
+        `DecisionHTML | suffixed `/details.yaml` | SC e-library html
+        `DecisionPDF` | suffixed `/pdf.yaml` | SC PDFs from main site
 
         Args:
-            db (Database): Will be used for `DecisionHTML.make()`
-            dockets (list[str], optional): See `DecisionFields`. Defaults to DOCKETS.
-            years (tuple[int, int], optional): See `DecisionFields`. Defaults to YEARS.
+            docket_prefix (str): Should end in .yaml
 
-        Yields:
-            Iterator[Self]: Unified decision item regardless of whether the source is
-                a `details.yaml` file or a `pdf.yaml` file.
+        Returns:
+            Self | None:  If found, prioritize `DecisionHTML` then `DecisionPDF`.
         """
         if key_html := cls.key_raw(docket_prefix):
             if html := DecisionHTML.get_from_storage(key_html):
