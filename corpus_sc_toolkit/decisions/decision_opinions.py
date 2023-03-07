@@ -72,29 +72,31 @@ class DecisionOpinion(BaseModel):
     class Config:
         use_enum_values = True
 
-    def make_filename_for_upload(self, file_extension: str = "md"):
-        if file_extension not in ("md", "txt"):
+    def make_filename_for_upload(self, file_ext: str = "md"):
+        if file_ext not in ("md", "txt"):
             logger.error("Improper file upload extension.")
             return None
 
         if self.title == "Ponencia":
-            return f"ponencia.{file_extension}"
+            return f"ponencia.{file_ext}"
         elif self.justice_id:
-            return f"{self.justice_id}.{file_extension}"
+            return f"{self.justice_id}.{file_ext}"
+
         logger.warning(f"No filename for {self.id=} {self.decision_id=}")
         return None
 
-    def to_storage(self, decision_prefix: str, file_extension: str = "md"):
-        if file_extension not in ("md", "txt"):
+    def to_storage(self, decision_prefix: str, file_ext: str = "md"):
+        if file_ext not in ("md", "txt"):
             logger.error("Improper file upload extension.")
             return None
 
         logger.debug(f"Uploading opinion {self.id=}")
-        prefix_title = self.make_filename_for_upload(file_extension)
+        prefix_title = self.make_filename_for_upload(file_ext)
         if not prefix_title:
             logger.warning("Missing title, skip upload.")
             return None
-        temp_md = Path(__file__).parent / f"temp.{file_extension}"
+
+        temp_md = Path(__file__).parent / "_tmp" / f"temp_op.{file_ext}"
         temp_md.write_text(self.text)
         decision_storage.upload(
             file_like=temp_md,

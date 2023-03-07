@@ -407,14 +407,14 @@ files = [
 
 [[package]]
 name = "corpus-pax"
-version = "0.1.23"
+version = "0.1.24"
 description = "Using Github API (to pull individuals, orgs, and article content), setup a local sqlite database, syncing images to Cloudflare."
 category = "main"
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "corpus_pax-0.1.23-py3-none-any.whl", hash = "sha256:139755851150254e50d65bb316b4950ee9dc558e812a7d0a0ef873aa1263db7c"},
-    {file = "corpus_pax-0.1.23.tar.gz", hash = "sha256:a60cebc60e451ae74c69b72f8f2c2ccd284c99a6622f7eaef69621f8718f1e54"},
+    {file = "corpus_pax-0.1.24-py3-none-any.whl", hash = "sha256:1138335c665d16170e19e8c581d773675d272b1c739c9e19f1ef99b89eff5eb9"},
+    {file = "corpus_pax-0.1.24.tar.gz", hash = "sha256:47189ecd71283d33098c802fd418ea6883c1a654b62a4c771bb98db739a41667"},
 ]
 
 [package.dependencies]
@@ -423,7 +423,7 @@ httpx = ">=0.23.0,<0.24.0"
 jinja2 = ">=3.1.2,<4.0.0"
 python-frontmatter = ">=1.0.0,<2.0.0"
 sqlpyd = ">=0.1.5,<0.2.0"
-start-sdk = ">=0.0.7,<0.0.8"
+start-sdk = ">=0.0.8,<0.0.9"
 
 [[package]]
 name = "coverage"
@@ -1883,14 +1883,14 @@ tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 
 [[package]]
 name = "start-sdk"
-version = "0.0.7"
+version = "0.0.8"
 description = "Settings for Github, Cloudflare Images API"
 category = "main"
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "start_sdk-0.0.7-py3-none-any.whl", hash = "sha256:f24072b698276082d41e2450e43cfc45ef27592c3ed29580b64be5095059a07b"},
-    {file = "start_sdk-0.0.7.tar.gz", hash = "sha256:3c0469f22fee5b6fc799d4fc654715fce817c645827b0ec86763685364657427"},
+    {file = "start_sdk-0.0.8-py3-none-any.whl", hash = "sha256:2fd3b51b0522a285295ff8ace5d936f655dd4fd26912fe5777f84536d04c598e"},
+    {file = "start_sdk-0.0.8.tar.gz", hash = "sha256:4d138f11deaeff58f537a66475dfa3bfe4bb44dd4bed953cda55f8f502c2cd68"},
 ]
 
 [package.dependencies]
@@ -2134,4 +2134,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "24d9b67b4b97218b084ea98d4f11412454686870b6c916a928fec6789fe930d3"
+content-hash = "358db05aca2a6cd0c1da789926b8d12f7bc655adabc10424845f2361b8257c65"
