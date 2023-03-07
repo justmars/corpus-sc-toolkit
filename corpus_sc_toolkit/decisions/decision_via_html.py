@@ -6,6 +6,7 @@ import yaml
 from citation_utils import Citation
 from loguru import logger
 from markdownify import markdownify
+from pydantic import Field
 from sqlite_utils import Database
 
 from ._resources import (
@@ -26,12 +27,21 @@ from .justice import CandidateJustice
 
 
 class DecisionHTML(DecisionFields):
-    ...
+    home_html: Path | None = Field(default=None, exclude=True)
 
-    def upload(self):
-        """Uses `details.yaml` to upload the entire set of decision fields
-        represented by this instance."""
+    def to_storage(self):
+        # Uses `details.yaml` to upload decision fields represented by instance.
         self.put_in_storage(DETAILS_FILE)
+
+        # Upload legacy html files
+        if self.home_html and self.home_html.exists():
+            decision_storage.upload(
+                file_like=self.home_html, loc=f"{self.prefix}/body.html"
+            )
+
+        # Upload markdown-based opinion files
+        for opinion in self.opinions:
+            opinion.to_storage(self.prefix)
 
     @classmethod
     def prefetch(
@@ -74,8 +84,10 @@ class DecisionHTML(DecisionFields):
         """Using local_path, match justice data containing a ponente field and a date
         from the `db`. This enables construction of a single `DecisionHTML` instance.
         """
+        folder_path = local_path.parent
+
         fallo = None
-        fallo_file = local_path.parent / "fallo.html"
+        fallo_file = folder_path / "fallo.html"
         if fallo_file.exists():
             fallo = markdownify(fallo_file.read_text()).strip()
 
@@ -86,10 +98,11 @@ class DecisionHTML(DecisionFields):
 
         decision_id, prefix, cite, ponente = result
 
-        opinions_folder = local_path.parent / "opinions"
+        opinions_folder = folder_path / "opinions"
         if not opinions_folder.exists():
-            logger.error(f"No opinions folder in {local_path=}")
+            logger.error(f"Missing {opinions_folder=}")
             return None
+
         opinions = list(
             DecisionOpinion.from_folder(  # from folder vs. from storage
                 opinions_folder=opinions_folder,
@@ -101,7 +114,7 @@ class DecisionHTML(DecisionFields):
             logger.error(f"No opinions in {opinions_folder=} {decision_id=}")
             return None
 
-        return cls(
+        decision = cls(
             id=decision_id,
             prefix=prefix,
             citation=cite,
@@ -118,6 +131,7 @@ class DecisionHTML(DecisionFields):
             opinions=opinions,
             **ponente.ponencia,
         )
+        return decision
 
     @classmethod
     def make_from_storage(cls, r2_data: dict, db: Database) -> Self | None:

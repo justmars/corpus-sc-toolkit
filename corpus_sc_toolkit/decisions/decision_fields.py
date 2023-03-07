@@ -69,9 +69,7 @@ class DecisionFields(BaseModel):
     justice_id: int | None = Field(
         default=None,
         title="Justice ID",
-        description=(
-            "Determine appropriate justice_id using `update_justice_ids.sql`."
-        ),
+        description="Get justice_id using `update_justice_ids.sql`.",
         col=int,
         index=True,
     )
@@ -118,6 +116,7 @@ class DecisionFields(BaseModel):
             "Report_Phil": self.citation.phil,
             "Report_Scra": self.citation.scra,
             "Report_Off_Gaz": self.citation.offg,
+            "Has_PDF": self.is_pdf,
         }
 
     @classmethod

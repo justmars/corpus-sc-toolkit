@@ -13,6 +13,7 @@ from sqlpyd import Connection
 
 from .decisions import (
     CitationRow,
+    DecisionHTML,
     DecisionRow,
     Justice,
     OpinionRow,
@@ -25,9 +26,9 @@ from .decisions import (
 )
 from .statutes import Statute
 
-LOCAL_STATUTES = (
-    Path().home().joinpath("code/corpus/statutes").glob("**/details.yaml")
-)
+LOCAL_FOLDER = Path().home().joinpath("code/corpus")
+STATUTES = LOCAL_FOLDER.glob("statutes/**/details.yaml")
+DECISIONS = LOCAL_FOLDER.glob("decisions/**/details.yaml")
 DB_FOLDER = Path(__file__).parent.parent / "data"
 load_dotenv(find_dotenv())
 
@@ -56,8 +57,8 @@ logger.configure(
 
 class ConfigStatutes(BaseModel):
     @classmethod
-    def extract_local(cls):
-        for detail_path in LOCAL_STATUTES:
+    def extract_local_statutes(cls):
+        for detail_path in STATUTES:
             try:
                 if obj := Statute.from_page(detail_path):
                     logger.debug(f"Uploading: {obj.id=}")
@@ -93,6 +94,19 @@ class ConfigDecisions(BaseModel):
 
     conn: Connection
     path: Path = Field(default=DB_FOLDER)
+
+    def extract_local_decisions(self):
+        for detail_path in DECISIONS:
+            try:
+                if obj := DecisionHTML.make_from_path(
+                    local_path=detail_path, db=self.conn.db
+                ):
+                    logger.debug(f"Uploading: {obj.id=}")
+                    obj.to_storage()
+                else:
+                    logger.error(f"Error uploading {detail_path=}")
+            except Exception as e:
+                logger.error(f"Bad {detail_path=}; see {e=}")
 
     @classmethod
     def get_pdf_db(cls, reset: bool = False) -> Path:

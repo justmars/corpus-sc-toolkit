@@ -1,5 +1,6 @@
 import re
 from collections.abc import Iterator
+from enum import Enum
 from pathlib import Path
 from typing import Self
 
@@ -120,7 +121,22 @@ class OpinionSegment(BaseModel):
             )
 
 
-OPINION_MD_H1 = re.compile(r"^#\s*(?P<label>).*$")
+OPINION_MD_H1 = re.compile(r"^#\s*(?P<label>.*)")
+
+
+class OpinionTag(str, Enum):
+    ponencia = "Ponencia"
+    concur = "Concurring Opinion"
+    dissent = "Dissenting Opinion"
+    separate = "Separate Opinion"
+
+    @classmethod
+    def detect(cls, text: str):
+        tags = []
+        for name, member in cls.__members__.items():
+            if name in text.lower():
+                tags.append(member)
+        return tags
 
 
 class DecisionOpinion(BaseModel):
@@ -143,7 +159,7 @@ class DecisionOpinion(BaseModel):
         description="How opinion called, e.g. Ponencia, Concurring Opinion,",
         col=str,
     )
-    tags: list[str] | None = Field(
+    tags: list[OpinionTag] | None = Field(
         default=None,
         description="e.g. main, dissenting, concurring, separate",
     )
@@ -165,11 +181,57 @@ class DecisionOpinion(BaseModel):
     segments: list[OpinionSegment]
     citations: list[Citation]
 
+    class Config:
+        use_enum_values = True
+
+    def make_filename_for_upload(self):
+        if self.title == "Ponencia":
+            return "ponencia.md"
+        elif self.justice_id:
+            return f"{self.justice_id}.md"
+        logger.warning(f"No filename for {self.id=} {self.decision_id=}")
+        return None
+
+    def to_storage(self, decision_prefix: str):
+        logger.debug(f"Uploading opinion {self.id=}")
+        prefix_title = self.make_filename_for_upload()
+        if not prefix_title:
+            logger.warning("Missing title, skip upload.")
+            return None
+        temp_md = Path(__file__).parent / "temp.md"
+        temp_md.write_text(self.text)
+        decision_storage.upload(
+            file_like=temp_md,
+            loc=f"{decision_prefix}/opinions/{prefix_title}",
+            args=decision_storage.set_extra_meta(self.storage_meta),
+        )
+        temp_md.unlink(missing_ok=True)
+
+    @property
+    def storage_meta(self):
+        if not self.title or not self.justice_id:
+            return {}
+        return {
+            "id": self.id,
+            "title": self.title,
+            "tags": ",".join([t for t in self.tags]) if self.tags else None,
+            "justice_id": self.justice_id,
+            "pdf": self.pdf,
+            "text_length": len(self.text),
+            "num_unique_statutes": len(self.statutes),
+            "num_detected_citations": len(self.citations),
+            "num_counted_segments": len(self.segments),
+        }
+
     @classmethod
     def get_headline(cls, text: str) -> str | None:
         """Markdown contains H1 header, extract this header."""
         if match := OPINION_MD_H1.search(text):
-            return match.group("label")
+            label = match.group("label")
+            if len(label) >= 5 and len(label) <= 50:
+                return label
+            else:
+                logger.error(f"Improper opinion {label=} regex capture.")
         return None
 
     @classmethod
@@ -203,26 +265,35 @@ class DecisionOpinion(BaseModel):
 
         Each opinion consists of `segments`, `citations`, and `statutes`.
         """
-        if key := cls.key_from_md_prefix(path):
-            justice_id = justice_id if key == "ponencia" else int(key)
-            opinion_id = f"{decision_id}-{key}"
-            return cls(
-                id=opinion_id,
-                decision_id=decision_id,
-                title=cls.get_headline(text),
-                text=text,
-                justice_id=justice_id,
-                citations=list(Citation.extract_citations(text=text)),
-                statutes=list(MentionedStatute.set_counted_statute(text=text)),
-                segments=list(
-                    OpinionSegment.make_segments(
-                        decision_id=decision_id,
-                        opinion_id=opinion_id,
-                        text=text,
-                    )
-                ),
-            )
-        return None
+        key = cls.key_from_md_prefix(path)
+        if not key:
+            logger.error(f"No key from {path=}")
+            return None
+
+        title = cls.get_headline(text)
+        if not title:
+            logger.error(f"No headline from {path=}; means no title.")
+            return None
+
+        justice_id = justice_id if key == "ponencia" else int(key)
+        opinion_id = f"{decision_id}-{key}"
+        return cls(
+            id=opinion_id,
+            decision_id=decision_id,
+            title=title,
+            text=text,
+            justice_id=justice_id,
+            tags=OpinionTag.detect(title),
+            citations=list(Citation.extract_citations(text=text)),
+            statutes=list(MentionedStatute.set_counted_statute(text=text)),
+            segments=list(
+                OpinionSegment.make_segments(
+                    decision_id=decision_id,
+                    opinion_id=opinion_id,
+                    text=text,
+                )
+            ),
+        )
 
     @classmethod
     def from_folder(
@@ -234,7 +305,7 @@ class DecisionOpinion(BaseModel):
         """Assumes local folder containing opinions in .md format.
         The `ponente_id`, if present, will be used to populate the ponencia
         opinion."""
-        for opinion_path in opinions_folder.glob("*.md"):
+        for opinion_path in opinions_folder.glob("**/*.md"):
             if opinion := cls.make_opinion(
                 path=str(opinion_path),
                 decision_id=decision_id,
