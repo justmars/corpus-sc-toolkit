@@ -1,6 +1,5 @@
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Self
 
 import yaml
 from citation_utils import Citation
@@ -34,9 +33,8 @@ class DecisionHTML(DecisionFields):
 
         # Upload legacy html files
         if self.home_html and self.home_html.exists():
-            decision_storage.upload(
-                file_like=self.home_html, loc=f"{self.prefix}/body.html"
-            )
+            loc = f"{self.prefix}/body.html"
+            decision_storage.upload(file_like=self.home_html, loc=loc)
 
         # Upload markdown-based opinion files
         for opinion in self.opinions:

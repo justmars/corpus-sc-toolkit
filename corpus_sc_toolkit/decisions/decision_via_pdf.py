@@ -1,6 +1,5 @@
 import json
 from collections.abc import Iterator
-from pathlib import Path
 from typing import Self
 
 from citation_utils import Citation
@@ -126,6 +125,14 @@ class InterimOpinion(BaseModel):
 class DecisionPDF(DecisionFields):
     ...
 
+    def to_storage(self):
+        # Uses `pdf.yaml` to upload decision fields represented by instance.
+        self.put_in_storage(PDF_FILE)
+
+        # Upload txt-based opinion files
+        for opinion in self.opinions:
+            opinion.to_storage(self.prefix, "txt")
+
     @classmethod
     def originate(cls, db: Database) -> Iterator[Self]:
         """Extract sql query (`/sql/limit_extract.sql`) from `db` to instantiate
@@ -172,22 +179,3 @@ class DecisionPDF(DecisionFields):
             decision.justice_id = opx_data.get("justice_id", None)
             decision.opinions = [op.row for op in opx_data["opinions"]]
             yield decision
-
-    def dump(self) -> tuple[str, Path] | None:
-        """Create a temporary yaml file containing the relevant fields
-        of the DecisionPDF instance and pair this file with its
-        intended target prefix when it gets uploaded to storage. This is
-        the resulting tuple.
-
-        The prefix implies that a docket citation exists since the pdf
-        data will be uploaded to a `<prefix>/pdf.yaml` endpoint.
-
-        Returns:
-            tuple[str, Path] | None: prefix and Path, if the prefix exists.
-        """
-        return (
-            f"{self.prefix}/{PDF_FILE}",
-            decision_storage.make_temp_yaml_path_from_data(
-                self.dict(exclude_none=True)
-            ),
-        )

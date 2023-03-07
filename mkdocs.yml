@@ -20,10 +20,11 @@ theme:
         name: Switch to light mode
 nav:
   - Overview: index.md
-  - Justice Field: justice.md
-  - Meta Field: meta.md
-  - Decision Models: decisions.md
-  - Statute Models: statutes.md
+  - Decision:
+      justice: decisions/justice.md
+      fields: decisions/fields.md
+      components: decisions/components.md
+  - Statute: statutes.md
 extra:
   homepage: https://mv3.dev
   social:

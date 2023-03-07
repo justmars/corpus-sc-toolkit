@@ -1,65 +1,51 @@
 # corpus-sc-toolkit
 
-Toolkit to process component elements of a Philippine Supreme Court decision.
+The library handles the processing of:
 
-## Metadata
+  1. Philippine Supreme Court Decisions; and
+  2. Philippine rules in the form of Statutes and Codifications.
 
-```mermaid
-flowchart TB
-m(metadata)
-m---format(general format)
-format---html
-format---pdf
-m---dx(case title)
-m---composition(court composition)
-composition---eb(en banc: 15 justices)
-composition---division(division: 5 justices)
-m---cite(citation)
-m---date(date promulgated)
-```
+It extracts fields from raw content, uploading a "source of truth" `yaml` file in R2 storage.
 
-## Citation
+## prefix-based decisions
 
-```mermaid
-flowchart TB
-cite(citation)---docket
-cite---report
-docket---d1(docket category)
-docket---d2(docket serial)
-docket---d3(docket date)
-report---r1(phil report)
-report---r2(scra)
-report---r3(off. gaz.)
-```
+Consider the following prefix `gr/1999/12/118289`, in the `sc-decisions` R2 bucket, where we can divine the following metadata at a glance:
 
-## Substructures
+Key | Value
+--:|:--
+category | Decision
+composition | Division
+docket_category | GR
+docket_date | 1999-12-13
+docket_id | 118289
+id | gr.1999.12.118289
+prefix | gr/1999/12/118289
+report_phil | 378 Phil. 300
+title | Trans-Asia Phils. Employees Association (Tapea) And Arnel Galvez, Petitioners, Vs. National Labor Relations Commission, Trans-Asia (Phils.) And Ernesto S. De Castro, Respondents.
 
-```mermaid
-flowchart TB
-decision---a(list of opinions)
-a---mm(each opinion has its own metadata)
-mm---writer(justice id)
-mm---title(title of opinion)
-mm---segments(each opinion may have a list of segments)
-title--op(ponencia)
-title--xconcur
-title--xdissent
-title--xseparate
+The full `gr/1999/12/118289/details.yaml` file can be downloaded and will contain relevant [fields](decisions/fields.md) including detected opinions. Each opinion may contain:
 
-```
+1. individual segments;
+2. an index of detected citations; and
+3. an index of detected statutes.
 
-## Decision Fields
+## prefix-based statutes
 
-::: corpus_sc_toolkit.decisions.decision_fields.DecisionFields
+Relatedly, a separate R2 bucket will host `ph-statutes`. So if we consider RA 386, as published, it's storage prefix would be `ra/1949/6/386/1`, the suffix `/1` takes into account the possibility of duplicate titles. This represents the following metadata:
 
-## Decision Opinions
+Key | Value
+--:|:--
+category | ra
+date | 1949-06-18
+description |An Act to Ordain and Institute the Civil Code of the Philippines
+id | ra.1949.6.386.1
+prefix | ra/1949/6/386/1
+serialid | 386
+title | Republic Act No. 386
+variant | 1
 
-Each decision is divided into opinions:
+The full `ra/1949/6/386/1/details.yaml` file can be downloaded and will contain relevant metadata including nested provisions.
 
-::: corpus_sc_toolkit.decisions.decision_substructures.DecisionOpinion
-
-## Opinion Segments
-
-Each decision is divided into opinions:
-
-::: corpus_sc_toolkit.decisions.decision_substructures.OpinionSegment
+1. individual segments;
+2. an index of detected citations; and
+3. an index of detected statutes.
