@@ -333,14 +333,12 @@ class Statute(Integrator):
         c.create_table(StatuteFoundInUnit)
         c.db.index_foreign_keys()
 
-    def upload(self):
-        statute_storage.upload(
-            file_like=statute_storage.make_temp_yaml_path_from_data(
-                self.dict()
-            ),
-            loc=f"{self.prefix}/details.yaml",
-            args=StorageUtils.set_extra_meta(self.storage_meta),
-        )
+    def to_storage(self):
+        loc = f"{self.prefix}/details.yaml"
+        temp_file = statute_storage.make_temp_yaml_path_from_data(self.dict())
+        args = statute_storage.set_extra_meta(self.storage_meta)
+        statute_storage.upload(file_like=temp_file, loc=loc, args=args)
+        temp_file.unlink()
 
     @classmethod
     def get(cls, prefix: str) -> Self:

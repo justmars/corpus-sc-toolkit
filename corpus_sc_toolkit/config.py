@@ -61,7 +61,7 @@ class ConfigStatutes(BaseModel):
             try:
                 if obj := Statute.from_page(detail_path):
                     logger.debug(f"Uploading: {obj.id=}")
-                    obj.upload()
+                    obj.to_storage()
                 else:
                     logger.error(f"Error uploading {detail_path=}")
             except Exception as e:
@@ -147,7 +147,6 @@ class ConfigDecisions(BaseModel):
             str | None: The decision id, if the insertion of records is successful.
         """
         table = self.conn.table(DecisionRow)
-
         try:
             added = table.insert(record=row.dict(), pk="id")  # type: ignore
             logger.debug(f"Added {added.last_pk=}")

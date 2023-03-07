@@ -7,18 +7,17 @@ from pydantic import BaseModel, Field
 from sqlite_utils.db import Database
 from sqlpyd import TableConfig
 
-from ._resources import DOCKETS, YEARS, decision_storage
+from ._resources import DOCKETS, YEARS
+from .decision_components import DecisionOpinion, OpinionSegment
 from .decision_fields import DecisionFields
-from .decision_substructures import DecisionOpinion, OpinionSegment
-from .interim import InterimDecision
+from .decision_via_html import DecisionHTML
+from .decision_via_pdf import DecisionPDF
 from .justice import Justice
-from .raw import RawDecision
 
 
 class DecisionRow(DecisionFields, TableConfig):
-    """The citation in a `DecisionRow` overrides `DecisionFields`
-    since the row implies a valid citation already exists and is uploaded in R2.
-    """
+    """Citation in a `DecisionRow` overrides `DecisionFields` since row implies valid
+    citation already exists and is uploaded in R2."""
 
     __prefix__ = "sc"
     __tablename__ = "decisions"
@@ -29,7 +28,10 @@ class DecisionRow(DecisionFields, TableConfig):
         ["id", "justice_id"],
         ["per_curiam", "raw_ponente"],
     ]
-    citation: Citation = Field(default=..., exclude=True)  # must be present
+    # see overriden DecisionFields: citation, emails, opinions
+    citation: Citation = Field(default=..., exclude=True)
+    emails: list[str] = Field(default_factory=list, exclude=True)
+    opinions: list[DecisionOpinion] = Field(default_factory=list, exclude=True)
 
     @property
     def citation_fk(self) -> dict:
@@ -44,15 +46,15 @@ class DecisionRow(DecisionFields, TableConfig):
     ) -> Iterator[Self]:
         """R2 uploaded content is formatted via:
 
-        1. `RawDecision`: `details.yaml` variant SC e-library html content;
-        2. `InterimDecision`: `pdf.yaml` variant SC links to PDF docs.
+        1. `DecisionHTML`: `details.yaml` variant SC e-library html content;
+        2. `DecisionPDF`: `pdf.yaml` variant SC links to PDF docs.
 
         Based on a filter from `dockets` and `years`, fetch from R2 storage either
-        the `RawDecision` or the `InterimDecision`, with priority given to the former,
-        i.e. if the `RawDecision` exists, use this; otherwise use `InterimDecision`.
+        the `DecisionHTML` or the `DecisionPDF`, with priority given to the former,
+        i.e. if the `DecisionHTML` exists, use this; otherwise use `DecisionPDF`.
 
         Args:
-            db (Database): Will be used for `RawDecision.make()`
+            db (Database): Will be used for `DecisionHTML.make()`
             dockets (list[str], optional): See `DecisionFields`. Defaults to DOCKETS.
             years (tuple[int, int], optional): See `DecisionFields`. Defaults to YEARS.
 
@@ -61,12 +63,11 @@ class DecisionRow(DecisionFields, TableConfig):
                 a `details.yaml` file or a `pdf.yaml` file.
         """
         for docket_prefix in cls.iter_dockets(dockets, years):
-            if raw_k := cls.key_raw(docket_prefix):
-                if rx := decision_storage.restore_temp_yaml(yaml_suffix=raw_k):
-                    if raw := RawDecision.make_from_storage(r2_data=rx, db=db):
-                        yield cls(**raw.dict())
+            if key_html := cls.key_raw(docket_prefix):
+                if html := DecisionHTML.get_from_storage(key_html):
+                    yield cls(**html.dict())
             elif key_pdf := cls.key_pdf(docket_prefix):
-                if pdf := InterimDecision.get(key_pdf):
+                if pdf := DecisionPDF.get_from_storage(key_pdf):
                     yield cls(**pdf.dict())
 
 

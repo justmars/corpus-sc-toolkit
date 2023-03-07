@@ -10,13 +10,13 @@ from pydantic import BaseModel, Field
 from sqlite_utils import Database
 
 from .._utils import sqlenv
-from ._resources import SUFFIX_PDF, decision_storage
-from .decision_fields import DecisionFields
-from .decision_substructures import (
+from ._resources import PDF_FILE, decision_storage
+from .decision_components import (
     DecisionOpinion,
     MentionedStatute,
     OpinionSegment,
 )
+from .decision_fields import DecisionFields
 from .fields import CourtComposition, DecisionCategory
 from .justice import CandidateJustice
 
@@ -125,7 +125,7 @@ class InterimOpinion(BaseModel):
         return {"opinions": opinions} | match_ponencia
 
 
-class InterimDecision(DecisionFields):
+class DecisionPDF(DecisionFields):
     ...
 
     @classmethod
@@ -175,17 +175,9 @@ class InterimDecision(DecisionFields):
             decision.opinions = [op.row for op in opx_data["opinions"]]
             yield decision
 
-    @property
-    def pdf_prefix(self) -> str | None:
-        """Represents the pdf prefix to be uploaded to R2."""
-        if not self.is_pdf:
-            logger.warning("Method limited to pdf-based files.")
-            return None
-        return f"{self.prefix}{SUFFIX_PDF}"
-
     def dump(self) -> tuple[str, Path] | None:
         """Create a temporary yaml file containing the relevant fields
-        of the Interim Decision instance and pair this file with its
+        of the DecisionPDF instance and pair this file with its
         intended target prefix when it gets uploaded to storage. This is
         the resulting tuple.
 
@@ -195,46 +187,9 @@ class InterimDecision(DecisionFields):
         Returns:
             tuple[str, Path] | None: prefix and Path, if the prefix exists.
         """
-        if not self.pdf_prefix:
-            return None
-        source = self.dict(exclude={"opinions"})
-        data = source | {"opinions": [o.dict() for o in self.opinions]}
-        temp_path = decision_storage.make_temp_yaml_path_from_data(data)
-        return self.pdf_prefix, temp_path
-
-    def upload(self):
-        """With a temporary file prepared, upload the object representing
-        the Interim Decision instance to R2 storage.
-
-        Args:
-            override (bool, optional): If true, will override. Defaults to False.
-
-        Returns:
-            bool: Whether or not an upload was performed.
-        """
-        prep_pdf_upload = self.dump()
-        if not prep_pdf_upload:
-            return False
-        loc, file_like = prep_pdf_upload
-        logger.info(f"Uploading {loc=}")
-        decision_storage.upload(
-            file_like=file_like, loc=loc, args=self.storage_meta
+        return (
+            f"{self.prefix}/{PDF_FILE}",
+            decision_storage.make_temp_yaml_path_from_data(
+                self.dict(exclude=None)
+            ),
         )
-
-    @classmethod
-    def get(cls, prefix: str) -> Self:
-        """Retrieve data represented by the `prefix` from R2 (implies previous
-        from `dump()` and `upload()`) and instantiate the Interim Decision based
-        on such retrieved data.
-
-        Args:
-            prefix (str): Must end with /pdf.yaml
-
-        Returns:
-            Self: Interim Decision instance from R2 prefix.
-        """
-        data = decision_storage.restore_temp_yaml(prefix)
-        if not data:
-            raise Exception(f"Could not originate {prefix=}")
-        opinions = [DecisionOpinion(**o) for o in data.pop("opinions")]
-        return cls(opinions=opinions, **data)

@@ -5,6 +5,7 @@ from typing import Self
 import yaml
 from citation_utils import Citation
 from loguru import logger
+from markdownify import markdownify
 from sqlite_utils import Database
 
 from ._resources import (
@@ -14,8 +15,8 @@ from ._resources import (
     YEARS,
     decision_storage,
 )
+from .decision_components import DecisionOpinion
 from .decision_fields import DecisionFields
-from .decision_substructures import DecisionOpinion
 from .fields import (
     CourtComposition,
     DecisionCategory,
@@ -24,8 +25,13 @@ from .fields import (
 from .justice import CandidateJustice
 
 
-class RawDecision(DecisionFields):
+class DecisionHTML(DecisionFields):
     ...
+
+    def upload(self):
+        """Uses `details.yaml` to upload the entire set of decision fields
+        represented by this instance."""
+        self.put_in_storage(DETAILS_FILE)
 
     @classmethod
     def prefetch(
@@ -48,49 +54,53 @@ class RawDecision(DecisionFields):
         """
         for prefix in cls.iter_dockets(dockets, years):
             target = f"{prefix}{DETAILS_FILE}"
-            if result := decision_storage.restore_temp_yaml(
-                yaml_suffix=target
-            ):
+            result = decision_storage.restore_temp_yaml(yaml_suffix=target)
+            if result:
                 yield result
 
     @classmethod
     def get_common(
         cls, data: dict, db: Database
     ) -> tuple[str, str, Citation, CandidateJustice] | None:
-        result = Citation.extract_id_prefix_citation_from_data(data)
-        if not result:
+        """Unpack initial identifying / complex values"""
+        if not (res := Citation.extract_id_prefix_citation_from_data(data)):
             return None
-        ponente = CandidateJustice(
-            db=db,
-            text=data.get("ponente"),
-            date_str=data.get("date_prom"),
+        return *res, CandidateJustice(
+            db=db, text=data.get("ponente"), date_str=data.get("date_prom")
         )
-        return *result, ponente
 
     @classmethod
     def make_from_path(cls, local_path: Path, db: Database):
         """Using local_path, match justice data containing a ponente field and a date
-        from the `db`. This enables construction of a single `RawDecision` instance.
+        from the `db`. This enables construction of a single `DecisionHTML` instance.
         """
+        fallo = None
+        fallo_file = local_path.parent / "fallo.html"
+        if fallo_file.exists():
+            fallo = markdownify(fallo_file.read_text()).strip()
+
         local = yaml.safe_load(local_path.read_bytes())
         result = cls.get_common(local, db)
         if not result:
             return None
+
         decision_id, prefix, cite, ponente = result
+
         opinions_folder = local_path.parent / "opinions"
         if not opinions_folder.exists():
             logger.error(f"No opinions folder in {local_path=}")
             return None
         opinions = list(
-            DecisionOpinion.from_folder(
+            DecisionOpinion.from_folder(  # from folder vs. from storage
                 opinions_folder=opinions_folder,
                 decision_id=decision_id,
                 ponente_id=ponente.id,
             )
         )
         if not opinions:
-            logger.error(f"No opinions detected in {local_path=} {id=}")
+            logger.error(f"No opinions in {opinions_folder=} {decision_id=}")
             return None
+
         return cls(
             id=decision_id,
             prefix=prefix,
@@ -100,7 +110,7 @@ class RawDecision(DecisionFields):
             description=cite.display,
             date=local["date_prom"],
             date_scraped=local["date_scraped"],
-            fallo=None,
+            fallo=fallo,
             voting=voteline_clean(local.get("voting")),
             emails=local.get("emails", ["bot@lawsql.com"]),
             composition=CourtComposition._setter(local.get("composition")),
@@ -111,18 +121,18 @@ class RawDecision(DecisionFields):
 
     @classmethod
     def make_from_storage(cls, r2_data: dict, db: Database) -> Self | None:
-        """Implies `r2_data` result from `decision_storage.restore_temp_yaml()`.
+        """Implies `r2_data` extraction from `decision_storage.restore_temp_yaml()`.
         Based on this result, match justice data from the `db`.
-        This enables construction of a single `RawDecision` instance.
+        This enables construction of a single `DecisionHTML` instance.
         """
-        result = cls.get_common(r2_data, db)
-        if not result:
+        if not (extracted := cls.get_common(r2_data, db)):
+            logger.error(f"Missing extraction {r2_data['prefix']=}")
             return None
-        decision_id, prefix, cite, ponente = result
-        opinions_r2_prefix = f"{r2_data['prefix']}{SUFFIX_OPINION}"
+        decision_id, prefix, cite, ponente = extracted
+
         opinions = list(
-            DecisionOpinion.from_storage(
-                opinion_prefix=opinions_r2_prefix,
+            DecisionOpinion.from_storage(  # from storage vs. from storage
+                opinion_prefix=f"{r2_data['prefix']}{SUFFIX_OPINION}",
                 decision_id=decision_id,
                 ponente_id=ponente.id,
             )
@@ -130,6 +140,7 @@ class RawDecision(DecisionFields):
         if not opinions:
             logger.error(f"No opinions detected in {decision_id=}")
             return None
+
         return cls(
             id=decision_id,
             prefix=prefix,

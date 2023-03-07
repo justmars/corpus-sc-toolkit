@@ -7,8 +7,10 @@ from .decision import (
     TitleTagRow,
     VoteLine,
 )
+from .decision_components import DecisionOpinion, OpinionSegment
 from .decision_fields import DecisionFields
-from .decision_substructures import DecisionOpinion, OpinionSegment
+from .decision_via_html import DecisionHTML
+from .decision_via_pdf import DecisionPDF, InterimOpinion
 from .fields import (
     CourtComposition,
     DecisionCategory,
@@ -17,7 +19,6 @@ from .fields import (
     tags_from_title,
     voteline_clean,
 )
-from .interim import InterimDecision, InterimOpinion
 from .justice import (
     CandidateJustice,
     Justice,
@@ -26,4 +27,3 @@ from .justice import (
     get_justices_file,
     get_justices_from_api,
 )
-from .raw import RawDecision

@@ -1,4 +1,4 @@
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 
 
 from ._utils import (
@@ -8,22 +8,22 @@ from ._utils import (
     sqlenv,
     standardize,
 )
-from .db import ConfigDecisions, ConfigStatutes
+from .config import ConfigDecisions, ConfigStatutes
 from .decisions import (
     CandidateJustice,
     CitationRow,
     CourtComposition,
     DecisionCategory,
+    DecisionHTML,
     DecisionOpinion,
+    DecisionPDF,
     DecisionRow,
     DecisionSource,
-    InterimDecision,
     InterimOpinion,
     Justice,
     JusticeDetail,
     OpinionRow,
     OpinionWriterName,
-    RawDecision,
     SegmentRow,
     TitleTagRow,
     VoteLine,
@@ -33,4 +33,4 @@ from .decisions import (
     tags_from_title,
     voteline_clean,
 )
-from .statutes import Statute
+from .statutes import Statute, StatuteRow

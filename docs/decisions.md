@@ -24,8 +24,8 @@ The pdf files from the database have not yet been replicated to R2 storage.
 Initialize instances of an Interim Decision:
 
 ```py
->>> from corpus_sc_toolkit import InterimDecision
->>> interim_objs = InterimDecision.originate(c.db) # raw data found in the database
+>>> from corpus_sc_toolkit import DecisionPDF
+>>> interim_objs = DecisionPDF.originate(c.db) # raw data found in the database
 >>> x = next(interim_objs) # x is an instance of an Interim Decision
 >>> x.pdf_prefix # the target prefix property of an Interim Decision
 'GR/2021/10/227403/pdf.yaml' # sample
@@ -41,34 +41,23 @@ Using the sample above, produce a temporary file found in `corpus_sc_toolkit/tmp
  PosixPath('/Users/mv/Code/corpus-toolkit/corpus_sc_toolkit/tmp/temp_pdf.yaml'))
 ```
 
-### Upload to R2
-
-Instead of creating a dump file, can automatically upload the same to R2:
-
-```py
->>> x.upload() # if the file already exists, will return False
-False
->>> x.upload(override=True) # will update the existing prefix data
-True # can now check R2 for the matching prefix in the bucket name with prefix GR/2021/10/227403/pdf.yaml
-```
-
 ### Get from R2
 
 After being uploaded, it can be recalled from R2, if we know the prefix:
 
 ```py
->>> output = InterimDecision.get(prefix="GR/2021/10/227403/pdf.yaml")
+>>> output = DecisionPDF.get(prefix="GR/2021/10/227403/pdf.yaml")
 >>> type(output)
-corpus_sc_toolkit.modes.interim.InterimDecision
+corpus_sc_toolkit.modes.interim.DecisionPDF
 ```
 
 ## Raw Decisions
 
-An initial set of "raw decisions" have previously been uploaded to R2. Note that these are unprocessed content. We can make an instance of a `RawDecision` which downloads and compiles such unprocessed content with:
+An initial set of "raw decisions" have previously been uploaded to R2. Note that these are unprocessed content. We can make an instance of a `DecisionHTML` which downloads and compiles such unprocessed content with:
 
 ```py
->>> from corpus_sc_toolkit import RawDecision
->>> temp_objs = RawDecision.prefetch(dockets=["GR"], years=(1996,1997)) # r2 filter
+>>> from corpus_sc_toolkit import DecisionHTML
+>>> temp_objs = DecisionHTML.prefetch(dockets=["GR"], years=(1996,1997)) # r2 filter
 >>> y = next(temp_objs)
 >>> type(y)
 dict
@@ -77,10 +66,10 @@ dict
 When specific prefix is identified:
 
 ```py
->>> from corpus_sc_toolkit import RawDecision, decision_storage
+>>> from corpus_sc_toolkit import DecisionHTML, decision_storage
 >>> prefix = "GR/1999/6/95405/details.yaml"
 >>> z_obj = decision_storage.restore_temp_yaml(yaml_suffix=prefix)
->>> z = RawDecision(**z_obj)
+>>> z = DecisionHTML(**z_obj)
 >>> type(z)
-corpus_sc_toolkit.modes.raw.RawDecision
+corpus_sc_toolkit.modes.raw.DecisionHTML
 ```

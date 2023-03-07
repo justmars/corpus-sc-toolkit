@@ -1,12 +1,11 @@
 import datetime
 from collections.abc import Iterator
-from typing import Any
+from typing import Any, Self
 
 from citation_utils import Citation
 from loguru import logger
 from pydantic import BaseModel, Field, root_validator
 
-from .._utils import get_from_prefix
 from ._resources import (
     DECISION_BUCKET_NAME,
     DECISION_CLIENT,
@@ -14,8 +13,9 @@ from ._resources import (
     DOCKETS,
     PDF_FILE,
     YEARS,
+    decision_storage,
 )
-from .decision_substructures import DecisionOpinion
+from .decision_components import DecisionOpinion
 from .fields import CourtComposition, DecisionCategory
 
 
@@ -29,8 +29,9 @@ class DecisionFields(BaseModel):
 
     Field | Type | Description
     :--:|:--:|:--
-    id | str | The [combination of various strings][set-decision-id-from-values] based on the source and citation, if available.
-    origin | str | Where the decision was sourced from
+    id | str | Using the docket citation as identifier, uses `.` as dividing mechanism
+    prefix | str | Location in cloud storage for saving / retrieving content delimited by `/`
+    origin | str | Where decision was sourced from
     title | str | The case title, this can be classified into [tags][title-tags]
     description | str | The citation display
     date | datetime.date | The date the case was promulgated
@@ -38,10 +39,10 @@ class DecisionFields(BaseModel):
     citation | optional[Citation] | The citation object
     composition | [CourtComposition][court-composition] | Whether the court sat en banc or in division
     category | [DecisionCategory][decision-category] | Whether the case decided was a decision or a resolution
-    raw_ponente| optional[str] | Who decided the case, if available
+    raw_ponente| optional[str] | Who decided case, if available
     justice_id | optional[int] | The [justice id][justice], if available
-    per_curiam | bool. Defaults to False. | Whether the case was decided per curiam
-    is_pdf | bool. Defaults to False. | Whether the case originated from a PDF file
+    per_curiam | bool. Defaults to False. | Whether case was decided per curiam
+    is_pdf | bool. Defaults to False. | Whether case originated from a PDF file
     fallo | optional[str] | Detected fallo / dispositive portion
     voting | optional[str] | Detected [voting line][vote-lines]
     emails | list[str] | Emails of authors
@@ -84,8 +85,8 @@ class DecisionFields(BaseModel):
     is_pdf: bool | None = Field(default=False, col=bool, index=True)
     fallo: str | None = Field(default=None, col=str, index=True, fts=True)
     voting: str | None = Field(default=None, col=str, index=True, fts=True)
-    emails: list[str] = Field(default_factory=list, exclude=True)
-    opinions: list[DecisionOpinion] = Field(default_factory=list, exclude=True)
+    emails: list[str] = Field(default_factory=list)
+    opinions: list[DecisionOpinion] = Field(default_factory=list)
 
     @root_validator()
     def citation_date_is_object_date(cls, values):
@@ -102,11 +103,12 @@ class DecisionFields(BaseModel):
 
     @property
     def storage_meta(self):
-        """When uploading to R2, the metadata can be included as extra arguments to
-        the file."""
+        """Metadata included as extra arguments to file uploaded."""
         if not self.citation or not self.citation.storage_prefix:
             return {}
         return {
+            "ID": self.id,
+            "Prefix": self.prefix,
             "Title": self.title,
             "Category": self.category,
             "Composition": self.composition,
@@ -159,21 +161,44 @@ class DecisionFields(BaseModel):
     @classmethod
     def key_raw(cls, dated_prefix: str) -> str | None:
         """Is suffix `details.yaml` present in result of `cls.iter_dockets()`?"""
-        target_key = f"{dated_prefix}{DETAILS_FILE}"
-        res = get_from_prefix(
-            client=DECISION_CLIENT,
-            bucket_name=DECISION_BUCKET_NAME,
-            key=target_key,
-        )
-        return target_key if res else None
+        key = f"{dated_prefix}{DETAILS_FILE}"
+        try:
+            DECISION_CLIENT.get_object(Bucket=DECISION_BUCKET_NAME, Key=key)
+            return key
+        except Exception:
+            return None
 
     @classmethod
     def key_pdf(cls, dated_prefix: str) -> str | None:
         """Is suffix `pdf.yaml` present in result of `cls.iter_dockets()`?"""
-        target_key = f"{dated_prefix}{PDF_FILE}"
-        res = get_from_prefix(
-            client=DECISION_CLIENT,
-            bucket_name=DECISION_BUCKET_NAME,
-            key=target_key,
-        )
-        return target_key if res else None
+        key = f"{dated_prefix}{PDF_FILE}"
+        try:
+            DECISION_CLIENT.get_object(Bucket=DECISION_BUCKET_NAME, Key=key)
+            return key
+        except Exception:
+            return None
+
+    def put_in_storage(self, suffix: str):
+        """Puts Pydantic exported data dict to `details.yaml` or `pdf.yaml` in
+        R2, depending on the value of `suffix`."""
+        if suffix not in ("details.yaml", "pdf.yaml"):
+            raise Exception("Invalid upload path.")
+        remote_loc = f"{self.prefix}/{suffix}"
+        temp_file = decision_storage.make_temp_yaml_path_from_data(self.dict())
+        args = decision_storage.set_extra_meta(self.storage_meta)
+        logger.info(f"Uploading file to {remote_loc=}")
+        decision_storage.upload(file_like=temp_file, loc=remote_loc, args=args)
+        temp_file.unlink()
+
+    @classmethod
+    def get_from_storage(cls, prefix: str) -> Self:
+        """Retrieves Pydantic exported data dict from either `details.yaml`, `pdf.yaml`
+        in R2 (see extracted prefix from `key_pdf()` or `key_raw`()`) and instantiate
+        the dict as a class instance."""
+        if not prefix.endswith(("details.yaml", "pdf.yaml")):
+            raise Exception("Bad path for DecisionFields base class.")
+        data = decision_storage.restore_temp_yaml(prefix)
+        if not data:
+            raise Exception(f"Could not originate {prefix=}")
+        logger.info(f"Retrieved file from {prefix=}")
+        return cls(**data)

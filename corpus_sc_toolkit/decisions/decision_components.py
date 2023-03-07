@@ -34,9 +34,9 @@ class OpinionSegment(BaseModel):
     of decisions to smaller portions for purposes of FTS search snippets and analysis.
     """
 
-    opinion_id: str  # overriden in decisions.py
-    decision_id: str  # overriden in decisions.py
     id: str = Field(..., col=str)
+    opinion_id: str  # later replaced in decisions.py
+    decision_id: str  # later replaced in decisions.py
     position: str = Field(
         default=...,
         title="Relative Position",
@@ -82,9 +82,9 @@ class DecisionOpinion(BaseModel):
     a specific case.
     """
 
-    decision_id: str  # overriden in decisions.py
-    justice_id: int | None = None
     id: str = Field(..., title="Opinion ID", col=str)
+    decision_id: str  # later replaced in decision.py
+    justice_id: int | None = None
     pdf: str | None = Field(
         default=None,
         title="PDF URL",
@@ -134,7 +134,7 @@ class DecisionOpinion(BaseModel):
         return None
 
     @classmethod
-    def make(
+    def make_opinion(
         cls,
         path: str,
         decision_id: str,
@@ -142,7 +142,20 @@ class DecisionOpinion(BaseModel):
         text: str,
     ):
         """Common opinion instantiator for both `cls.from_folder()` and
-        `cls.from_storage()`"""
+        `cls.from_storage()`
+
+        The `path` field implies that this may be a ponencia / opinion field.
+        Ponencias are labeled 'ponencia.md' while Opinions are labeled
+        '<digit>.md' where the digit refers to the justice id (representing
+        the Justice) that penned the opinion.
+
+        The `justice_id` refers to upstream value previously acquired for
+        the ponencia. If the path's key refers to 'ponencia', then this
+        `justice_id` value is utilized as the writer id; otherwise, use
+        the <digit>.
+
+        Each opinion consists of `segments`, `citations`, and `statutes`.
+        """
         if key := cls.key_from_md_prefix(path):
             justice_id = justice_id if key == "ponencia" else int(key)
             opinion_id = f"{decision_id}-{key}"
@@ -175,7 +188,7 @@ class DecisionOpinion(BaseModel):
         The `ponente_id`, if present, will be used to populate the ponencia
         opinion."""
         for opinion_path in opinions_folder.glob("*.md"):
-            if opinion := cls.make(
+            if opinion := cls.make_opinion(
                 path=str(opinion_path),
                 decision_id=decision_id,
                 justice_id=ponente_id,
@@ -196,13 +209,13 @@ class DecisionOpinion(BaseModel):
         The `ponente_id`, if present, will be used to populate the ponencia
         opinion."""
         result = DECISION_CLIENT.list_objects_v2(
-            Bucket=DECISION_BUCKET_NAME, Delimiter="/", Prefix=opinion_prefix
+            Bucket=DECISION_BUCKET_NAME,
+            Delimiter="/",
+            Prefix=opinion_prefix,
         )
         for content in result["Contents"]:
             if not content["Key"].endswith(".md"):
-                logger.error(
-                    f"Improper {content['Key']=} in {opinion_prefix=}"
-                )
+                logger.error(f"Non .md {content['Key']=} in {opinion_prefix=}")
                 continue
 
             text = decision_storage.restore_temp_txt(content["Key"])
@@ -210,7 +223,7 @@ class DecisionOpinion(BaseModel):
                 logger.error(f"No text restored from {content['Key']=}")
                 continue
 
-            opinion = cls.make(
+            opinion = cls.make_opinion(
                 path=str(content["Key"]),
                 decision_id=decision_id,
                 justice_id=ponente_id,
