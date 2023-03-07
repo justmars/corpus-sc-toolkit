@@ -2,7 +2,16 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+from jinja2 import Environment, PackageLoader, select_autoescape
 from markdownify import markdownify
+
+sqlenv = Environment(
+    loader=PackageLoader(
+        package_name="corpus_sc_toolkit", package_path="_sql"
+    ),
+    autoescape=select_autoescape(),
+)
+"""Common Jinja2-based environment to get templates from a common path."""
 
 MD_FOOTNOTE_LEFT = re.compile(
     r"""
@@ -86,9 +95,9 @@ class DecisionHTMLConvertMarkdown:
         return revised_pass
 
 
-def add_markdown_file(p: Path, text: str):
+def add_markdown_file(p: Path, text: str, key: str):
     opinions_path = p / "opinions"
     opinions_path.mkdir(exist_ok=True)
-    ponencia_path = opinions_path / "ponencia.md"
+    ponencia_path = opinions_path / f"{key}.md"
     # if not ponencia_path.exists():
     ponencia_path.write_text(text)

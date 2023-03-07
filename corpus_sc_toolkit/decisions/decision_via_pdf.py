@@ -9,7 +9,8 @@ from loguru import logger
 from pydantic import BaseModel, Field
 from sqlite_utils import Database
 
-from .._utils import sqlenv
+from corpus_sc_toolkit.utils import sqlenv
+
 from ._resources import PDF_FILE, decision_storage
 from .decision_components import (
     DecisionOpinion,

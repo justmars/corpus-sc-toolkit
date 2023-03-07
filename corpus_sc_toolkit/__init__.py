@@ -1,13 +1,6 @@
 __version__ = "0.2.2"
 
 
-from ._utils import (
-    DecisionHTMLConvertMarkdown,
-    add_markdown_file,
-    segmentize,
-    sqlenv,
-    standardize,
-)
 from .config import ConfigDecisions, ConfigStatutes
 from .decisions import (
     CandidateJustice,

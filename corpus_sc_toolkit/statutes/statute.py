@@ -6,7 +6,6 @@ from typing import Self
 from loguru import logger
 from pydantic import EmailStr, Field, ValidationError
 from sqlpyd import Connection, TableConfig
-from start_sdk.cf_r2 import StorageUtils
 from statute_patterns import (
     StatuteTitleCategory,
     extract_rules,
@@ -21,7 +20,8 @@ from statute_trees import (
     generic_mp,
 )
 
-from .._utils import sqlenv
+from corpus_sc_toolkit.utils import sqlenv
+
 from ._resources import Integrator, statute_storage
 
 

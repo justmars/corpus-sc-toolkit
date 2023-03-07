@@ -9,8 +9,19 @@ from pydantic import BaseModel, Field
 from statute_patterns import count_rules
 from statute_trees import StatuteBase
 
-from .._utils import segmentize
 from ._resources import DECISION_BUCKET_NAME, DECISION_CLIENT, decision_storage
+
+
+def standardize(text: str):
+    return (
+        text.replace("\xa0", "")
+        .replace("\xad", "-")
+        .replace("“", '"')
+        .replace("”", '"')
+        .replace("‘", "'")
+        .replace("’", "'")
+        .strip()
+    )
 
 
 class MentionedStatute(StatuteBase):
@@ -26,6 +37,10 @@ class MentionedStatute(StatuteBase):
                         statute_serial_id=rule.get("id"),
                         mentions=mentions,
                     )
+
+
+single_spaced = re.compile(r"\s*\n\s*")
+double_spaced = re.compile(r"\s*\n\s*\n\s*")
 
 
 class OpinionSegment(BaseModel):
@@ -60,11 +75,43 @@ class OpinionSegment(BaseModel):
     )
 
     @classmethod
+    def segmentize(
+        cls, full_text: str, min_num_chars: int = 10
+    ) -> Iterator[dict]:
+        """Split first by double-spaced breaks `\\n\\n` and then by
+        single spaced breaks `\\n` to get the position of the segment.
+
+        Will exclude footnotes and segments with less than 10 characters.
+
+        Args:
+            full_text (str): The opinion to segment
+
+        Yields:
+            Iterator[dict]: The partial segment data fields
+        """
+        if cleaned_text := standardize(full_text):
+            if subdivisions := double_spaced.split(cleaned_text):
+                for idx, text in enumerate(subdivisions):
+                    if lines := single_spaced.split(text):
+                        for sub_idx, segment in enumerate(lines):
+                            # --- marks the footnote boundary in # converter.py
+                            if segment == "---":
+                                return
+                            position = f"{idx}-{sub_idx}"
+                            char_count = len(segment)
+                            if char_count > min_num_chars:
+                                yield {
+                                    "position": position,
+                                    "segment": segment,
+                                    "char_count": char_count,
+                                }
+
+    @classmethod
     def make_segments(
         cls, decision_id: str, opinion_id: str, text: str
     ) -> Iterator[Self]:
         """Auto-generated segments based on the text of the opinion."""
-        for extract in segmentize(text):
+        for extract in cls.segmentize(text):
             yield cls(
                 id=f"{opinion_id}-{extract['position']}",
                 decision_id=decision_id,

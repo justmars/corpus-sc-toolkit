@@ -7,7 +7,7 @@ from pydantic import BaseModel, EmailStr
 from sqlpyd import Connection
 from start_sdk.cf_r2 import StorageUtils
 
-from .._utils import sqlenv
+from corpus_sc_toolkit.utils import sqlenv
 
 """R2 variables in order to perform operations from the library."""
 
