@@ -28,14 +28,9 @@ class Justice(Bio):
     """
     # Justice
 
-    Based on sqlpyd `TableConfig`, the declaration of the model makes it easier
-    to create a table based on a given list of Pydantic fields. The [list of justices ][local-file-containing-list]
-    from the created YAML file are parsed through this model prior to being inserted
-    into the database.
-
     Field | Type | Description
     --:|:--|:--
-    id |int | Unique identifier of the Justice
+    id |int | Unique identifier of the Justice based on appointment roster
     full_name |str | First + last + suffix
     first_name |str | -
     last_name |str | -
@@ -72,6 +67,10 @@ class Justice(Bio):
         >>> len(list(table.rows))
         194
         >>> c.path_to_db.unlink() # tear down
+
+    The [list of justices ][local-file-containing-list]
+    from the created YAML file are parsed through this model prior to being inserted
+    into the database.
 
 
     """  # noqa: E501

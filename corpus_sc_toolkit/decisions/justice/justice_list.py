@@ -10,11 +10,10 @@ from .justice_model import Justice
 
 
 def get_justices_from_api() -> Iterator[dict]:
-    """With `GH_TOKEN` in .env, a master list of [Justices][justice-model-instance] is
-    copied from github `/corpus` repository into an iterator of dicts.
+    """Need `GH_TOKEN` to copy from /corpus/justices/sc.yaml to iterator of dicts.
 
     Yields:
-        Iterator[dict]: Justices from the API
+        Iterator[dict]: Justices from API
     """
     logger.debug("Extracting justice list from API.")
     res = gh.get(
@@ -33,11 +32,11 @@ def get_justices_file(
     calling [get_justices_from_api()][source-list-from-api].
 
     Args:
-        local_file (Path, optional): _description_. Defaults to JUSTICE_LOCAL.
+        local_file (Path, optional): Path to justice list. See default folder /"sc.yaml"
 
     Examples:
         >>> from pathlib import Path
-        >>> p = Path().cwd() / "tests" / "sc.yaml" # the test file
+        >>> p = Path().cwd() / "justice" / "sc.yaml" # the test file
         >>> f = get_justices_file(p)
         >>> f.exists()
         True

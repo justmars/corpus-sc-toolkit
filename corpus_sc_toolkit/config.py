@@ -101,6 +101,10 @@ class ConfigDecisions(BaseModel):
                 if obj := DecisionHTML.make_from_path(
                     local_path=detail_path, db=self.conn.db
                 ):
+                    if DecisionHTML.key_raw(obj.prefix):
+                        logger.debug(f"Skipping: {obj.prefix=}")
+                        continue
+
                     logger.debug(f"Uploading: {obj.id=}")
                     obj.to_storage()
                 else:
