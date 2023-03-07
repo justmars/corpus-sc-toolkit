@@ -12,7 +12,11 @@ from sqlite_utils import Database
 from .._utils import sqlenv
 from ._resources import SUFFIX_PDF, decision_storage
 from .decision_fields import DecisionFields
-from .decision_substructures import DecisionOpinion
+from .decision_substructures import (
+    DecisionOpinion,
+    MentionedStatute,
+    OpinionSegment,
+)
 from .fields import CourtComposition, DecisionCategory
 from .justice import CandidateJustice
 
@@ -74,14 +78,25 @@ class InterimOpinion(BaseModel):
     @property
     def row(self):
         """Row to be used in OpinionRow table."""
+        opinion_id = f"{self.decision_id}-{self.candidate.id or self.id}"
+        text = f"{self.body}\n\n----\n\n{self.annex}"
         return DecisionOpinion(
-            id=f"{self.decision_id}-{self.candidate.id or self.id}",
+            id=opinion_id,
             decision_id=self.decision_id,
             title=self.title,
             pdf=self.pdf,
             justice_id=self.candidate.id,
-            text=f"{self.body}\n\n----\n\n{self.annex}",
+            text=text,
             tags=[],
+            citations=list(Citation.extract_citations(text=text)),
+            statutes=list(MentionedStatute.set_counted_statute(text=text)),
+            segments=list(
+                OpinionSegment.make_segments(
+                    decision_id=self.decision_id,
+                    opinion_id=opinion_id,
+                    text=text,
+                )
+            ),
         )
 
     @classmethod

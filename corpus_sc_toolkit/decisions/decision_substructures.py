@@ -1,15 +1,31 @@
 import re
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Self
 
 from citation_utils import Citation
+from loguru import logger
 from pydantic import BaseModel, Field
 from statute_patterns import count_rules
+from statute_trees import StatuteBase
 
 from .._utils import segmentize
 from ._resources import DECISION_BUCKET_NAME, DECISION_CLIENT, decision_storage
 
-"""Decision substructures: opinions and segments."""
+
+class MentionedStatute(StatuteBase):
+    mentions: int
+
+    @classmethod
+    def set_counted_statute(cls, text: str):
+        for rule in count_rules(text):
+            if mentions := rule.get("mentions"):
+                if isinstance(mentions, int) and mentions >= 1:
+                    yield cls(
+                        statute_category=rule.get("cat"),
+                        statute_serial_id=rule.get("id"),
+                        mentions=mentions,
+                    )
 
 
 class OpinionSegment(BaseModel):
@@ -43,6 +59,19 @@ class OpinionSegment(BaseModel):
         fts=True,
     )
 
+    @classmethod
+    def make_segments(
+        cls, decision_id: str, opinion_id: str, text: str
+    ) -> Iterator[Self]:
+        """Auto-generated segments based on the text of the opinion."""
+        for extract in segmentize(text):
+            yield cls(
+                id=f"{opinion_id}-{extract['position']}",
+                decision_id=decision_id,
+                opinion_id=opinion_id,
+                **extract,
+            )
+
 
 OPINION_MD_H1 = re.compile(r"^#\s*(?P<label>).*$")
 
@@ -55,14 +84,7 @@ class DecisionOpinion(BaseModel):
 
     decision_id: str  # overriden in decisions.py
     justice_id: int | None = None
-    id: str = Field(
-        ...,
-        title="Opinion ID",
-        description=(
-            "Based on combining decision_id with the justice_id, if found."
-        ),
-        col=str,
-    )
+    id: str = Field(..., title="Opinion ID", col=str)
     pdf: str | None = Field(
         default=None,
         title="PDF URL",
@@ -92,33 +114,16 @@ class DecisionOpinion(BaseModel):
         col=str,
         fts=True,
     )
-
-    @property
-    def segments(self) -> Iterator[OpinionSegment]:
-        """Auto-generated segments based on the text of the opinion."""
-        for extract in segmentize(self.text):
-            yield OpinionSegment(
-                id=f"{self.id}-{extract['position']}",
-                decision_id=self.decision_id,
-                opinion_id=self.id,
-                **extract,
-            )
-
-    @property
-    def rules(self) -> Iterator[dict]:
-        """Get the statutes found in the text."""
-        return count_rules(self.text)
-
-    @property
-    def citations(self) -> Iterator[Citation]:
-        """Get the citations found in the text."""
-        return Citation.extract_citations(self.text)
+    statutes: list[MentionedStatute]
+    segments: list[OpinionSegment]
+    citations: list[Citation]
 
     @classmethod
-    def get_headline(cls, text: str) -> str:
+    def get_headline(cls, text: str) -> str | None:
+        """Markdown contains H1 header, extract this header."""
         if match := OPINION_MD_H1.search(text):
             return match.group("label")
-        return "Not Found"
+        return None
 
     @classmethod
     def key_from_md_prefix(cls, prefix: str) -> str | None:
@@ -131,21 +136,31 @@ class DecisionOpinion(BaseModel):
     @classmethod
     def make(
         cls,
-        origin_path_str: str,
+        path: str,
         decision_id: str,
         justice_id: int | None,
         text: str,
     ):
         """Common opinion instantiator for both `cls.from_folder()` and
         `cls.from_storage()`"""
-        if key := cls.key_from_md_prefix(origin_path_str):
+        if key := cls.key_from_md_prefix(path):
             justice_id = justice_id if key == "ponencia" else int(key)
+            opinion_id = f"{decision_id}-{key}"
             return cls(
-                id=f"{decision_id}-{key}",
+                id=opinion_id,
                 decision_id=decision_id,
                 title=cls.get_headline(text),
                 text=text,
                 justice_id=justice_id,
+                citations=list(Citation.extract_citations(text=text)),
+                statutes=list(MentionedStatute.set_counted_statute(text=text)),
+                segments=list(
+                    OpinionSegment.make_segments(
+                        decision_id=decision_id,
+                        opinion_id=opinion_id,
+                        text=text,
+                    )
+                ),
             )
         return None
 
@@ -156,12 +171,12 @@ class DecisionOpinion(BaseModel):
         decision_id: str,
         ponente_id: int | None = None,
     ):
-        """Assumes a local folder containing opinions in .md format.
+        """Assumes local folder containing opinions in .md format.
         The `ponente_id`, if present, will be used to populate the ponencia
         opinion."""
         for opinion_path in opinions_folder.glob("*.md"):
             if opinion := cls.make(
-                origin_path_str=str(opinion_path),
+                path=str(opinion_path),
                 decision_id=decision_id,
                 justice_id=ponente_id,
                 text=opinion_path.read_text(),
@@ -184,12 +199,25 @@ class DecisionOpinion(BaseModel):
             Bucket=DECISION_BUCKET_NAME, Delimiter="/", Prefix=opinion_prefix
         )
         for content in result["Contents"]:
-            if content["Key"].endswith(".md"):
-                if text := decision_storage.restore_temp_txt(content["Key"]):
-                    if opinion := cls.make(
-                        origin_path_str=str(content["Key"]),
-                        decision_id=decision_id,
-                        justice_id=ponente_id,
-                        text=text,
-                    ):
-                        yield opinion
+            if not content["Key"].endswith(".md"):
+                logger.error(
+                    f"Improper {content['Key']=} in {opinion_prefix=}"
+                )
+                continue
+
+            text = decision_storage.restore_temp_txt(content["Key"])
+            if not text:
+                logger.error(f"No text restored from {content['Key']=}")
+                continue
+
+            opinion = cls.make(
+                path=str(content["Key"]),
+                decision_id=decision_id,
+                justice_id=ponente_id,
+                text=text,
+            )
+            if not opinion:
+                logger.error(f"No opinion from {content['Key']=}")
+                continue
+
+            yield opinion
