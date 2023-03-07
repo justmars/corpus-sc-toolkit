@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+from sqlite3 import IntegrityError
 
 import yaml
 from corpus_pax import Individual, setup_pax
@@ -68,14 +69,14 @@ class ConfigStatutes(BaseModel):
 
 
 class ConfigDecisions(BaseModel):
-    """How to configure:
+    """# How to configure
 
     ```py
-        # set up initial PDF tables
-        from corpus_sc_toolkit import Config
+        # set up initial PDF tables, takes less than a minute to download
+        from corpus_sc_toolkit import ConfigDecisions
         config = ConfigDecisions.setup(reset=True)
 
-        # add individuals / organizations to the database
+        # add to db downloaded: individuals / organizations
         from corpus_pax import setup_pax
         setup_pax(str(config.conn.path_to_db))
 
@@ -111,19 +112,19 @@ class ConfigDecisions(BaseModel):
         Get the sqlite database from aws containing pdf tables via litestream.
         The database file becomes the focal point of the instance.
         """
-        return cls(
-            conn=Connection(
-                DatabasePath=str(cls.get_pdf_db(reset=reset)),
-                WAL=True,
-            )
-        )
+        dbpath: Path = cls.get_pdf_db(reset=reset)
+        conn = Connection(DatabasePath=str(dbpath), WAL=True)
+        return cls(conn=conn)
 
     def build_tables(self) -> Database:
         """Create all the relevant tables involving a decision object."""
         logger.info("Ensure tables are created.")
         # Populate pax tables so that authors can be associated with decisions
-        justices = yaml.safe_load(get_justices_file().read_bytes())
-        self.conn.add_records(Justice, justices)
+        try:
+            justices = yaml.safe_load(get_justices_file().read_bytes())
+            self.conn.add_records(Justice, justices)
+        except IntegrityError:
+            ...  # already existing table because of prior addition
         self.conn.create_table(DecisionRow)
         self.conn.create_table(CitationRow)
         self.conn.create_table(OpinionRow)

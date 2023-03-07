@@ -1,11 +1,12 @@
 import re
 from collections.abc import Iterator
+from pathlib import Path
 
 from citation_utils import Citation
 from pydantic import BaseModel, Field
 from statute_patterns import count_rules
 
-from .._utils import download_to_temp, segmentize
+from .._utils import segmentize
 from ._resources import DECISION_BUCKET_NAME, DECISION_CLIENT, decision_storage
 
 """Decision substructures: opinions and segments."""
@@ -120,23 +121,62 @@ class DecisionOpinion(BaseModel):
         return "Not Found"
 
     @classmethod
-    def key_from_md_prefix(cls, prefix: str):
+    def key_from_md_prefix(cls, prefix: str) -> str | None:
         """Given a prefix containing a filename, e.g. `/hello/test/ponencia.md`,
         get the identifying key of the filename, e.g. `ponencia`."""
         if "/" in prefix and prefix.endswith(".md"):
             return prefix.split("/")[-1].split(".")[0]
-        return "Invalid Key."
+        return None
 
     @classmethod
-    def fetch(
+    def make(
+        cls,
+        origin_path_str: str,
+        decision_id: str,
+        justice_id: int | None,
+        text: str,
+    ):
+        """Common opinion instantiator for both `cls.from_folder()` and
+        `cls.from_storage()`"""
+        if key := cls.key_from_md_prefix(origin_path_str):
+            justice_id = justice_id if key == "ponencia" else int(key)
+            return cls(
+                id=f"{decision_id}-{key}",
+                decision_id=decision_id,
+                title=cls.get_headline(text),
+                text=text,
+                justice_id=justice_id,
+            )
+        return None
+
+    @classmethod
+    def from_folder(
+        cls,
+        opinions_folder: Path,
+        decision_id: str,
+        ponente_id: int | None = None,
+    ):
+        """Assumes a local folder containing opinions in .md format.
+        The `ponente_id`, if present, will be used to populate the ponencia
+        opinion."""
+        for opinion_path in opinions_folder.glob("*.md"):
+            if opinion := cls.make(
+                origin_path_str=str(opinion_path),
+                decision_id=decision_id,
+                justice_id=ponente_id,
+                text=opinion_path.read_text(),
+            ):
+                yield opinion
+
+    @classmethod
+    def from_storage(
         cls,
         opinion_prefix: str,
         decision_id: str,
         ponente_id: int | None = None,
     ):
-        """The `opinion_prefix` must be in the form of:
-
-        `<docket>/<year>/<month>/<serial>/opinions/`. Note the ending backslash.
+        """`opinion_prefix` format: `<docket>/<year>/<month>/<serial>/opinions/`.
+        Note ending backslash.
 
         The `ponente_id`, if present, will be used to populate the ponencia
         opinion."""
@@ -145,16 +185,11 @@ class DecisionOpinion(BaseModel):
         )
         for content in result["Contents"]:
             if content["Key"].endswith(".md"):
-                key = DecisionOpinion.key_from_md_prefix(content["Key"])
-                justice_id = ponente_id if key == "ponencia" else int(key)
-                if tx := download_to_temp(
-                    bucket=decision_storage, src=content["Key"], ext="md"
-                ):
-                    if isinstance(tx, str):
-                        yield cls(
-                            id=f"{decision_id}-{key}",
-                            decision_id=decision_id,
-                            title=DecisionOpinion.get_headline(tx),
-                            text=tx,
-                            justice_id=justice_id,
-                        )
+                if text := decision_storage.restore_temp_txt(content["Key"]):
+                    if opinion := cls.make(
+                        origin_path_str=str(content["Key"]),
+                        decision_id=decision_id,
+                        justice_id=ponente_id,
+                        text=text,
+                    ):
+                        yield opinion

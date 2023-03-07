@@ -9,7 +9,7 @@ from loguru import logger
 from pydantic import BaseModel, Field
 from sqlite_utils import Database
 
-from .._utils import create_temp_yaml, download_to_temp, sqlenv
+from .._utils import sqlenv
 from ._resources import SUFFIX_PDF, decision_storage
 from .decision_fields import DecisionFields
 from .decision_substructures import DecisionOpinion
@@ -184,7 +184,7 @@ class InterimDecision(DecisionFields):
             return None
         source = self.dict(exclude={"opinions"})
         data = source | {"opinions": [o.dict() for o in self.opinions]}
-        temp_path = create_temp_yaml(data=data)
+        temp_path = decision_storage.make_temp_yaml_path_from_data(data)
         return self.pdf_prefix, temp_path
 
     def upload(self):
@@ -218,12 +218,8 @@ class InterimDecision(DecisionFields):
         Returns:
             Self: Interim Decision instance from R2 prefix.
         """
-        if not prefix.endswith(SUFFIX_PDF):
-            raise Exception("Method limited to pdf-based files.")
-        data = download_to_temp(
-            bucket=decision_storage, src=prefix, ext="yaml"
-        )
-        if not isinstance(data, dict):
+        data = decision_storage.restore_temp_yaml(prefix)
+        if not data:
             raise Exception(f"Could not originate {prefix=}")
         opinions = [DecisionOpinion(**o) for o in data.pop("opinions")]
         return cls(opinions=opinions, **data)

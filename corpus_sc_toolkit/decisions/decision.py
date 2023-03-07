@@ -29,8 +29,7 @@ class DecisionRow(DecisionFields, TableConfig):
         ["id", "justice_id"],
         ["per_curiam", "raw_ponente"],
     ]
-    id: str = Field(col=str, description="Constructed in DecisionFields.")
-    citation: Citation = Field(default=..., exclude=True)
+    citation: Citation = Field(default=..., exclude=True)  # must be present
 
     @property
     def citation_fk(self) -> dict:

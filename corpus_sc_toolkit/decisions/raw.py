@@ -77,12 +77,17 @@ class RawDecision(DecisionFields):
         if not result:
             return None
         decision_id, prefix, cite, ponente = result
-        opinion_path = local_path.parent / "opinions"
-        if not opinion_path.exists():
+        opinions_folder = local_path.parent / "opinions"
+        if not opinions_folder.exists():
+            logger.error(f"No opinions folder in {local_path=}")
             return None
-        opinions = []
-        for opinion in opinion_path.glob("*.md"):
-            opinions.append(opinion)
+        opinions = list(
+            DecisionOpinion.from_folder(
+                opinions_folder=opinions_folder,
+                decision_id=decision_id,
+                ponente_id=ponente.id,
+            )
+        )
         if not opinions:
             logger.error(f"No opinions detected in {local_path=} {id=}")
             return None
@@ -114,15 +119,16 @@ class RawDecision(DecisionFields):
         if not result:
             return None
         decision_id, prefix, cite, ponente = result
+        opinions_r2_prefix = f"{r2_data['prefix']}{SUFFIX_OPINION}"
         opinions = list(
-            DecisionOpinion.fetch(
-                opinion_prefix=f"{r2_data['prefix']}{SUFFIX_OPINION}",
-                decision_id=r2_data["id"],
+            DecisionOpinion.from_storage(
+                opinion_prefix=opinions_r2_prefix,
+                decision_id=decision_id,
                 ponente_id=ponente.id,
             )
         )
         if not opinions:
-            logger.error(f"No opinions detected in {r2_data['id']=}")
+            logger.error(f"No opinions detected in {decision_id=}")
             return None
         return cls(
             id=decision_id,

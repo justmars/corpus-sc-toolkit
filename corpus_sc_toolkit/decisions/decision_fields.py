@@ -48,8 +48,8 @@ class DecisionFields(BaseModel):
     opinions | list[DecisionOpinion] | [Opinion structures][decision opinions] which can be further [subdivided into segments][opinion segments]
     """  # noqa: E501
 
-    id: str
-    prefix: str
+    id: str = Field(col=str)
+    prefix: str = Field(col=str)
     citation: Citation | None = Field(default=None)  # overriden in decision.py
     origin: str = Field(col=str, index=True)
     title: str = Field(col=str, index=True, fts=True)
@@ -147,7 +147,7 @@ class DecisionFields(BaseModel):
     def iter_dockets(
         cls, dockets: list[str] = DOCKETS, years: tuple[int, int] = YEARS
     ) -> Iterator[str]:
-        """For each item in the collection from `cls.iter_collections()`, produce
+        """For each item in the collection from `cls.iter_docket_dates()`, produce
         unique docket keys."""
         for collection in cls.iter_docket_date_serials(dockets, years):
             if collection.get("CommonPrefixes", None):
