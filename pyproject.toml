@@ -42,7 +42,7 @@ ipython = "^8.11.0"
 [tool.pytest.ini_options]
 minversion = "7.2"
 filterwarnings = ['ignore::DeprecationWarning']
-addopts = "-ra -q --doctest-modules --cov=corpus_sc_toolkit tests/"
+addopts = "-ra -q --doctest-modules --cov tests/"
 testpaths = ["tests"]
 
 [tool.ruff]

@@ -34,4 +34,3 @@ The full `ra/1949/6/386/1/details.yaml` is downloadable, contain metadata includ
 1. individual segments;
 2. an index of detected citations; and
 3. an index of detected statutes.
-
