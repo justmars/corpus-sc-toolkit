@@ -9,8 +9,6 @@ from start_sdk.cf_r2 import StorageUtils
 
 from corpus_sc_toolkit.utils import sqlenv
 
-"""R2 variables in order to perform operations from the library."""
-
 STATUTE_TEMP_FOLDER = Path(__file__).parent / "_tmp"
 STATUTE_TEMP_FOLDER.mkdir(exist_ok=True)
 
@@ -52,60 +50,12 @@ class Integrator(BaseModel, abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def make_tables(cls, c: Connection) -> None:
-        """Common process for creatng the tables associated
-        with the concrete class."""
-        raise NotImplementedError
-
-    @classmethod
-    @abc.abstractmethod
     def from_page(cls, file_path: Path) -> None:
         """The `file_path` expects an appropriate .yaml file
         containing the metadata. The data will be processed into an
         interim 'page' that will eventually build an instance of
         the concrete class."""
         raise NotImplementedError
-
-    @property
-    @abc.abstractmethod
-    def relations(cls):
-        """Helper property to associate TableConfigured models
-        to their instantiated values in preparation for
-        database insertion."""
-        raise NotImplementedError
-
-    def insert_objects(
-        self,
-        c: Connection,
-        obj: Any,
-        correlations: list[tuple[Any, Any]],
-    ) -> str:
-        """The use of the concrete class' `insert_objects()` function
-        implies that an `Individual` table already exists.
-
-        The `obj` is a subclass of `TableConfig`. Since we're already aware
-        of the `id` of the `obj`, we can also use this same id to create the
-        author of the object as well as the correlated entities.
-
-        Each correlated entity must also be a subclass of `TableConfig`.
-        """
-        record = self.meta.dict(exclude={"emails"})
-        c.add_record(obj, record)
-
-        for email in self.emails:
-            c.table(obj).update(self.id).m2m(
-                other_table=c.table(Individual),
-                lookup={"email": email},
-                pk="id",
-            )
-
-        for related in correlations:
-            c.add_cleaned_records(
-                related[0],  # the related model which must be
-                related[1],  # the instance of the object
-            )
-
-        return self.id
 
 
 def sql_get_detail(generic_tbl_name: str, generic_id: str) -> str:

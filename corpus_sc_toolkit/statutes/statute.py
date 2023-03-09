@@ -238,15 +238,6 @@ class Statute(Integrator):
             "Variant": self.meta.variant,
         }
 
-    @property
-    def relations(self):
-        return [
-            (StatuteMaterialPath, self.material_paths),
-            (StatuteUnitSearch, self.unit_fts),
-            (StatuteTitleRow, self.titles),
-            (StatuteFoundInUnit, self.statutes_found),
-        ]
-
     @classmethod
     def from_page(cls, details_path: Path) -> Self | None:
         """Assumes a local directory from which to construct statutory objects.
@@ -266,16 +257,19 @@ class Statute(Integrator):
             logger.error(f"Could not validate {details_path=}")
             return None
 
+        # TODO: note that the id in page from StatutePage.build still uses dashes;
+        # this needs to be fixed since the ID of statute will used the prefix_db_key
         if not page.prefix_db_key:
             logger.error(f"Could not make key {details_path=}")
             return None
         if not page.storage_prefix:
             logger.error(f"Could not make storage_prefix {details_path=}")
             return None
-        statute_id = page.prefix_db_key
 
         # assign row for creation
+        page.id = page.prefix_db_key  # mutate the page prior to export as dict
         meta = StatuteRow(**page.dict(exclude={"emails", "tree", "titles"}))
+        statute_id = page.prefix_db_key  # use same id for related entities
 
         # setup associated titles
         titles = [
@@ -321,17 +315,6 @@ class Statute(Integrator):
                 )
             ),
         )
-
-    @classmethod
-    def make_tables(cls, c: Connection):
-        """The bulk of the fields declared within the Statute
-        container are table structures."""
-        c.create_table(StatuteRow)  # corresponds to StatutePage
-        c.create_table(StatuteTitleRow)  # corresponds to StatuteTitle
-        c.create_table(StatuteUnitSearch)
-        c.create_table(StatuteMaterialPath)
-        c.create_table(StatuteFoundInUnit)
-        c.db.index_foreign_keys()
 
     def to_storage(self):
         loc = f"{self.prefix}/details.yaml"

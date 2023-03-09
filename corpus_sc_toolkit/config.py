@@ -13,7 +13,6 @@ from sqlpyd import Connection
 
 from .decisions import (
     CitationRow,
-    DecisionHTML,
     DecisionRow,
     Justice,
     OpinionRow,
@@ -24,13 +23,14 @@ from .decisions import (
     get_justices_file,
     tags_from_title,
 )
-from .statutes import Statute
-
-LOCAL_FOLDER = Path().home().joinpath("code/corpus")
-STATUTES = LOCAL_FOLDER.glob("statutes/**/details.yaml")
-DECISIONS = LOCAL_FOLDER.glob("decisions/**/details.yaml")
-DB_FOLDER = Path(__file__).parent.parent / "data"
-load_dotenv(find_dotenv())
+from .statutes import (
+    Statute,
+    StatuteFoundInUnit,
+    StatuteMaterialPath,
+    StatuteRow,
+    StatuteTitleRow,
+    StatuteUnitSearch,
+)
 
 logger.configure(
     handlers=[
@@ -55,18 +55,58 @@ logger.configure(
 )
 
 
+DB_FOLDER = Path(__file__).parent.parent / "data"
+load_dotenv(find_dotenv())
+
+
 class ConfigStatutes(BaseModel):
-    @classmethod
-    def extract_local_statutes(cls):
-        for detail_path in STATUTES:
-            try:
-                if obj := Statute.from_page(detail_path):
-                    logger.debug(f"Uploading: {obj.id=}")
-                    obj.to_storage()
-                else:
-                    logger.error(f"Error uploading {detail_path=}")
-            except Exception as e:
-                logger.error(f"Bad {detail_path=}; see {e=}")
+    conn: Connection
+    path: Path = Field(default=DB_FOLDER)
+
+    def build_tables(self):
+        """Create all relevant tables involving statute object."""
+        self.conn.create_table(StatuteRow)
+        self.conn.create_table(StatuteTitleRow)
+        self.conn.create_table(StatuteUnitSearch)
+        self.conn.create_table(StatuteMaterialPath)
+        self.conn.create_table(StatuteFoundInUnit)
+        self.conn.db.index_foreign_keys()
+        logger.info("Statute-based tables ready.")
+        return self.conn.db
+
+    def add(self, statute: Statute):
+        # id should be modified prior to adding to db
+        record = statute.meta.dict(exclude={"emails"})
+        record["id"] = statute.id  # see TODO in Statute
+        self.conn.add_record(StatuteRow, record)
+
+        for email in statute.emails:
+            self.conn.table(StatuteRow).update(statute.id).m2m(
+                other_table=self.conn.table(Individual),
+                lookup={"email": email},
+                pk="id",
+            )
+
+        self.conn.add_cleaned_records(
+            kls=StatuteMaterialPath,
+            items=statute.material_paths,
+        )
+
+        self.conn.add_cleaned_records(
+            kls=StatuteUnitSearch,
+            items=statute.unit_fts,
+        )
+
+        self.conn.add_cleaned_records(
+            kls=StatuteTitleRow,
+            items=statute.titles,
+        )
+
+        self.conn.add_cleaned_records(
+            kls=StatuteFoundInUnit,
+            items=statute.statutes_found,
+        )
+        return statute.id
 
 
 class ConfigDecisions(BaseModel):
@@ -83,34 +123,11 @@ class ConfigDecisions(BaseModel):
 
         # build decision-focused tables
         config.build_tables()
-
-        # test saving a document from R2
-        r2_collection = config.iter_decisions()
-        item = next(r2_collection)
-        type(item) # DecisionRow
-        config.add_decision(item)
     ```
     """
 
     conn: Connection
     path: Path = Field(default=DB_FOLDER)
-
-    def extract_local_decisions(self):
-        for detail_path in DECISIONS:
-            try:
-                if obj := DecisionHTML.make_from_path(
-                    local_path=detail_path, db=self.conn.db
-                ):
-                    if DecisionHTML.key_raw(obj.prefix):
-                        logger.debug(f"Skipping: {obj.prefix=}")
-                        continue
-
-                    logger.debug(f"Uploading: {obj.id=}")
-                    obj.to_storage()
-                else:
-                    logger.error(f"Error uploading {detail_path=}")
-            except Exception as e:
-                logger.error(f"Bad {detail_path=}; see {e=}")
 
     @classmethod
     def get_pdf_db(cls, reset: bool = False) -> Path:
@@ -134,7 +151,6 @@ class ConfigDecisions(BaseModel):
     def build_tables(self) -> Database:
         """Create all relevant tables involving decision object."""
         logger.info("Ensure tables are created.")
-        # Populate pax tables so that authors can be associated with decisions
         try:
             justices = yaml.safe_load(get_justices_file().read_bytes())
             self.conn.add_records(Justice, justices)
@@ -150,7 +166,7 @@ class ConfigDecisions(BaseModel):
         logger.info("Decision-based tables ready.")
         return self.conn.db
 
-    def add_decision(self, row: DecisionRow) -> str | None:
+    def add(self, row: DecisionRow) -> str | None:
         """This creates a decision row and correlated metadata involving
         the decision, i.e. the citation, voting text, tags from the title, etc.,
         and then add rows for their respective tables.
@@ -200,9 +216,13 @@ class ConfigDecisions(BaseModel):
             )
 
         for op in row.opinions:
-            self.conn.add_record(kls=OpinionRow, item=op.dict())
+            self.conn.add_record(
+                kls=OpinionRow,
+                item=op.dict(),
+            )
             self.conn.add_records(
-                kls=SegmentRow, items=list(op.dict() for op in op.segments)
+                kls=SegmentRow,
+                items=list(op.dict() for op in op.segments),
             )
 
         return row.id

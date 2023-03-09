@@ -1,4 +1,4 @@
-__version__ = "0.2.2"
+__version__ = "0.2.3"
 
 
 from .config import ConfigDecisions, ConfigStatutes
@@ -26,4 +26,11 @@ from .decisions import (
     tags_from_title,
     voteline_clean,
 )
-from .statutes import Statute, StatuteRow
+from .statutes import (
+    Statute,
+    StatuteFoundInUnit,
+    StatuteMaterialPath,
+    StatuteRow,
+    StatuteTitleRow,
+    StatuteUnitSearch,
+)
