@@ -1,10 +1,12 @@
 import json
 from collections.abc import Iterator
+from concurrent.futures import TimeoutError
 from typing import Self
 
 from citation_utils import Citation
 from dateutil.parser import parse
 from loguru import logger
+from pebble import concurrent
 from pydantic import BaseModel, Field
 from sqlite_utils import Database
 from statute_trees import MentionedStatute
@@ -13,9 +15,29 @@ from corpus_sc_toolkit.utils import sqlenv
 
 from .decision_fields import DecisionFields
 from .decision_opinion_segments import OpinionSegment
-from .decision_opinions import DecisionOpinion
+from .decision_opinions import DecisionOpinion, OpinionTag
 from .fields import CourtComposition, DecisionCategory
 from .justice import CandidateJustice
+
+
+@concurrent.process(timeout=5)
+def list_statutes(body_text: str, annex_text: str | None = None):
+    items = []
+    items.extend(list(MentionedStatute.set_counted_statute(text=body_text)))
+    if annex_text:
+        items.extend(
+            list(MentionedStatute.set_counted_statute(text=annex_text))
+        )
+    return items
+
+
+@concurrent.process(timeout=5)
+def list_citations(body_text: str, annex_text: str | None = None):
+    items = []
+    items.extend(list(Citation.extract_citations(text=body_text)))
+    if annex_text:
+        items.extend(list(Citation.extract_citations(text=annex_text)))
+    return items
 
 
 def extract_citation_ids(data: dict) -> tuple[str, str, Citation] | None:
@@ -75,22 +97,41 @@ class InterimOpinion(BaseModel):
     @property
     def row(self):
         """Row to be used in OpinionRow table."""
-        opinion_id = f"{self.decision_id}-{self.candidate.id or self.id}"
+        id = f"{self.decision_id}-{self.candidate.id or self.title.lower()}"
         text = f"{self.body}\n\n----\n\n{self.annex}"
+
+        citations = []
+        future_citations = list_citations(self.body, self.annex)  # type: ignore
+        try:
+            citations = future_citations.result()  # type: ignore
+        except TimeoutError:
+            logger.error(f"Timed out citations {self.id}")
+        except Exception:
+            logger.error(f"Could not generate citations {self.id}")
+
+        statutes = []
+        future_statutes = list_statutes(self.body, self.annex)  # type: ignore
+        try:
+            statutes = future_statutes.result()  # type: ignore
+        except TimeoutError:
+            logger.error(f"Timed out statutes {self.id}")
+        except Exception:
+            logger.error(f"Could not generate statutes {self.id}")
+
         return DecisionOpinion(
-            id=opinion_id,
+            id=id,
             decision_id=self.decision_id,
             title=self.title,
             pdf=self.pdf,
             justice_id=self.candidate.id,
             text=text,
-            tags=[],
-            citations=list(Citation.extract_citations(text=text)),
-            statutes=list(MentionedStatute.set_counted_statute(text=text)),
+            tags=OpinionTag.detect(self.title),
+            citations=citations,
+            statutes=statutes,
             segments=list(
                 OpinionSegment.make_segments(
                     decision_id=self.decision_id,
-                    opinion_id=opinion_id,
+                    opinion_id=id,
                     text=text,
                 )
             ),
@@ -127,6 +168,7 @@ class DecisionPDF(DecisionFields):
 
     def to_storage(self):
         # Uses `pdf.yaml` to upload decision fields represented by instance.
+        logger.debug(f"Uploading: {self.id=}")
         self.put_in_storage("pdf.yaml")
 
         # Upload txt-based opinion files

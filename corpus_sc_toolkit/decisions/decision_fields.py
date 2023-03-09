@@ -1,6 +1,5 @@
 import datetime
-from collections.abc import Iterator
-from typing import Any, Self
+from typing import Self
 
 from citation_utils import Citation
 from loguru import logger
@@ -128,12 +127,18 @@ class DecisionFields(BaseModel):
     def put_in_storage(self, suffix: str):
         """Puts Pydantic exported data dict to `details.yaml` or `pdf.yaml` in
         R2, depending on the value of `suffix`."""
+
+        # Set guard on suffix only
         if suffix not in ("details.yaml", "pdf.yaml"):
             raise Exception("Invalid upload path.")
+
+        # Prepare instance values
         output_data = self.dict(exclude_none=True)
         remote_loc = f"{self.prefix}/{suffix}"
         temp_file = decision_storage.make_temp_yaml_path_from_data(output_data)
         args = decision_storage.set_extra_meta(self.storage_meta)
+
+        # Put proper
         logger.info(f"Uploading file to {remote_loc=}")
         decision_storage.upload(file_like=temp_file, loc=remote_loc, args=args)
         temp_file.unlink()
@@ -143,10 +148,16 @@ class DecisionFields(BaseModel):
         """Retrieves Pydantic exported data dict from either `details.yaml`, `pdf.yaml`
         in R2 (see extracted prefix from `key_pdf()` or `key_raw`()`) and instantiate
         the dict as a class instance."""
+
+        # Set guard on entire prefix
         if not prefix.endswith(("details.yaml", "pdf.yaml")):
             raise Exception("Bad path for DecisionFields base class.")
+
+        # Get proper
         data = decision_storage.restore_temp_yaml(prefix)
         if not data:
             raise Exception(f"Could not originate {prefix=}")
+
+        # Return instance
         logger.info(f"Retrieved file from {prefix=}")
         return cls(**data)

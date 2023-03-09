@@ -1,3 +1,4 @@
+import multiprocessing as mp
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -7,7 +8,7 @@ from sqlite_utils import Database
 LOCAL_FOLDER = Path().home().joinpath("code/corpus")
 
 
-def extract_local_statutes(
+def store_local_statutes_in_r2(
     path_to_statutes: Iterator[Path] = LOCAL_FOLDER.glob(
         "statutes/**/details.yaml"
     ),
@@ -25,7 +26,7 @@ def extract_local_statutes(
             logger.error(f"Bad {detail_path=}; see {e=}")
 
 
-def extract_local_decisions(
+def store_local_decisions_in_r2(
     db: Database,
     path_to_decisions: Iterator[Path] = LOCAL_FOLDER.glob(
         "decisions/**/details.yaml"
@@ -48,3 +49,14 @@ def extract_local_decisions(
                 logger.error(f"Error uploading {detail_path=}")
         except Exception as e:
             logger.error(f"Bad {detail_path=}; see {e=}")
+
+
+def store_pdf_decisions_in_r2(db: Database):
+    from .decisions import DecisionPDF
+
+    pdf_rows = DecisionPDF.originate(db=db)
+    for pdf_row in pdf_rows:
+        try:
+            pdf_row.to_storage()
+        except Exception as e:
+            logger.error(f"Bad {pdf_row.id=}; see {e=}")

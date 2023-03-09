@@ -1166,6 +1166,18 @@ files = [
 ]
 
 [[package]]
+name = "pebble"
+version = "5.0.3"
+description = "Threading and multiprocessing eye-candy."
+category = "main"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "Pebble-5.0.3-py3-none-any.whl", hash = "sha256:8274aa0959f387b368ede47666129cbe5d123f276a1bd9cafe77e020194b2141"},
+    {file = "Pebble-5.0.3.tar.gz", hash = "sha256:bdcfd9ea7e0aedb895b204177c19e6d6543d9962f4e3402ebab2175004863da8"},
+]
+
+[[package]]
 name = "pexpect"
 version = "4.8.0"
 description = "Pexpect allows easy control of interactive console applications."
@@ -2134,4 +2146,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "90be6612c4023a90882e10e4ac1d408cb2d674c11e63a59c2d88c800c447bda7"
+content-hash = "cf5fba2798742b43f3012a7427b9fb71f823f8891a65a1821f6a1c9c16b1669c"

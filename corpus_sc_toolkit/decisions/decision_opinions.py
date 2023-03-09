@@ -152,7 +152,7 @@ class DecisionOpinion(BaseModel):
         """Common opinion instantiator for both `cls.from_folder()` and
         `cls.from_storage()`
 
-        The `path` field implies that this may be a ponencia / opinion field.
+        The `path` field implies this may be a ponencia / opinion field.
         Ponencias are labeled 'ponencia.md' while Opinions are labeled
         '<digit>.md' where the digit refers to the justice id (representing
         the Justice) that penned the opinion.
@@ -175,7 +175,9 @@ class DecisionOpinion(BaseModel):
             return None
 
         justice_id = justice_id if key == "ponencia" else int(key)
-        opinion_id = f"{decision_id}-{key}"
+        opinion_id = (  # this matches opinion id from InterimOpinion f"{self.decision_id}-{self.candidate.id or self.id}" # noqa E501
+            f"{decision_id}-{key}"
+        )
         return cls(
             id=opinion_id,
             decision_id=decision_id,
