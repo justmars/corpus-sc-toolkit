@@ -180,6 +180,8 @@ class StatuteInOpinion(OpinionComponent, MentionedStatute, TableConfig):
         ["statute_category", "statute_serial_id"],
     ]
 
+    mentions: int = Field(col=int)  # TODO: Should be in MentionedStatute
+
 
 class CitationInOpinion(OpinionComponent, Citation, TableConfig):
     """Each opinion can contain references of citations."""
