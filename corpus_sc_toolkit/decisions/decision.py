@@ -135,15 +135,18 @@ class OpinionTitleTagRow(OpinionComponent, TableConfig):
     """Each opinion's title can have tags."""
 
     __tablename__ = "opinion_tags"
-    __indexes__ = [["opinion_id", "tag_label"]]
+    __indexes__ = [
+        ["opinion_id", "decision_id"],
+        ["opinion_id", "label"],
+    ]
 
-    tag_label: OpinionTag = Field(col=str, index=True)
+    label: OpinionTag = Field(col=str, index=True)
 
 
 class SegmentRow(OpinionComponent, OpinionSegment, TableConfig):
     """Each opinion can be divided into segments."""
 
-    __tablename__ = "segments"
+    __tablename__ = "opinion_segments"
     __indexes__ = [["opinion_id", "decision_id"]]
 
 
@@ -151,11 +154,18 @@ class StatuteInOpinion(OpinionComponent, MentionedStatute, TableConfig):
     """Each opinion can contain references of statutes."""
 
     __tablename__ = "opinion_statutes"
-    __indexes__ = [["opinion_id", "decision_id"]]
+    __indexes__ = [
+        ["opinion_id", "decision_id"],
+        ["statute_category", "statute_serial_id"],
+    ]
 
 
 class CitationInOpinion(OpinionComponent, Citation, TableConfig):
     """Each opinion can contain references of citations."""
 
     __tablename__ = "opinion_citations"
-    __indexes__ = [["opinion_id", "decision_id"]]
+    __indexes__ = [
+        ["opinion_id", "decision_id"],
+        ["docket_category", "docket_serial", "docket_date"],
+        ["scra", "phil", "offg", "docket"],
+    ]
