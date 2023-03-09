@@ -23,6 +23,8 @@ from corpus_sc_toolkit.utils import sqlenv
 
 from ._resources import Integrator, statute_storage
 
+DETAILS_FILE = "details.yaml"
+
 
 class StatuteRow(Page, StatuteBase, TableConfig):
     """This corresponds to `statute_trees.StatutePage` but is adjusted
@@ -313,7 +315,7 @@ class Statute(Integrator):
         )
 
     def to_storage(self):
-        loc = f"{self.prefix}/details.yaml"
+        loc = f"{self.prefix}/{DETAILS_FILE}"
         data = self.dict(exclude_none=True)
         temp_file = statute_storage.make_temp_yaml_path_from_data(data)
         args = statute_storage.set_extra_meta(self.storage_meta)
@@ -386,14 +388,32 @@ class ConfigStatutes(StorageToDatabaseConfiguration):
         self.set_tables()
         if statute_prefixes := self.storage.all_items():
             for prefix in statute_prefixes:
-                if prefix["Key"].endswith("details.yaml"):
+                if prefix["Key"].endswith(DETAILS_FILE):
                     try:
                         row = self.add_row(Statute.get(prefix["Key"]))
                         logger.success(f"Added: {row=}")
                     except Exception as e:
                         logger.error(f"Bad {prefix['key']}; {e=}")
 
-    def get_rows(self) -> Iterator[str]:
+    def get_db_ids(self) -> Iterator[str]:
         table = self.conn.db[StatuteRow.__tablename__]
         for row in table.rows_where(select="id"):
             yield row["id"]
+
+    def get_r2_ids(self) -> Iterator[str]:
+        if objs := self.storage.all_items():
+            for item in self.storage.filter_content(DETAILS_FILE, objs):
+                key = item["Key"].removesuffix(f"/{DETAILS_FILE}")
+                yield key.replace("/", ".")
+
+    def add_missing_r2_ids(self):
+        r2_ids = set(self.get_r2_ids())
+        db_ids = set(self.get_db_ids())
+        for id in r2_ids.difference(db_ids):
+            key = id.replace(".", "/")
+            prefix = f"{key}/{DETAILS_FILE}"
+            try:
+                self.add_row(Statute.get(prefix))
+                logger.success(f"Added: {prefix=}")
+            except Exception as e:
+                logger.error(f"Bad {prefix}; {e=}")

@@ -27,13 +27,13 @@ class StorageToDatabaseConfiguration(BaseModel, abc.ABC):
     storage: StorageUtils
 
     @abc.abstractmethod
-    def set_tables(self) -> None:
+    def set_tables(self) -> Database:
         """Prep tables for data entry. The tables created here will be utilized in
         `add_row()`"""
         raise NotImplementedError
 
     @abc.abstractmethod
-    def add_row(self) -> None:
+    def add_row(self) -> str:
         """Implies prior creation of tables under`set_tables()`, will accept an instance
         retrieved from storage to add the same to the database."""
         raise NotImplementedError
@@ -44,7 +44,7 @@ class StorageToDatabaseConfiguration(BaseModel, abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_rows(self) -> None:
+    def get_db_ids(self) -> Iterator[str]:
         """Get existing ids of main table associated with the storage bucket, e.g.
 
         Main Table | Storage Bucket
@@ -52,6 +52,18 @@ class StorageToDatabaseConfiguration(BaseModel, abc.ABC):
         DecisionRow | `sc-decisions`
         Statute | `ph-statutes`
         """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_r2_ids(self) -> Iterator[str]:
+        """Get prefixes from storage, remove filename suffixes and convert to
+        id values."""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def add_missing_r2_ids(self) -> Iterator[str]:
+        """Subset adding of rows getting the different between `get_r2_ids()` and
+        `get_db_ids()`."""
         raise NotImplementedError
 
 

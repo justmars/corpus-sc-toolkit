@@ -59,10 +59,22 @@ class DecisionRow(DecisionFields, TableConfig):
 
     @classmethod
     def from_key(cls, key: str) -> Self | None:
+        """Expects full key inclusive of whether `details.yaml` / `pdf.yaml`
+        to retrieve an instance of `DecisionRow`, if available in r2."""
         if key.endswith(DETAILS_KEY):
             return cls(**DecisionHTML.get_from_storage(key).dict())
         elif key.endswith(PDF_KEY):
             return cls(**DecisionPDF.get_from_storage(key).dict())
+        return None
+
+    @classmethod
+    def from_prefix(cls, prefix: str) -> Self | None:
+        """Add one of two keys `details.yaml` / `pdf.yaml`" to the incomplete prefix
+        to get the `DecisionRow`, if available in r2."""
+        if obj := DecisionHTML.get_from_storage(f"{prefix}/{DETAILS_KEY}"):
+            return cls(**obj.dict())
+        elif obj := DecisionPDF.get_from_storage(f"{prefix}/{PDF_KEY}"):
+            return cls(**obj.dict())
         return None
 
 
@@ -273,7 +285,32 @@ class ConfigDecisions(StorageToDatabaseConfiguration):
                     if row_added := self.add_row(row):
                         logger.success(f"{row_added=}")
 
-    def get_rows(self) -> Iterator[str]:
+    def get_db_ids(self) -> Iterator[str]:
         table = self.conn.db[DecisionRow.__tablename__]
         for row in table.rows_where(select="id"):
             yield row["id"]
+
+    def get_r2_ids(self) -> Iterator[str]:
+        if objs := self.storage.all_items():
+            detail_keys = [  # Get unique prefixes containing details
+                detail["Key"].removesuffix(f"/{DETAILS_KEY}")
+                for detail in self.storage.filter_content(DETAILS_KEY, objs)
+            ]
+            pdf_keys = [  # Get unique suffixes containing pdfs
+                pdf["Key"].removesuffix(f"/{PDF_KEY}")
+                for pdf in self.storage.filter_content(PDF_KEY, objs)
+            ]
+            for key in set(detail_keys + pdf_keys):
+                yield key.replace("/", ".")
+
+    def add_missing_r2_ids(self):
+        r2_ids = set(self.get_r2_ids())
+        db_ids = set(self.get_db_ids())
+        for id in r2_ids.difference(db_ids):
+            key = id.replace(".", "/")
+            try:
+                if row := DecisionRow.from_prefix(key):
+                    if added := self.add_row(row):
+                        logger.success(f"Added: {id=} {added=}")
+            except Exception as e:
+                logger.error(f"Bad {id}; {e=}")
