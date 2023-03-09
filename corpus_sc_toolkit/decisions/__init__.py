@@ -2,6 +2,7 @@ from ._resources import decision_storage
 from .decision import (
     CitationInOpinion,
     CitationRow,
+    ConfigDecisions,
     DecisionRow,
     OpinionRow,
     OpinionTitleTagRow,

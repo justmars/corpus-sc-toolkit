@@ -1,10 +1,10 @@
 __version__ = "0.2.5"
 
 
-from .config import ConfigDecisions, ConfigStatutes
 from .decisions import (
     CandidateJustice,
     CitationRow,
+    ConfigDecisions,
     CourtComposition,
     DecisionCategory,
     DecisionHTML,
@@ -27,8 +27,9 @@ from .decisions import (
     tags_from_title,
     voteline_clean,
 )
-from .main import config_db, get_pdf_db
+from .main import config_db
 from .statutes import (
+    ConfigStatutes,
     Statute,
     StatuteFoundInUnit,
     StatuteMaterialPath,
@@ -36,4 +37,10 @@ from .statutes import (
     StatuteTitleRow,
     StatuteUnitSearch,
     statute_storage,
+)
+from .store import (
+    get_pdf_db,
+    store_local_decisions_in_r2,
+    store_local_statutes_in_r2,
+    store_pdf_decisions_in_r2,
 )

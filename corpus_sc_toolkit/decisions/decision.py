@@ -1,17 +1,26 @@
 import abc
+from collections.abc import Iterator
+from sqlite3 import IntegrityError
 from typing import Self
 
+import yaml
 from citation_utils import Citation
+from corpus_pax import Individual
+from loguru import logger
 from pydantic import BaseModel, Field
+from sqlite_utils import Database
 from sqlpyd import TableConfig
 from statute_trees import MentionedStatute
+
+from corpus_sc_toolkit.store import StorageToDatabaseConfiguration
 
 from .decision_fields import DecisionFields
 from .decision_fields_via_html import DETAILS_KEY, DecisionHTML
 from .decision_fields_via_pdf import PDF_KEY, DecisionPDF
 from .decision_opinion_segments import OpinionSegment
 from .decision_opinions import DecisionOpinion, OpinionTag
-from .justice import Justice
+from .fields import extract_votelines, tags_from_title
+from .justice import Justice, get_justices_file
 
 
 class DecisionRow(DecisionFields, TableConfig):
@@ -169,3 +178,102 @@ class CitationInOpinion(OpinionComponent, Citation, TableConfig):
         ["docket_category", "docket_serial", "docket_date"],
         ["scra", "phil", "offg", "docket"],
     ]
+
+
+class ConfigDecisions(StorageToDatabaseConfiguration):
+    def set_tables(self) -> Database:
+        logger.info("Ensure tables are created.")
+        try:
+            justices = yaml.safe_load(get_justices_file().read_bytes())
+            self.conn.add_records(Justice, justices)
+        except IntegrityError:
+            ...  # already existing table because of prior addition
+        self.conn.create_table(DecisionRow)
+        self.conn.create_table(OpinionRow)
+        self.conn.create_table(CitationRow)
+        self.conn.create_table(VoteLine)
+        self.conn.create_table(TitleTagRow)
+        self.conn.create_table(SegmentRow)
+        self.conn.db.index_foreign_keys()
+        logger.info("Decision-based tables ready.")
+        return self.conn.db
+
+    def add_row(self, row: DecisionRow) -> str | None:
+        table = self.conn.table(DecisionRow)
+        try:
+            added = table.insert(record=row.dict(), pk="id")  # type: ignore
+            logger.debug(f"Added {added.last_pk=}")
+        except Exception as e:
+            logger.error(f"Skip duplicate: {row.id=}; {e=}")
+            return None
+        if not added.last_pk:
+            logger.error(f"Not made: {row.dict()=}")
+            return None
+
+        for email in row.emails:
+            table.update(added.last_pk).m2m(
+                other_table=self.conn.table(Individual),
+                pk="id",
+                lookup={"email": email},
+                m2m_table="sc_tbl_decisions_pax_tbl_individuals",
+            )  # note explicit m2m table name is `sc_`
+        if row.citation and row.citation.has_citation:
+            self.conn.add_record(
+                kls=CitationRow,
+                item=row.citation_fk,
+            )
+        if row.voting:
+            self.conn.add_records(
+                kls=VoteLine,
+                items=extract_votelines(
+                    decision_pk=added.last_pk,
+                    text=row.voting,
+                ),
+            )
+        if row.title:
+            self.conn.add_records(
+                kls=TitleTagRow,
+                items=tags_from_title(
+                    decision_pk=added.last_pk,
+                    text=row.title,
+                ),
+            )
+
+        for op in row.opinions:
+            self.conn.add_record(
+                kls=OpinionRow,
+                item=op.dict(),
+            )
+            self.conn.add_cleaned_records(
+                kls=SegmentRow,
+                items=op.segments,
+            )
+            base_op = {"opinion_id": op.id, "decision_id": op.decision_id}
+            if op.tags:
+                self.conn.add_records(
+                    kls=OpinionTitleTagRow,
+                    items=[base_op | {"label": tag} for tag in op.tags],
+                )
+            if op.statutes:
+                self.conn.add_records(
+                    kls=StatuteInOpinion,
+                    items=[base_op | stat.dict() for stat in op.statutes],
+                )
+            self.conn.add_records(
+                kls=CitationInOpinion,
+                items=[base_op | cite.dict() for cite in op.citations],
+            )
+        return row.id
+
+    def add_rows(self):
+        self.set_tables()
+        if decision_prefixes := self.storage.all_items():
+            for item in decision_prefixes:
+                if row := DecisionRow.from_key(item["Key"]):
+                    if row_added := self.add_row(row):
+                        logger.success(f"{row_added=}")
+
+    def get_rows(self) -> Iterator[str]:
+        table = self.conn.db[DecisionRow.__tablename__]
+        for row in table.rows_where(select="id"):
+            yield row["id"]

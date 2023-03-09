@@ -3,13 +3,11 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Self
 
+from corpus_pax import Individual
 from loguru import logger
 from pydantic import EmailStr, Field, ValidationError
 from sqlpyd import Connection, TableConfig
-from statute_patterns import (
-    StatuteTitleCategory,
-    extract_rules,
-)
+from statute_patterns import StatuteTitleCategory, extract_rules
 from statute_trees import (
     Node,
     Page,
@@ -20,6 +18,7 @@ from statute_trees import (
     generic_mp,
 )
 
+from corpus_sc_toolkit.store import StorageToDatabaseConfiguration
 from corpus_sc_toolkit.utils import sqlenv
 
 from ._resources import Integrator, statute_storage
@@ -335,3 +334,66 @@ class Statute(Integrator):
         if not (data := statute_storage.restore_temp_yaml(yaml_suffix=prefix)):
             raise Exception(f"Could not originate {prefix=}")
         return cls(**data)
+
+
+class ConfigStatutes(StorageToDatabaseConfiguration):
+    def set_tables(self):
+        self.conn.create_table(StatuteRow)
+        self.conn.create_table(StatuteTitleRow)
+        self.conn.create_table(StatuteUnitSearch)
+        self.conn.create_table(StatuteMaterialPath)
+        self.conn.create_table(StatuteFoundInUnit)
+        self.conn.db.index_foreign_keys()
+        logger.info("Statute-based tables ready.")
+        return self.conn.db
+
+    def add_row(self, statute: Statute):
+        # id should be modified prior to adding to db
+        record = statute.meta.dict(exclude={"emails"})
+        record["id"] = statute.id  # see TODO in Statute
+        self.conn.add_record(StatuteRow, record)
+        for email in statute.emails:
+            self.conn.table(StatuteRow).update(statute.id).m2m(
+                other_table=self.conn.table(Individual),
+                lookup={"email": email},
+                pk="id",
+            )
+
+        for statute_title in statute.titles:
+            statute_title.statute_id = statute.id  # see TODO in Statute
+            self.conn.add_record(
+                kls=StatuteTitleRow,
+                item=statute_title.dict(),
+            )
+
+        self.conn.add_cleaned_records(
+            kls=StatuteMaterialPath,
+            items=statute.material_paths,
+        )
+
+        self.conn.add_cleaned_records(
+            kls=StatuteUnitSearch,
+            items=statute.unit_fts,
+        )
+
+        self.conn.add_cleaned_records(
+            kls=StatuteFoundInUnit,
+            items=statute.statutes_found,
+        )
+        return statute.id
+
+    def add_rows(self):
+        self.set_tables()
+        if statute_prefixes := self.storage.all_items():
+            for prefix in statute_prefixes:
+                if prefix["Key"].endswith("details.yaml"):
+                    try:
+                        row = self.add_row(Statute.get(prefix["Key"]))
+                        logger.success(f"Added: {row=}")
+                    except Exception as e:
+                        logger.error(f"Bad {prefix['key']}; {e=}")
+
+    def get_rows(self) -> Iterator[str]:
+        table = self.conn.db[StatuteRow.__tablename__]
+        for row in table.rows_where(select="id"):
+            yield row["id"]

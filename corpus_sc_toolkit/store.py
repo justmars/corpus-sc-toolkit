@@ -1,8 +1,59 @@
+import abc
 from collections.abc import Iterator
 from pathlib import Path
 
 from loguru import logger
+from pydantic import BaseModel
+from pylts import ConfigS3
 from sqlite_utils import Database
+from sqlpyd import Connection
+from start_sdk import StorageUtils
+
+
+class StorageToDatabaseConfiguration(BaseModel, abc.ABC):
+    """Each flow must implement 4 functions:
+
+    1. `set_tables()` using the `sqlpyd.Connection` convention
+    2. `add_row()` expects a Pydantic model instance already converted
+        with fields that can be used in the tables created / assigned in
+        `set_tables()`
+    3. `add_rows()` retrieves bucket prefixes `start_sdk.StorageUtils` and
+        converts these prefixes to Pydantic model instances so that
+        `add_row()` can be used
+    4. `get_rows()` lists ids of the main model
+    """
+
+    conn: Connection
+    storage: StorageUtils
+
+    @abc.abstractmethod
+    def set_tables(self) -> None:
+        """Prep tables for data entry. The tables created here will be utilized in
+        `add_row()`"""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def add_row(self) -> None:
+        """Implies prior creation of tables under`set_tables()`, will accept an instance
+        retrieved from storage to add the same to the database."""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def add_rows(self) -> None:
+        """Using storage items converted into rows add each to database."""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_rows(self) -> None:
+        """Get existing ids of main table associated with the storage bucket, e.g.
+
+        Main Table | Storage Bucket
+        --:|:--
+        DecisionRow | `sc-decisions`
+        Statute | `ph-statutes`
+        """
+        raise NotImplementedError
+
 
 LOCAL_FOLDER = Path().home().joinpath("code/corpus")
 
@@ -50,12 +101,28 @@ def store_local_decisions_in_r2(
             logger.error(f"Bad {detail_path=}; see {e=}")
 
 
-def store_pdf_decisions_in_r2(db: Database):
+def get_pdf_db(path: Path, reset: bool = False) -> Path:
+    """Download pre-existing database containing pdf tables. This is
+    needed to transfer pdf-based rows to r2 and to another database."""
+    src = "s3://corpus-pdf/db"
+    logger.info(f"Restore from {src=} to {path=}")
+    stream = ConfigS3(s3=src, folder=path)
+    if reset:
+        stream.delete()
+        return stream.restore()
+    if not stream.dbpath.exists():
+        return stream.restore()
+    return stream.dbpath
+
+
+def store_pdf_decisions_in_r2(pdf_db: Database):
+    """Used in tandem with `get_pdf_db()`; retrieves the records
+    so that these can be uploaded. Note that this will overwrite
+    present fields."""
     from .decisions import DecisionPDF
 
-    pdf_rows = DecisionPDF.originate(db=db)
-    for pdf_row in pdf_rows:
+    for row in DecisionPDF.originate(db=pdf_db):
         try:
-            pdf_row.to_storage()
+            row.to_storage()
         except Exception as e:
-            logger.error(f"Bad {pdf_row.id=}; see {e=}")
+            logger.error(f"Bad {row.id=}; see {e=}")

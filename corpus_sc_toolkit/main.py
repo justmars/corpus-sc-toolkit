@@ -4,12 +4,10 @@ from pathlib import Path
 from corpus_pax import setup_pax
 from dotenv import find_dotenv, load_dotenv
 from loguru import logger
-from pylts import ConfigS3
 from sqlpyd import Connection
 
-from .config import ConfigDecisions, ConfigStatutes
-from .decisions import decision_storage
-from .statutes import statute_storage
+from .decisions import ConfigDecisions, decision_storage
+from .statutes import ConfigStatutes, statute_storage
 
 load_dotenv(find_dotenv())
 logger.configure(
@@ -34,27 +32,12 @@ logger.configure(
     ]
 )
 data_folder = Path(__file__).parent.parent / "data"
+db_file = data_folder / "lawdata.db"
 
 
-def get_pdf_db(reset: bool = False, path: Path = data_folder) -> Path:
-    src = "s3://corpus-pdf/db"
-    logger.info(f"Restore from {src=} to {path=}")
-    stream = ConfigS3(s3=src, folder=path)
-    if reset:
-        stream.delete()
-        return stream.restore()
-    if not stream.dbpath.exists():
-        return stream.restore()
-    return stream.dbpath
-
-
-def config_db(reset: bool = False):
-    main_conn: Connection = setup_pax(str(get_pdf_db(reset)))
-
-    config_statutes = ConfigStatutes(conn=main_conn, storage=statute_storage)
-    config_statutes.add_rows()
-
-    config_decisions = ConfigDecisions(
-        conn=main_conn, storage=decision_storage
-    )
-    config_decisions.add_rows()
+def config_db(dbpath: str = str(db_file)):
+    """Creates/uses database in `dbpath` containing content
+    from `corpus_pax` and content from r2 storage buckets."""
+    c: Connection = setup_pax(dbpath)
+    ConfigStatutes(conn=c, storage=statute_storage).add_rows()
+    ConfigDecisions(conn=c, storage=decision_storage).add_rows()
