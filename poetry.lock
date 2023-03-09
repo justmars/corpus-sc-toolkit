@@ -407,14 +407,14 @@ files = [
 
 [[package]]
 name = "corpus-pax"
-version = "0.1.24"
+version = "0.1.25"
 description = "Using Github API (to pull individuals, orgs, and article content), setup a local sqlite database, syncing images to Cloudflare."
 category = "main"
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "corpus_pax-0.1.24-py3-none-any.whl", hash = "sha256:1138335c665d16170e19e8c581d773675d272b1c739c9e19f1ef99b89eff5eb9"},
-    {file = "corpus_pax-0.1.24.tar.gz", hash = "sha256:47189ecd71283d33098c802fd418ea6883c1a654b62a4c771bb98db739a41667"},
+    {file = "corpus_pax-0.1.25-py3-none-any.whl", hash = "sha256:3888157d338ed38045bd4c3750c101b5d7ee7d9ce43f1f7694375d252cf20ddb"},
+    {file = "corpus_pax-0.1.25.tar.gz", hash = "sha256:de4420ce871e91c580af3aa79cbcbb8b023dbf8a1e91c6bca547ba5233dc6005"},
 ]
 
 [package.dependencies]
@@ -423,7 +423,7 @@ httpx = ">=0.23.0,<0.24.0"
 jinja2 = ">=3.1.2,<4.0.0"
 python-frontmatter = ">=1.0.0,<2.0.0"
 sqlpyd = ">=0.1.5,<0.2.0"
-start-sdk = ">=0.0.8,<0.0.9"
+start-sdk = ">=0.0.9,<0.0.10"
 
 [[package]]
 name = "coverage"
@@ -1895,14 +1895,14 @@ tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 
 [[package]]
 name = "start-sdk"
-version = "0.0.8"
+version = "0.0.9"
 description = "Settings for Github, Cloudflare Images API"
 category = "main"
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "start_sdk-0.0.8-py3-none-any.whl", hash = "sha256:2fd3b51b0522a285295ff8ace5d936f655dd4fd26912fe5777f84536d04c598e"},
-    {file = "start_sdk-0.0.8.tar.gz", hash = "sha256:4d138f11deaeff58f537a66475dfa3bfe4bb44dd4bed953cda55f8f502c2cd68"},
+    {file = "start_sdk-0.0.9-py3-none-any.whl", hash = "sha256:699cf850fa3078846c0d12cbd38ea500c9dba48db3290bc4cec6ffd21cee64e5"},
+    {file = "start_sdk-0.0.9.tar.gz", hash = "sha256:4ccad8e5f6de507b3c4419a24dc2a1224ed6b9cf338d75b5553a3f70abeaf948"},
 ]
 
 [package.dependencies]
@@ -2146,4 +2146,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "cf5fba2798742b43f3012a7427b9fb71f823f8891a65a1821f6a1c9c16b1669c"
+content-hash = "91abd562ff50968d57a668ab50d3b181fadc20c5e542103b638194e3a98583dc"

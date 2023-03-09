@@ -1,3 +1,4 @@
+import abc
 import sys
 from pathlib import Path
 from sqlite3 import IntegrityError
@@ -6,19 +7,24 @@ import yaml
 from corpus_pax import Individual, setup_pax
 from dotenv import find_dotenv, load_dotenv
 from loguru import logger
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from pylts import ConfigS3
 from sqlite_utils import Database
 from sqlpyd import Connection
+from start_sdk import StorageUtils
 
 from .decisions import (
+    CitationInOpinion,
     CitationRow,
     DecisionRow,
     Justice,
     OpinionRow,
+    OpinionTitleTagRow,
     SegmentRow,
+    StatuteInOpinion,
     TitleTagRow,
     VoteLine,
+    decision_storage,
     extract_votelines,
     get_justices_file,
     tags_from_title,
@@ -30,6 +36,7 @@ from .statutes import (
     StatuteRow,
     StatuteTitleRow,
     StatuteUnitSearch,
+    statute_storage,
 )
 
 logger.configure(
@@ -59,12 +66,29 @@ DB_FOLDER = Path(__file__).parent.parent / "data"
 load_dotenv(find_dotenv())
 
 
-class ConfigStatutes(BaseModel):
+class StorageToDatabaseConfiguration(BaseModel, abc.ABC):
     conn: Connection
-    path: Path = Field(default=DB_FOLDER)
+    storage: StorageUtils
 
-    def build_tables(self):
-        """Create all relevant tables involving statute object."""
+    @abc.abstractmethod
+    def set_tables(self) -> None:
+        """Prep tables for data entry."""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def add_row(self) -> None:
+        """Implies organization of table entries from a retrieved storage instance."""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def add_rows(self) -> None:
+        """Using storage items converted into rows add each to database."""
+        raise NotImplementedError
+
+
+class ConfigStatutes(StorageToDatabaseConfiguration):
+    def set_tables(self):
+        """Create tables involving statute object."""
         self.conn.create_table(StatuteRow)
         self.conn.create_table(StatuteTitleRow)
         self.conn.create_table(StatuteUnitSearch)
@@ -74,7 +98,7 @@ class ConfigStatutes(BaseModel):
         logger.info("Statute-based tables ready.")
         return self.conn.db
 
-    def add(self, statute: Statute):
+    def add_row(self, statute: Statute):
         # id should be modified prior to adding to db
         record = statute.meta.dict(exclude={"emails"})
         record["id"] = statute.id  # see TODO in Statute
@@ -87,48 +111,38 @@ class ConfigStatutes(BaseModel):
                 pk="id",
             )
 
+        for statute_title in statute.titles:
+            statute_title.statute_id = statute.id  # see TODO in Statute
+            self.conn.add_record(
+                kls=StatuteTitleRow, item=statute_title.dict()
+            )
+
         self.conn.add_cleaned_records(
-            kls=StatuteMaterialPath,
-            items=statute.material_paths,
+            kls=StatuteMaterialPath, items=statute.material_paths
         )
 
         self.conn.add_cleaned_records(
-            kls=StatuteUnitSearch,
-            items=statute.unit_fts,
+            kls=StatuteUnitSearch, items=statute.unit_fts
         )
 
         self.conn.add_cleaned_records(
-            kls=StatuteTitleRow,
-            items=statute.titles,
-        )
-
-        self.conn.add_cleaned_records(
-            kls=StatuteFoundInUnit,
-            items=statute.statutes_found,
+            kls=StatuteFoundInUnit, items=statute.statutes_found
         )
         return statute.id
 
+    def add_rows(self):
+        self.set_tables()
+        if statute_prefixes := self.storage.all_items():
+            for prefix in statute_prefixes:
+                if prefix["Key"].endswith("details.yaml"):
+                    try:
+                        row = self.add_row(Statute.get(prefix["Key"]))
+                        logger.success(f"Added: {row=}")
+                    except Exception as e:
+                        logger.error(f"Bad {prefix['key']}; {e=}")
 
-class ConfigDecisions(BaseModel):
-    """# How to configure
 
-    ```py
-        # set up initial PDF tables, takes less than a minute to download
-        from corpus_sc_toolkit import ConfigDecisions
-        config = ConfigDecisions.setup(reset=True)
-
-        # add to db downloaded: individuals / organizations
-        from corpus_pax import setup_pax
-        setup_pax(str(config.conn.path_to_db))
-
-        # build decision-focused tables
-        config.build_tables()
-    ```
-    """
-
-    conn: Connection
-    path: Path = Field(default=DB_FOLDER)
-
+class ConfigDecisions(StorageToDatabaseConfiguration):
     @classmethod
     def get_pdf_db(cls, reset: bool = False) -> Path:
         src = "s3://corpus-pdf/db"
@@ -141,15 +155,8 @@ class ConfigDecisions(BaseModel):
             return stream.restore()
         return stream.dbpath
 
-    @classmethod
-    def setup(cls, reset: bool = False):
-        """Get sqlite db containing pdf tables from aws via litestream."""
-        dbpath: Path = cls.get_pdf_db(reset=reset)
-        conn = Connection(DatabasePath=str(dbpath), WAL=True)
-        return cls(conn=conn)
-
-    def build_tables(self) -> Database:
-        """Create all relevant tables involving decision object."""
+    def set_tables(self) -> Database:
+        """Create involving decision object."""
         logger.info("Ensure tables are created.")
         try:
             justices = yaml.safe_load(get_justices_file().read_bytes())
@@ -157,8 +164,8 @@ class ConfigDecisions(BaseModel):
         except IntegrityError:
             ...  # already existing table because of prior addition
         self.conn.create_table(DecisionRow)
-        self.conn.create_table(CitationRow)
         self.conn.create_table(OpinionRow)
+        self.conn.create_table(CitationRow)
         self.conn.create_table(VoteLine)
         self.conn.create_table(TitleTagRow)
         self.conn.create_table(SegmentRow)
@@ -166,7 +173,7 @@ class ConfigDecisions(BaseModel):
         logger.info("Decision-based tables ready.")
         return self.conn.db
 
-    def add(self, row: DecisionRow) -> str | None:
+    def add_row(self, row: DecisionRow) -> str | None:
         """This creates a decision row and correlated metadata involving
         the decision, i.e. the citation, voting text, tags from the title, etc.,
         and then add rows for their respective tables.
@@ -175,7 +182,7 @@ class ConfigDecisions(BaseModel):
             row (DecisionRow): Uniform fields ready for database insertion
 
         Returns:
-            str | None: The decision id, if the insertion of records is successful.
+            str | None: The decision id, if insertion of records is successful.
         """
         table = self.conn.table(DecisionRow)
         try:
@@ -220,15 +227,43 @@ class ConfigDecisions(BaseModel):
                 kls=OpinionRow,
                 item=op.dict(),
             )
-            self.conn.add_records(
+
+            self.conn.add_cleaned_records(
                 kls=SegmentRow,
-                items=list(op.dict() for op in op.segments),
+                items=op.segments,
+            )
+
+            base_op = {"opinion_id": op.id, "decision_id": op.decision_id}
+            if op.tags:
+                self.conn.add_records(
+                    kls=OpinionTitleTagRow,
+                    items=[base_op | {"tag_label": tag} for tag in op.tags],
+                )
+
+            if op.statutes:
+                self.conn.add_records(
+                    kls=StatuteInOpinion,
+                    items=[base_op | stat.dict() for stat in op.statutes],
+                )
+
+            self.conn.add_records(
+                kls=CitationInOpinion,
+                items=[base_op | cite.dict() for cite in op.citations],
             )
 
         return row.id
 
-    @classmethod
-    def restart(cls):
-        config = cls.setup(reset=True)
-        setup_pax(str(config.conn.path_to_db))
-        config.build_tables()
+    def add_rows(self):
+        self.set_tables()
+        if decision_prefixes := self.storage.all_items():
+            for item in decision_prefixes:
+                if row := DecisionRow.from_key(item["Key"]):
+                    if row_added := self.add_row(row):
+                        logger.success(f"{row_added=}")
+
+
+def configure_corpus():
+    conn: Connection = setup_pax(str(ConfigDecisions.get_pdf_db()))
+    # ConfigStatutes(conn=conn, storage=statute_storage).set_tables()
+    ConfigStatutes(conn=conn, storage=statute_storage).add_rows()
+    ConfigDecisions(conn=conn, storage=decision_storage).add_rows()

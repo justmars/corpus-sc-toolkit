@@ -66,6 +66,7 @@ class DecisionOpinion(BaseModel):
         col=str,
         fts=True,
     )
+    # TODO: The lists below need to be extracted to separate db table, see relations
     statutes: list[MentionedStatute]
     segments: list[OpinionSegment]
     citations: list[Citation]

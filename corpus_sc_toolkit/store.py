@@ -1,4 +1,3 @@
-import multiprocessing as mp
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -39,7 +38,7 @@ def store_local_decisions_in_r2(
             if obj := DecisionHTML.make_from_path(
                 local_path=detail_path, db=db
             ):
-                if DecisionHTML.key_raw(obj.prefix):
+                if DecisionHTML.get_key(obj.prefix):
                     logger.debug(f"Skipping: {obj.prefix=}")
                     continue
 

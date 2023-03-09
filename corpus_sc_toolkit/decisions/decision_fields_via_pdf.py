@@ -13,11 +13,15 @@ from statute_trees import MentionedStatute
 
 from corpus_sc_toolkit.utils import sqlenv
 
+from ._resources import DECISION_BUCKET_NAME, DECISION_CLIENT, decision_storage
 from .decision_fields import DecisionFields
 from .decision_opinion_segments import OpinionSegment
 from .decision_opinions import DecisionOpinion, OpinionTag
 from .fields import CourtComposition, DecisionCategory
 from .justice import CandidateJustice
+
+PDF_KEY = "pdf.yaml"
+"""This suffix is uploaded / retrieved from R2 storage based on `DecisionPDF`."""
 
 
 @concurrent.process(timeout=5)
@@ -166,10 +170,29 @@ class InterimOpinion(BaseModel):
 class DecisionPDF(DecisionFields):
     ...
 
+    @classmethod
+    def get_key(cls, dated_prefix: str) -> str | None:
+        """Is suffix `pdf.yaml` present in result of `cls.iter_dockets()`?"""
+        key = f"{dated_prefix}/{PDF_KEY}"
+        try:
+            DECISION_CLIENT.get_object(Bucket=DECISION_BUCKET_NAME, Key=key)
+            return key
+        except Exception:
+            return None
+
+    @classmethod
+    def get_existing_prefixes(cls) -> Iterator[str]:
+        if object_list := decision_storage.all_items():
+            if filtered_list := decision_storage.filter_content(
+                filter_suffix="/{PDF_KEY}", objects_list=object_list
+            ):
+                for item in filtered_list:
+                    yield item["Key"]
+
     def to_storage(self):
         # Uses `pdf.yaml` to upload decision fields represented by instance.
         logger.debug(f"Uploading: {self.id=}")
-        self.put_in_storage("pdf.yaml")
+        self.put_in_storage(PDF_KEY)
 
         # Upload txt-based opinion files
         for opinion in self.opinions:
@@ -181,11 +204,11 @@ class DecisionPDF(DecisionFields):
         a list of rows to process.
 
         Args:
-            db (Database): Contains previously created pdf-based / justice tables.
+            db (Database): result of a [corpus-extractor](https://github.com/justmars/corpus-extractor/) process.
 
         Yields:
             Iterator[Self]: Instances of the Interim Decision.
-        """
+        """  # noqa: E501
         q = sqlenv.get_template("decisions/limit_extract.sql").render()
         for row in db.execute_returning_dicts(q):
             result = extract_citation_ids(row)

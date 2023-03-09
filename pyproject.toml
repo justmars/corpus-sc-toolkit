@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "corpus-sc-toolkit"
 description = "Toolkit to process component elements of a Philippine Supreme Court decision."
-version = "0.2.4"
+version = "0.2.5"
 authors = ["Marcelino G. Veloso III <mars@veloso.one>"]
 readme = "README.md"
 license = "MIT"
@@ -21,7 +21,7 @@ classifiers = [
 python = "^3.11"
 # custom
 pylts = "^0.0.8" # litestream, sqlite database, loguru
-corpus-pax = "^0.1.24" # start-sdk, cloudflare, github api
+corpus-pax = "^0.1.25" # start-sdk, cloudflare, github api
 statute-trees = "^0.1.4"
 citation-utils = "^0.2.8"
 # helpers

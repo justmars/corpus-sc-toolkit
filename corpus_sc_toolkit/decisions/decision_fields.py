@@ -5,7 +5,7 @@ from citation_utils import Citation
 from loguru import logger
 from pydantic import BaseModel, Field, root_validator
 
-from ._resources import DECISION_BUCKET_NAME, DECISION_CLIENT, decision_storage
+from ._resources import decision_storage
 from .decision_opinions import DecisionOpinion
 from .fields import CourtComposition, DecisionCategory
 
@@ -103,26 +103,6 @@ class DecisionFields(BaseModel):
             "report_off_gaz": self.citation.offg,
             "has_pdf": self.is_pdf,
         }
-
-    @classmethod
-    def key_raw(cls, dated_prefix: str) -> str | None:
-        """Is suffix `details.yaml` present in result of `cls.iter_dockets()`?"""
-        key = f"{dated_prefix}/details.yaml"
-        try:
-            DECISION_CLIENT.get_object(Bucket=DECISION_BUCKET_NAME, Key=key)
-            return key
-        except Exception:
-            return None
-
-    @classmethod
-    def key_pdf(cls, dated_prefix: str) -> str | None:
-        """Is suffix `pdf.yaml` present in result of `cls.iter_dockets()`?"""
-        key = f"{dated_prefix}/pdf.yaml"
-        try:
-            DECISION_CLIENT.get_object(Bucket=DECISION_BUCKET_NAME, Key=key)
-            return key
-        except Exception:
-            return None
 
     def put_in_storage(self, suffix: str):
         """Puts Pydantic exported data dict to `details.yaml` or `pdf.yaml` in

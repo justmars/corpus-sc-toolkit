@@ -11,15 +11,9 @@ from corpus_sc_toolkit.utils import sqlenv
 
 STATUTE_TEMP_FOLDER = Path(__file__).parent / "_tmp"
 STATUTE_TEMP_FOLDER.mkdir(exist_ok=True)
-
-STATUTE_BUCKET_NAME = "ph-statutes"
 statute_storage = StorageUtils(
-    name=STATUTE_BUCKET_NAME, temp_folder=STATUTE_TEMP_FOLDER
+    name="ph-statutes", temp_folder=STATUTE_TEMP_FOLDER
 )
-meta = statute_storage.resource.meta
-if not meta:
-    raise Exception("Bad bucket.")
-STATUTE_CLIENT = meta.client
 
 
 class Integrator(BaseModel, abc.ABC):
@@ -31,15 +25,6 @@ class Integrator(BaseModel, abc.ABC):
     3. `add_rows()`: to populate the tables created
     4. `from_page()`: given a raw yaml file, extract fields into the BaseModel
     5. `@relations`: the BaseModel will have relationships to other BaseModels
-
-    The reason for requiring `emails` is that the common
-    `insert_objects()` function can: create an m2m table with respect
-    to authors
-
-    The reason for requiring `@relations` is that the common
-    `insert_objects()` function can: go through each of the tuples where in
-    the first item of the tuple represents a table and the second item of the
-    tuple, rows to be inserted in such a table.
     """
 
     id: str = NotImplemented

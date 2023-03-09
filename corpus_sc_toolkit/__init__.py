@@ -1,4 +1,4 @@
-__version__ = "0.2.4"
+__version__ = "0.2.5"
 
 
 from .config import ConfigDecisions, ConfigStatutes
@@ -20,6 +20,7 @@ from .decisions import (
     SegmentRow,
     TitleTagRow,
     VoteLine,
+    decision_storage,
     extract_votelines,
     get_justices_file,
     get_justices_from_api,
@@ -33,4 +34,5 @@ from .statutes import (
     StatuteRow,
     StatuteTitleRow,
     StatuteUnitSearch,
+    statute_storage,
 )

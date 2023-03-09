@@ -26,7 +26,7 @@ from ._resources import Integrator, statute_storage
 
 
 class StatuteRow(Page, StatuteBase, TableConfig):
-    """This corresponds to statute_trees.StatutePage but is adjusted
+    """This corresponds to `statute_trees.StatutePage` but is adjusted
     for the purpose of table creation."""
 
     __prefix__ = "lex"
@@ -56,7 +56,7 @@ class StatuteRow(Page, StatuteBase, TableConfig):
 
 
 class StatuteTitleRow(TableConfig):
-    """This corresponds to statute_patterns.StatuteTitle but
+    """This corresponds to `statute_patterns.StatuteTitle` but
     is adjusted for the purpose of table creation."""
 
     __prefix__ = "lex"
@@ -177,9 +177,7 @@ class StatuteFoundInUnit(StatuteBase, TableConfig):
         pk: str,
         units: list["StatuteUnit"],
     ) -> Iterator["StatuteFoundInUnit"]:
-        """Traverse the tree and search the caption and content of each unit
-        for possible Statutes.
-        """
+        """Traverse tree and search unit caption /content for possible Statutes."""
         for u in units:
             if u.caption and u.content:
                 text = f"{u.caption}. {u.content}"
@@ -191,8 +189,7 @@ class StatuteFoundInUnit(StatuteBase, TableConfig):
 
     @classmethod
     def get_statutes_from_references(cls, c: Connection) -> Iterator[dict]:
-        """Extract relevant statute category and identifier pairs
-        from the cls.__tablename__."""
+        """Extract statute category and identifier pairs from the cls.__tablename__."""
         for row in c.db.execute_returning_dicts(
             sqlenv.get_template(
                 "statutes/references/unique_statutes_list.sql"
@@ -202,8 +199,8 @@ class StatuteFoundInUnit(StatuteBase, TableConfig):
 
     @classmethod
     def update_statute_ids(cls, c: Connection) -> sqlite3.Cursor:
-        """Since all statutes present in `db`, supply `matching_statute_id` in
-        the references table."""
+        """Since statutes present in `db`, supply `matching_statute_id` in
+        references table."""
         with c.session as cur:
             return cur.execute(
                 sqlenv.get_template("statutes/update_id.sql").render(

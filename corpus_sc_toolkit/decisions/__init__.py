@@ -1,15 +1,18 @@
 from ._resources import decision_storage
 from .decision import (
+    CitationInOpinion,
     CitationRow,
     DecisionRow,
     OpinionRow,
+    OpinionTitleTagRow,
     SegmentRow,
+    StatuteInOpinion,
     TitleTagRow,
     VoteLine,
 )
 from .decision_fields import DecisionFields
-from .decision_fields_via_html import DecisionHTML
-from .decision_fields_via_pdf import DecisionPDF, InterimOpinion
+from .decision_fields_via_html import DETAILS_KEY, DecisionHTML
+from .decision_fields_via_pdf import PDF_KEY, DecisionPDF, InterimOpinion
 from .decision_opinion_segments import OpinionSegment
 from .decision_opinions import DecisionOpinion
 from .fields import (
