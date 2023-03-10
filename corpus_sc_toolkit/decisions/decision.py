@@ -53,14 +53,10 @@ class DecisionRow(DecisionFields, TableConfig):
     emails: list[str] = Field(default_factory=list, exclude=True)
     opinions: list[DecisionOpinion] = Field(default_factory=list, exclude=True)
 
-    @property
-    def citation_fk(self) -> dict:
-        return self.citation.dict() | {"decision_id": self.id}
-
     @classmethod
     def from_key(cls, key: str) -> Self | None:
         """Expects full key inclusive of whether `details.yaml` / `pdf.yaml`
-        to retrieve an instance of `DecisionRow`, if available in r2."""
+        to retrieve an instance of `DecisionRow` from r2, if available."""
         if key.endswith(DETAILS_KEY):
             return cls(**DecisionHTML.get_from_storage(key).dict())
         elif key.endswith(PDF_KEY):
@@ -69,13 +65,12 @@ class DecisionRow(DecisionFields, TableConfig):
 
     @classmethod
     def from_prefix(cls, prefix: str) -> Self | None:
-        """Add one of two keys `details.yaml` / `pdf.yaml`" to the incomplete prefix
-        to get the `DecisionRow`, if available in r2."""
-        if obj := DecisionHTML.get_from_storage(f"{prefix}/{DETAILS_KEY}"):
-            return cls(**obj.dict())
-        elif obj := DecisionPDF.get_from_storage(f"{prefix}/{PDF_KEY}"):
-            return cls(**obj.dict())
-        return None
+        """Prefix is implied to be incomplete; add one of two suffixes
+        `details.yaml` / `pdf.yaml`" to complete the key for a `DecisionRow`
+        from r2. With the completed key, the object will be downloaded
+        and instantiated into a `DecisionRow`, if available."""
+        details, pdf = f"{prefix}/{DETAILS_KEY}", f"{prefix}/{PDF_KEY}"
+        return cls.from_key(details) or cls.from_key(pdf)
 
 
 class DecisionComponent(BaseModel, abc.ABC):
@@ -231,11 +226,13 @@ class ConfigDecisions(StorageToDatabaseConfiguration):
                 lookup={"email": email},
                 m2m_table="sc_tbl_decisions_pax_tbl_individuals",
             )  # note explicit m2m table name is `sc_`
+
         if row.citation and row.citation.has_citation:
             self.conn.add_record(
                 kls=CitationRow,
-                item=row.citation_fk,
+                item=row.citation.dict() | {"decision_id": row.id},
             )
+
         if row.voting:
             self.conn.add_records(
                 kls=VoteLine,
@@ -283,9 +280,12 @@ class ConfigDecisions(StorageToDatabaseConfiguration):
         self.set_tables()
         if decision_prefixes := self.storage.all_items():
             for item in decision_prefixes:
-                if row := DecisionRow.from_key(item["Key"]):
-                    if row_added := self.add_row(row):
-                        logger.success(f"{row_added=}")
+                try:
+                    if row := DecisionRow.from_key(item["Key"]):
+                        if row_added := self.add_row(row):
+                            logger.success(f"{row_added=}")
+                except Exception as e:
+                    logger.error(f"Bad {id}; {e=}")
 
     def get_db_ids(self) -> Iterator[str]:
         table = self.conn.db[DecisionRow.__tablename__]

@@ -39,7 +39,6 @@ from .statutes import (
     statute_storage,
 )
 from .store import (
-    get_pdf_db,
     store_local_decisions_in_r2,
     store_local_statutes_in_r2,
     store_pdf_decisions_in_r2,

@@ -4,7 +4,6 @@ from pathlib import Path
 
 from loguru import logger
 from pydantic import BaseModel
-from pylts import ConfigS3
 from sqlite_utils import Database
 from sqlpyd import Connection
 from start_sdk import StorageUtils
@@ -113,27 +112,29 @@ def store_local_decisions_in_r2(
             logger.error(f"Bad {detail_path=}; see {e=}")
 
 
-def get_pdf_db(path: Path, reset: bool = False) -> Path:
-    """Download pre-existing database containing pdf tables. This is
-    needed to transfer pdf-based rows to r2 and to another database."""
-    src = "s3://corpus-pdf/db"
-    logger.info(f"Restore from {src=} to {path=}")
-    stream = ConfigS3(s3=src, folder=path)
-    if reset:
-        stream.delete()
-        return stream.restore()
-    if not stream.dbpath.exists():
-        return stream.restore()
-    return stream.dbpath
-
-
 def store_pdf_decisions_in_r2(pdf_db: Database):
     """Used in tandem with `get_pdf_db()`; retrieves the records
     so that these can be uploaded. Note that this will overwrite
-    present fields."""
+    present fields.
+
+    ```py
+    from pylts import ConfigS3 # excluded from this package
+    def get_pdf_db(path: Path, reset: bool = False) -> Path:
+        src = "s3://corpus-pdf/db"
+        logger.info(f"Restore from {src=} to {path=}")
+        stream = ConfigS3(s3=src, folder=path)
+        if reset:
+            stream.delete()
+            return stream.restore()
+        if not stream.dbpath.exists():
+            return stream.restore()
+        return stream.dbpath
+    ```
+    """
     from .decisions import DecisionPDF
 
-    for row in DecisionPDF.originate(db=pdf_db):
+    rows = DecisionPDF.originate(db=pdf_db)
+    for row in rows:
         try:
             row.to_storage()
         except Exception as e:

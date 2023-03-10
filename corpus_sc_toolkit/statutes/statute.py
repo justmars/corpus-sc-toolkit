@@ -5,8 +5,9 @@ from typing import Self
 
 from corpus_pax import Individual
 from loguru import logger
-from pydantic import EmailStr, Field, ValidationError
+from pydantic import BaseModel, EmailStr, Field, ValidationError
 from sqlpyd import Connection, TableConfig
+from start_sdk.cf_r2 import StorageUtils
 from statute_patterns import StatuteTitleCategory, extract_rules
 from statute_trees import (
     Node,
@@ -21,15 +22,15 @@ from statute_trees import (
 from corpus_sc_toolkit.store import StorageToDatabaseConfiguration
 from corpus_sc_toolkit.utils import sqlenv
 
-from ._resources import Integrator, statute_storage
-
 DETAILS_FILE = "details.yaml"
+STATUTE_TEMP_FOLDER = Path(__file__).parent / "_tmp"
+STATUTE_TEMP_FOLDER.mkdir(exist_ok=True)
+statute_storage = StorageUtils(
+    name="ph-statutes", temp_folder=STATUTE_TEMP_FOLDER
+)
 
 
 class StatuteRow(Page, StatuteBase, TableConfig):
-    """This corresponds to `statute_trees.StatutePage` but is adjusted
-    for the purpose of table creation."""
-
     __prefix__ = "lex"
     __tablename__ = "statutes"
     __indexes__ = [
@@ -57,9 +58,6 @@ class StatuteRow(Page, StatuteBase, TableConfig):
 
 
 class StatuteTitleRow(TableConfig):
-    """This corresponds to `statute_patterns.StatuteTitle` but
-    is adjusted for the purpose of table creation."""
-
     __prefix__ = "lex"
     __tablename__ = "statute_titles"
     __indexes__ = [["category", "text"], ["category", "statute_id"]]
@@ -212,7 +210,7 @@ class StatuteFoundInUnit(StatuteBase, TableConfig):
             )
 
 
-class Statute(Integrator):
+class Statute(BaseModel):
     id: str
     prefix: str
     emails: list[EmailStr]

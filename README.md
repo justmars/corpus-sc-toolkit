@@ -11,3 +11,5 @@ See [documentation](https://justmars.github.io/corpus-sc-toolkit).
 1. Run `poetry shell`
 2. Run `poetry update`
 3. Run `pytest`
+
+Could not originate prefix='gr/1290/1905/1/5/details.yaml'
