@@ -125,42 +125,34 @@ class StatuteFoundInUnit(StatuteBase, TableConfig):
     @classmethod
     def list_affected_statutes(cls, c: Connection, pk: str) -> dict:
         sql_file = "statutes/list_affected_statutes.sql"
-        results = c.db.execute_returning_dicts(
-            sqlenv.get_template(sql_file).render(
-                ref_tbl=cls.__tablename__,
-                statute_tbl=StatuteRow.__tablename__,
-                affecting_statute_id=pk,
-            )
+        template = sqlenv.get_template(sql_file)
+        query = template.render(
+            ref_tbl=cls.__tablename__,
+            statute_tbl=StatuteRow.__tablename__,
+            affecting_statute_id=pk,
         )
-        if results:
-            return results[0]
+        if rows := c.db.execute_returning_dicts(query):
+            return rows[0]
         return {}
 
     @classmethod
     def list_affector_statutes(cls, c: Connection, pk: str) -> dict:
-        sql_file = "statutes/list_affector_statutes.sql"
-        results = c.db.execute_returning_dicts(
-            sqlenv.get_template(sql_file).render(
-                ref_tbl=cls.__tablename__,
-                statute_tbl=StatuteRow.__tablename__,
-                affected_statute_id=pk,
-            )
+        sql = "statutes/list_affector_statutes.sql"
+        template = sqlenv.get_template(sql)
+        query = template.render(
+            ref_tbl=cls.__tablename__,
+            statute_tbl=StatuteRow.__tablename__,
+            affected_statute_id=pk,
         )
-        if results:
-            return results[0]
+        if rows := c.db.execute_returning_dicts(query):
+            return rows[0]
         return {}
 
     @classmethod
     def find_statute_in_unit(
-        cls,
-        text: str,
-        mp: str,
-        statute_id: str,
-    ) -> Iterator["StatuteFoundInUnit"]:
-        """Given text of a particular `material_path`, determine if there are
-        statutes found by `get_statute_labels`; if they're found, determine
-        the proper `StatuteFoundInUnit` to yield.
-        """
+        cls, text: str, mp: str, statute_id: str
+    ) -> Iterator[Self]:
+        """Yield statutes in `text` of material_path `mp`."""
         for rule in extract_rules(text):
             yield cls(
                 material_path=mp,
@@ -172,10 +164,8 @@ class StatuteFoundInUnit(StatuteBase, TableConfig):
 
     @classmethod
     def extract_units(
-        cls,
-        pk: str,
-        units: list["StatuteUnit"],
-    ) -> Iterator["StatuteFoundInUnit"]:
+        cls, pk: str, units: list[StatuteUnit]
+    ) -> Iterator[Self]:
         """Traverse tree and search unit caption /content for possible Statutes."""
         for u in units:
             if u.caption and u.content:
@@ -189,11 +179,11 @@ class StatuteFoundInUnit(StatuteBase, TableConfig):
     @classmethod
     def get_statutes_from_references(cls, c: Connection) -> Iterator[dict]:
         """Extract statute category and identifier pairs from the cls.__tablename__."""
-        for row in c.db.execute_returning_dicts(
-            sqlenv.get_template(
-                "statutes/references/unique_statutes_list.sql"
-            ).render(statute_references_tbl=cls.__tablename__)
-        ):
+        sql = "statutes/references/unique_statutes_list.sql"
+        template = sqlenv.get_template(sql)
+        query = template.render(statute_references_tbl=cls.__tablename__)
+        rows = c.db.execute_returning_dicts(query)
+        for row in rows:
             yield StatuteBase(**row).dict()
 
     @classmethod
